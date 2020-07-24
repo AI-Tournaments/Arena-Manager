@@ -6,10 +6,7 @@
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
 		<script>
-			var getVariables = window.location.search.substring(1).split('&');
-			for(let index = 0; index < getVariables.length; index++){
-				getVariables[index] = getVariables[index].split('=');
-			}
+			'use strict'
 			function getVariable(name){
 				for(const variable of getVariables){
 					if(variable[0] == name){
@@ -19,15 +16,34 @@
 				return undefined;
 			}
 
+			async function createWorkerFromRemoteURL(url=''){
+				let urlObject = URL.createObjectURL(new Blob(['importScripts("'+url+'");'], {type: 'application/javascript'}));
+				let worker = new Worker(urlObject);
+				await new Promise(resolve => setTimeout(resolve, 1000));
+				URL.revokeObjectURL(urlObject);
+				return worker;
+			}
+
+			var getVariables = window.location.search.substring(1).split('&');
+			getVariables['&RAW'] = window.location.search.substring(1);
+			for(let index = 0; index < getVariables.length; index++){
+				getVariables[index] = getVariables[index].split('=');
+			}
+
 			var game = getVariable('game');
 			document.title = document.title.replace('X', game);
 
-			let arenaURL = getVariable('url'); // TODO: 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', game);
-			var arena = new Worker(arenaURL);
-			arena.postMessage(getVariables);
-			arena.onMessage(()=>{
-				console.log('Done!');
-			});
+			let arenaURL = getVariable('TEMPurl'); // TODO: 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', game);
+			if(arenaURL !== undefined){
+				createWorkerFromRemoteURL(arenaURL).then(arena => {
+					arena.onmessage = messageEvent => {
+						console.log('Done!');
+					};
+					arena.postMessage(getVariables);
+				});
+			}else{
+				console.error('No arena defined.');
+			}
 		</script>
 	</head>
 	<body></body>
