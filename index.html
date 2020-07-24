@@ -16,11 +16,10 @@
 				return undefined;
 			}
 
-			async function createWorkerFromRemoteURL(url=''){
+			function createWorkerFromRemoteURL(url=''){
 				let urlObject = URL.createObjectURL(new Blob(['importScripts("'+url+'");'], {type: 'application/javascript'}));
 				let worker = new Worker(urlObject);
-				await new Promise(resolve => setTimeout(resolve, 1000));
-				URL.revokeObjectURL(urlObject);
+				setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
 				return worker;
 			}
 
@@ -34,13 +33,13 @@
 			document.title = document.title.replace('X', game);
 
 			let arenaURL = getVariable('TEMPurl'); // TODO: 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', game);
+			var worker;
 			if(arenaURL !== undefined){
-				createWorkerFromRemoteURL(arenaURL).then(arena => {
-					arena.onmessage = messageEvent => {
-						console.log('Done!');
-					};
-					arena.postMessage(getVariables);
-				});
+				worker = createWorkerFromRemoteURL(arenaURL);
+				worker.onmessage = messageEvent => {
+					console.log('Done!');
+				};
+				worker.postMessage(getVariables);
 			}else{
 				console.error('No arena defined.');
 			}
