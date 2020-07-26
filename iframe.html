@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>X Arena</title>
+		<meta content="width=device-width, initial-scale=1.0" name="viewport">
+		<meta content="yes" name="mobile-web-app-capable">
+		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
+		<script>
+			'use strict'
+			window.onhashchange = hashChangeEvent => {
+				let data = JSON.parse(decodeURI(location.hash.substring(1)));
+
+				document.title = document.title.replace('X', data.game);
+				let arenaURL = data.TEMPurl; // TODO: 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', data.game);
+
+				let worker;
+				if(arenaURL !== undefined){
+					worker = createWorkerFromRemoteURL(arenaURL);
+					worker.onmessage = messageEvent => {
+						console.log(messageEvent.data.id + ' done!');
+					};
+					//for each match:
+						worker.postMessage({arena: data, id: 0});
+				}else{
+					console.error('No arena defined.');
+				}
+			};
+			window.onhashchange();
+		</script>
+	</head>
+	<body></body>
+</html>
