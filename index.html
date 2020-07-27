@@ -25,12 +25,13 @@
 				.then(forks => {
 					forks.forEach(fork => {
 						participantsToFetch++;
+						let full_name_split = fork.full_name.split('/');
 						fetch('https://api.github.com/repos/' + fork.full_name + '/git/trees/master')
 						.then(response => response.json())
 						.then(data => {
 							data.tree.forEach(file =>{
 								if(file.path.endsWith('.js')){
-									settings.participants.push(file.path); // TODO: This should be manually input input, so limited tournaments can be arranged.
+									settings.participants.push('https://' + full_name_split[0] + '.github.io/' + full_name_split[1] + '/' + file.path); // TODO: This should be manually input input, so limited tournaments can be arranged.
 								}
 							});
 							participantsToFetch--;
