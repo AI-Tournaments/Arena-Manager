@@ -41,6 +41,10 @@
 								iframe.sandbox = 'allow-scripts';
 								document.body.appendChild(iframe);
 							}
+						})
+						.catch(error => {
+							console.error(error);
+							participantsToFetch--;
 						});
 					});
 				});
