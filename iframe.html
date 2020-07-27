@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>X Arena</title>
+		<title>X Arena (IFrame)</title>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
@@ -10,15 +10,15 @@
 			'use strict'
 			window.onhashchange = hashChangeEvent => {
 				let data = JSON.parse(decodeURI(location.hash.substring(1)));
+				document.title = document.title.replace('X', data.arena);
 
-				document.title = document.title.replace('X', data.game);
-				let arenaURL = data.TEMPurl; // TODO: 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', data.game);
+				if(data.arena !== undefined){
+					let arenaURL = 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', data.arena);
+					arenaURL = data.TEMPurl;
 
-				let worker;
-				if(arenaURL !== undefined){
-					worker = createWorkerFromRemoteURL(arenaURL);
+					let worker = createWorkerFromRemoteURL(arenaURL);
 					worker.onmessage = messageEvent => {
-						console.log(messageEvent.data.id + ' done!');
+						console.log(messageEvent.data);
 					};
 					//for each match:
 						worker.postMessage({arena: data, id: 0});
