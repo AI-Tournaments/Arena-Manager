@@ -37,7 +37,7 @@
 							if(participantsToFetch == 0){
 								document.title = document.title.replace('X', settings.arena);
 								let iframe = document.createElement('iframe');
-								iframe.src = '/Arena/iframe.html#' + JSON.stringify(settings);
+								iframe.src = 'Arena/iframe.html#' + JSON.stringify(settings);
 								iframe.sandbox = 'allow-scripts';
 								document.body.appendChild(iframe);
 							}
