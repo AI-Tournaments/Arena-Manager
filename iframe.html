@@ -13,17 +13,15 @@
 				document.title = document.title.replace('X', data.arena);
 
 				if(data.arena !== undefined){
-					let arenaURL = 'https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', data.arena);
-					arenaURL = data.TEMPurl;
-
-					let worker = createWorkerFromRemoteURL(arenaURL);
+					let worker = createWorkerFromRemoteURL('https://ai-tournaments.github.io/GAME-Arena/arena.js'.replace('GAME', data.arena));
 					worker.onmessage = messageEvent => {
 						console.log(messageEvent.data);
+						document.body.innerHTML = '<pre>' + JSON.stringify(messageEvent.data, 0, 4) + '</pre>';
 					};
 					//for each match:
 						worker.postMessage({arena: data, id: 0});
 				}else{
-					console.error('No arena defined.');
+					document.body.innerHTML = 'No arena defined.';
 				}
 			};
 			window.onhashchange();

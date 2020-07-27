@@ -8,10 +8,10 @@
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
+			var participantsToFetch = 0;
 			function onload(){
 				let settings = {
 					arena: 'Kalaha',
-					TEMPurl: 'http://127.0.0.1:8887/Kalaha-Arena/arena.js', // TEMP During local dev.
 					participants: [],
 					settings: {
 						boardLength: 6,
@@ -20,12 +20,30 @@
 						rules: []
 					}
 				};
-				document.title = document.title.replace('X', settings.arena);
-				let iframe = document.createElement('iframe');
-				iframe.src = '/Arena/iframe.html#' + JSON.stringify(settings);
-				iframe.src = 'http://127.0.0.1:8887/AI-Tournaments-Website/Arena/iframe.html#' + JSON.stringify(settings); // TEMP: During local dev.
-				iframe.sandbox = 'allow-scripts';
-				document.body.appendChild(iframe);
+				fetch('https://api.github.com/repos/AI-Tournaments/Kalaha-AI-Tournament-Participant/forks')
+				.then(response => response.json())
+				.then(forks => {
+					forks.forEach(fork => {
+						participantsToFetch++;
+						fetch('https://api.github.com/repos/' + fork.full_name + '/git/trees/master')
+						.then(response => response.json())
+						.then(data => {
+							data.tree.forEach(file =>{
+								if(file.path.endsWith('.js')){
+									settings.participants.push(file.path); // TODO: This should be manually input input, so limited tournaments can be arranged.
+								}
+							});
+							participantsToFetch--;
+							if(participantsToFetch == 0){
+								document.title = document.title.replace('X', settings.arena);
+								let iframe = document.createElement('iframe');
+								iframe.src = '/Arena/iframe.html#' + JSON.stringify(settings);
+								iframe.sandbox = 'allow-scripts';
+								document.body.appendChild(iframe);
+							}
+						});
+					});
+				});
 			}
 		</script>
 	</head>
