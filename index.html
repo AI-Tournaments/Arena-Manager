@@ -20,6 +20,7 @@
 						rules: []
 					}
 				};
+				document.title = document.title.replace('X', settings.arena);
 				fetch('https://api.github.com/repos/AI-Tournaments/Kalaha-AI-Tournament-Participant/forks')
 				.then(response => response.json())
 				.then(forks => {
@@ -35,11 +36,8 @@
 							});
 							participantsToFetch--;
 							if(participantsToFetch == 0){
-								document.title = document.title.replace('X', settings.arena);
-								let iframe = document.createElement('iframe');
-								iframe.src = 'iframe.html#' + JSON.stringify(settings);
-								iframe.sandbox = 'allow-scripts';
-								document.body.appendChild(iframe);
+								let sandbox = document.getElementById('sandbox');
+								sandbox.srcdoc = sandbox.srcdoc.replace('DATA', JSON.stringify(settings).replace(/"/g, '\\"'));
 							}
 						})
 						.catch(error => {
@@ -51,5 +49,39 @@
 			}
 		</script>
 	</head>
-	<body onload="onload()"></body>
+	<body onload="onload()">
+		<iframe id="sandbox" sandbox="allow-scripts" srcdoc='
+			<!DOCTYPE html>
+			<html>
+				<head>
+					<meta charset="UTF-8">
+					<title>X Arena (IFrame)</title>
+					<meta content="width=device-width, initial-scale=1.0" name="viewport">
+					<meta content="yes" name="mobile-web-app-capable">
+					<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
+					<script>
+						"use strict"
+						let data = "DATA";
+						if(data !== "DA"+"TA"){
+							data = JSON.parse(data);
+							document.title = document.title.replace("X", data.arena);
+
+							if(data.arena !== undefined){
+								createWorkerFromRemoteURL("https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js".replace("GAME", data.arena), true).then(worker => {
+									worker.onmessage = messageEvent => {
+										document.body.innerHTML += "<pre>" + JSON.stringify(messageEvent.data, 0, 4) + "</pre>";
+									};
+									//for each match:
+										worker.postMessage({arena: data, id: 0});
+								});
+							}else{
+								document.body.innerHTML = "No arena defined.";
+							}
+						}
+					</script>
+				</head>
+				<body></body>
+			</html>
+		'></iframe>
+	</body>
 </html>
