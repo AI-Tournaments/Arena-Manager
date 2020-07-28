@@ -44,10 +44,6 @@
 					window.location.replace(window.location.href.replace('iframe.html', ''));
 				}
 			};
-			function rerun(){
-				document.getElementById('output').innerHTML = '';
-				window.onhashchange();
-			}
 			function getOutput(){
 				function copyToClipboard(str){
 					const el = document.createElement('textarea');
@@ -74,7 +70,6 @@
 	</head>
 	<body>
 		<div>
-			<!--<input type="button" onclick="rerun()" value="Rerun">-->
 			<input type="button" onclick="getOutput()" value="Copy output">
 		</div>
 		<div id="output"></div>
