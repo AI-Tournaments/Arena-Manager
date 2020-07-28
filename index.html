@@ -65,7 +65,6 @@
 						if(data !== "DA"+"TA"){
 							data = JSON.parse(data);
 							document.title = document.title.replace("X", data.arena);
-
 							if(data.arena !== undefined){
 								createWorkerFromRemoteURL("https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js".replace("GAME", data.arena), true).then(worker => {
 									worker.onmessage = messageEvent => {
