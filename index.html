@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>X Arena</title>
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-173346924-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-173346924-1');</script>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
@@ -50,7 +51,9 @@
 		</script>
 	</head>
 	<body onload="onload()">
-		<iframe id="sandbox" sandbox="allow-scripts" srcdoc='
+		<input type="button" style="float: left;" value="Rerun">
+		<input type="button" style="float: left;" value="Copy output">
+		<iframe id="sandbox" style="float: left; clear: both;" sandbox="allow-scripts" srcdoc='
 			<!DOCTYPE html>
 			<html>
 				<head>
@@ -68,7 +71,7 @@
 							if(data.arena !== undefined){
 								createWorkerFromRemoteURL("https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js".replace("GAME", data.arena), true).then(worker => {
 									worker.onmessage = messageEvent => {
-										document.body.innerHTML += "<pre>" + JSON.stringify(messageEvent.data, 0, 4) + "</pre>";
+										document.body.innerHTML += "<pre id=\"" + messageEvent.data.id + "\">" + JSON.stringify(messageEvent.data, 0, 4) + "</pre>";
 									};
 									//for each match:
 										worker.postMessage({arena: data, id: 0});
