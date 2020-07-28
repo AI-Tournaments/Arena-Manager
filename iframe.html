@@ -22,7 +22,7 @@
 					if(data.arena !== undefined){
 						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
 							worker.onmessage = messageEvent => {
-								document.body.innerHTML += '<pre id="' + messageEvent.data.id + '>' + JSON.stringify(messageEvent.data, 0, 4) + '</pre>';
+								document.body.innerHTML += '<pre id="' + messageEvent.data.id + '">' + JSON.stringify(messageEvent.data, 0, 4) + '</pre>';
 							};
 							//for each match:
 								worker.postMessage({arena: data, id: 0});
