@@ -57,14 +57,16 @@
 					document.execCommand('copy');
 					document.body.removeChild(el);
 				};
-				let output = [];
+				let output = {};
+				output.arena = document.title.split(' ')[0];
+				output.data = [];
 				let list = document.getElementById('output').getElementsByTagName('pre');
 				for(const key in list){
 					if(list.hasOwnProperty(key)){
-						output.push(list[key].innerHTML);
+						output.data.push(JSON.parse(list[key].innerHTML));
 					}
 				}
-				copyToClipboard('[' + output.join(',') + ']');
+				copyToClipboard(JSON.stringify(output));
 			}
 			window.onhashchange();
 		</script>
