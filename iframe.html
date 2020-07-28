@@ -63,7 +63,8 @@
 				let list = document.getElementById('output').getElementsByTagName('pre');
 				for(const key in list){
 					if(list.hasOwnProperty(key)){
-						output.data.push(JSON.parse(list[key].innerHTML));
+						let element = list[key];
+						output.data.push({type: element.className, value: JSON.parse(element.innerHTML)});
 					}
 				}
 				copyToClipboard(JSON.stringify(output));
