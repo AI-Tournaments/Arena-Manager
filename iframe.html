@@ -24,7 +24,7 @@
 							let info = {};
 							info.src = data.participants[i];
 							let nameParts = info.src.replace(/^.*\/\//, '').split('/');
-							info.name = nameParts.name[1] + '/' + nameParts.name[2];
+							info.name = nameParts[1] + '/' + nameParts[2];
 							for (const namePart of nameParts.slice(4)){
 								info.name += '/' + namePart;
 							}
