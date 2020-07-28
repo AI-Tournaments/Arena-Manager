@@ -32,7 +32,7 @@
 						}
 						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
 							worker.onmessage = messageEvent => {
-								document.getElementById('output').innerHTML += '<pre id="' + messageEvent.data.message.id + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
+								document.getElementById('output').innerHTML += '<pre id="' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
 							};
 							//for each match:
 								worker.postMessage({arena: data, id: 0});
