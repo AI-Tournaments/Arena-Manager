@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>X Arena (IFrame)</title>
+		<meta content="width=device-width, initial-scale=1.0" name="viewport">
+		<meta content="yes" name="mobile-web-app-capable">
+		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
+		<script>
+			'use strict'
+			function isIframe(){
+				try{
+					return window.self !== window.top;
+				}catch(e){
+					return true;
+				}
+			}
+			window.onhashchange = hashChangeEvent => {
+				if(isIframe()){
+					let data = JSON.parse(decodeURI(location.hash.substring(1)));
+					document.title = document.title.replace('X', data.arena);
+					if(data.arena !== undefined){
+						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
+							worker.onmessage = messageEvent => {
+								document.body.innerHTML += '<pre id="' + messageEvent.data.id + '>' + JSON.stringify(messageEvent.data, 0, 4) + '</pre>';
+							};
+							//for each match:
+								worker.postMessage({arena: data, id: 0});
+						});
+					}else{
+						document.body.innerHTML = 'No arena defined.';
+					}
+				}else{
+					window.location.replace(window.location.href.replace('iframe.html', ''));
+				}
+			};
+			window.onhashchange();
+		</script>
+	</head>
+	<body></body>
+</html>
