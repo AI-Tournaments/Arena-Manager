@@ -34,7 +34,7 @@
 							worker.onmessage = messageEvent => {
 								document.getElementById('output').innerHTML += '<pre id="' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
 							};
-							// TODO: For each sub tournaments:
+							// TODO: For each tournament bracket:
 								worker.postMessage({arena: data, id: 0});
 						});
 					}else{
