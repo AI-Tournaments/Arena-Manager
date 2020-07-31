@@ -6,18 +6,27 @@
 		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-173346924-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-173346924-1');</script>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
+		<style>
+			html, body, iframe {
+				margin: 0;
+				padding: 0;
+				border: 0;
+				width: 100%;
+				height: 100%;
+			}
+		</style>
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
 			var participantsToFetch = 0;
 			function onload(){
-				let settings = {
+				let settings = { // TEMP
 					arena: 'Kalaha',
 					participants: [],
 					settings: {
 						boardLength: 6,
 						startValue: 4,
-						matchs: 1,
+						averageOf: 4,
 						rules: []
 					}
 				};
@@ -40,8 +49,6 @@
 								let iframe = document.createElement('iframe');
 								iframe.src = 'iframe.html#' + JSON.stringify(settings);
 								iframe.sandbox = 'allow-scripts';
-								iframe.style.float = 'left';
-								iframe.style.clear = 'both';
 								document.body.appendChild(iframe);
 							}
 						})
