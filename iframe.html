@@ -43,7 +43,7 @@
 							info.src = data.participants[i];
 							let nameParts = info.src.replace(/^.*\/\//, '').split('/');
 							info.name = nameParts[1] + '/' + nameParts[2];
-							for (const namePart of nameParts.slice(4)){
+							for(const namePart of nameParts.slice(4)){
 								info.name += '/' + namePart;
 							}
 							data.participants[i] = info;
@@ -52,9 +52,7 @@
 							worker.onmessage = messageEvent => {
 								document.getElementById('output').innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
 							};
-							let id = 0;
-							// TODO: For each tournament bracket:
-								worker.postMessage({arena: data, id: id+'_'});
+							worker.postMessage({arena: data});
 						});
 					}else{
 						document.getElementById('output') = 'No arena defined.';
