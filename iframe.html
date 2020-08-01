@@ -34,7 +34,7 @@
 			}
 			window.onhashchange = hashChangeEvent => {
 				if(isIframe()){
-					document.getElementById('output') = '';
+					let output = document.getElementById('output');
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
@@ -50,12 +50,12 @@
 						}
 						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
 							worker.onmessage = messageEvent => {
-								document.getElementById('output').innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
+								output.innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
 							};
 							worker.postMessage({arena: data});
 						});
 					}else{
-						document.getElementById('output') = 'No arena defined.';
+						output.innerHTML = 'No arena defined.';
 					}
 				}else{
 					window.location.replace(window.location.href.replace('iframe.html', ''));
