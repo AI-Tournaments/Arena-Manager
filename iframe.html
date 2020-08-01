@@ -34,6 +34,7 @@
 			}
 			window.onhashchange = hashChangeEvent => {
 				if(isIframe()){
+					document.getElementById('output') = '';
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
@@ -51,11 +52,12 @@
 							worker.onmessage = messageEvent => {
 								document.getElementById('output').innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
 							};
+							let id = 0;
 							// TODO: For each tournament bracket:
-								worker.postMessage({arena: data, id: 0});
+								worker.postMessage({arena: data, id: id+'_'});
 						});
 					}else{
-						document.body.innerHTML = 'No arena defined.';
+						document.getElementById('output') = 'No arena defined.';
 					}
 				}else{
 					window.location.replace(window.location.href.replace('iframe.html', ''));
