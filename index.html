@@ -50,6 +50,7 @@
 								let iframe = document.createElement('iframe');
 								iframe.src = 'iframe.html#' + JSON.stringify(settings);
 								iframe.sandbox = 'allow-scripts';
+								iframe.style.display = 'none';
 								document.body.appendChild(iframe);
 							}
 						})
