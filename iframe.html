@@ -32,7 +32,7 @@
 					return true;
 				}
 			}
-			window.onhashchange = hashChangeEvent => {
+			function onload(){
 				if(isIframe()){
 					let output = document.getElementById('output');
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
@@ -85,7 +85,7 @@
 			window.onhashchange();
 		</script>
 	</head>
-	<body>
+	<body onload="onload()">
 		<div>
 			<input type="button" onclick="getOutput()" value="Copy output">
 		</div>
