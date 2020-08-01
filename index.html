@@ -44,6 +44,7 @@
 									settings.participants.push('https://raw.githubusercontent.com/' + fork.full_name + '/' + fork.default_branch + '/' + file.path); // TODO: This should be manually input input, so limited tournaments can be arranged.
 								}
 							});
+							settings.participants = settings.participants.slice(2); // TEMP: During dev.
 							participantsToFetch--;
 							if(participantsToFetch == 0){
 								let iframe = document.createElement('iframe');
