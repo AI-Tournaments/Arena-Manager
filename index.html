@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>X Arena</title>
+		<title>Arena</title>
 		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-173346924-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-173346924-1');</script>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
@@ -21,8 +21,11 @@
 			let arenaList = undefined;
 			let participantList = undefined;
 			let settings = undefined;
+			let settings_json = undefined;
+			let btnAddTeam = undefined;
+			let btnTransfer = undefined;
 			function getOption(element, event){
-				for(const option of element.getElementsByTagName("option")){
+				for(const option of element.getElementsByTagName('option')){
 					if(option.value === event.target.value){
 						return option;
 					}
@@ -39,26 +42,35 @@
 					selectElement.add(option);
 				}
 			}
+			function transferToTeam(event){
+				let selectElement_moveTo = document.getElementById(event.target.dataset.select);
+				for(const selectElement of document.getElementsByClassName('participants')){
+					for(let option of [...selectElement.selectedOptions]){
+						selectElement_moveTo.add(option);
+						option.selected = false;
+					}
+				}
+				// TODO: Validate .participants.min/.max, .participantsPerTeam.min/.max
+				sortOptions(selectElement_moveTo);
+			}
 			function onload(){
 				arenaList = document.getElementById('arena-datalist');
 				participantList = document.getElementById('participants-selectable');
 				settings = document.getElementById('settings');
+				btnAddTeam = document.getElementById('add-team');
+				btnTransfer = document.getElementById('transfer');
+				btnTransfer.onclick = transferToTeam;
 				document.getElementById('arena').onchange = event => {
 					let option = getOption(arenaList, event);
 					if(option !== undefined){
+						btnAddTeam.disabled = true;
+						for(const element of document.getElementsByClassName('participant-team')){
+							element.parentNode.removeChild(element);
+						}
+						document.title = event.target.value + ' Arena';
 						getSettings(event.target.value);
 						getParticipants(option.value, option.dataset.full_name);
 					}
-				}
-				document.getElementById('transfer').onclick = event => {
-					let selectElement_moveTo = document.getElementById(event.target.dataset.select);
-					for(const selectElement of document.getElementsByClassName('participants')){
-						for(let option of [...selectElement.selectedOptions]){
-							selectElement_moveTo.add(option);
-							option.selected = false;
-						}
-					}
-					sortOptions(selectElement_moveTo);
 				}
 				fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(repos => {
 					repos.forEach(repo => {
@@ -103,15 +115,40 @@
 				});
 			}
 			function getSettings(arena=''){
-				console.log(arena);
 				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/settings.json'.replace('GAME', arena))
 				.then(response => response.json())
 				.then(json => {
+					settings_json = json;
+					for(let index = 0; index < Math.max(1, json.limits.teams.min); index++){
+						createTeam();
+					}
 					while(0 < settings.length){
 						settings.remove(0);
 					}
-					console.log(json);
 				});
+			}
+			function createTeam(){
+				let teamIndex = document.getElementsByClassName('participant-team').length + 1;
+				btnAddTeam.disabled = settings_json.limits.teams.max <= teamIndex;
+				let teamID = 'participant-team-' + teamIndex;
+				let participantTeam = document.createElement('div');
+				participantTeam.classList.add('participant-team');
+				let input = document.createElement('input');
+				participantTeam.appendChild(input);
+				let label = document.createElement('label');
+				participantTeam.appendChild(label);
+				let select = document.createElement('select');
+				participantTeam.appendChild(select);
+				input.type = 'button';
+				input.dataset.select = teamID;
+				input.value = btnTransfer.value;
+				input.onclick = transferToTeam;
+				label.for = teamID;
+				label.innerHTML = 'Team ' + teamIndex;
+				select.id = teamID;
+				select.classList.add('participants');
+				select.multiple = true;
+				document.getElementById('participant-groups').appendChild(participantTeam);
 			}
 			function start(){ // TODO: 
 				let json = {
@@ -136,9 +173,14 @@
 		<label for="arena">Arena:</label>
 		<input list="arena-datalist" name="arena" id="arena"/>
 		<datalist id="arena-datalist"></datalist>
-		<input type="button" id="transfer" data-select="participants-selectable" value="Transfer">
-		<label for="participants-selectable">Available participants:</label>
-		<select id="participants-selectable" class="participants" multiple></select>
-		<div id="settings"></div>
+		<input type="button" id="add-team" value="Add team" onclick="createTeam()" disabled>
+		<div id="participant-groups">
+			<div>
+				<input type="button" id="transfer" data-select="participants-selectable" value="Transfer here">
+				<label for="participants-selectable">Available participants</label>
+				<select id="participants-selectable" class="participants" multiple></select>
+			</div>
+		</div>
+		<form id="settings"></form>
 	</body>
 </html>
