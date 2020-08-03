@@ -20,7 +20,6 @@
 			'use strict'
 			let arenaList = undefined;
 			let participantList = undefined;
-			let participantList_chosen = undefined;
 			let settings = undefined;
 			function getOption(element, event){
 				for(const option of element.getElementsByTagName("option")){
@@ -29,21 +28,20 @@
 					}
 				}
 			}
-			function sortOptions(select){
-				let options = [...select.options];
+			function sortOptions(selectElement){
+				let options = [...selectElement.options];
 				options.sort(function(a, b){
 					if(a.value < b.value){return -1;}
 					if(b.value < a.value){return 1;}
 					return 0;
 				});
 				for(let option of options){
-					select.add(option);
+					selectElement.add(option);
 				}
 			}
 			function onload(){
 				arenaList = document.getElementById('arena-datalist');
 				participantList = document.getElementById('participants-selectable');
-				participantList_chosen = document.getElementById('participants-chosen');
 				settings = document.getElementById('settings');
 				document.getElementById('arena').onchange = event => {
 					let option = getOption(arenaList, event);
@@ -53,18 +51,14 @@
 					}
 				}
 				document.getElementById('transfer').onclick = event => {
-					let toSelect = [...participantList.selectedOptions];
-					let toUnselect = [...participantList_chosen.selectedOptions];
-					for(let option of toSelect){
-						participantList_chosen.add(option);
-						option.selected = false;
+					let selectElement_moveTo = document.getElementById(event.target.dataset.select);
+					for(const selectElement of document.getElementsByClassName('participants')){
+						for(let option of [...selectElement.selectedOptions]){
+							selectElement_moveTo.add(option);
+							option.selected = false;
+						}
 					}
-					for(let option of toUnselect){
-						participantList.add(option);
-						option.selected = false;
-					}
-					sortOptions(participantList);
-					sortOptions(participantList_chosen);
+					sortOptions(selectElement_moveTo);
 				}
 				fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(repos => {
 					repos.forEach(repo => {
@@ -78,11 +72,10 @@
 				});
 			}
 			function getParticipants(arena='', full_name){
-				while(0 < participantList.length){
-					participantList.remove(0);
-				}
-				while(0 < participantList_chosen.length){
-					participantList_chosen.remove(0);
+				for(const selectElement of document.getElementsByClassName('participants')){
+					while(0 < selectElement.length){
+						selectElement.remove(0);
+					}
 				}
 				let promises = [];
 				fetch('https://api.github.com/repos/AI-Tournaments/'+arena+'-AI-Tournament-Participant/forks').then(response => response.json()).then(forks => {
@@ -111,7 +104,7 @@
 			}
 			function getSettings(arena=''){
 				console.log(arena);
-				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/default-settings.json'.replace('GAME', arena))
+				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/settings.json'.replace('GAME', arena))
 				.then(response => response.json())
 				.then(json => {
 					while(0 < settings.length){
@@ -132,7 +125,7 @@
 					}
 				};
 				let iframe = document.createElement('iframe');
-				iframe.src = 'iframe.html#' + JSON.stringify(settings);
+				iframe.src = 'iframe.html#' + JSON.stringify(json);
 				iframe.sandbox = 'allow-scripts';
 				iframe.style.display = 'none';
 				document.body.appendChild(iframe);
@@ -143,11 +136,9 @@
 		<label for="arena">Arena:</label>
 		<input list="arena-datalist" name="arena" id="arena"/>
 		<datalist id="arena-datalist"></datalist>
+		<input type="button" id="transfer" data-select="participants-selectable" value="Transfer">
 		<label for="participants-selectable">Available participants:</label>
-		<select id="participants-selectable" multiple></select>
-		<input type="button" id="transfer" value="Transfer">
-		<label for="participants-chosen">Chosen participants:</label>
-		<select id="participants-chosen" multiple></select>
+		<select id="participants-selectable" class="participants" multiple></select>
 		<div id="settings"></div>
 	</body>
 </html>
