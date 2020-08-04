@@ -130,6 +130,7 @@
 						switch(typeof value){
 							default: input.type = 'text'; break;
 							case 'boolean': input.type = 'checkbox'; break;
+							case 'number': input.type = 'number'; break;
 						}
 						if(typeof value === 'boolean'){
 							input.checked = value;
@@ -210,7 +211,11 @@
 					if(json.settings[info[0]] === undefined){
 						json.settings[info[0]] = {};
 					}
-					json.settings[info[0]][info[1]] = input.type === 'checkbox' ? input.checked : input.value;
+					switch(input.type){
+						default: json.settings[info[0]][info[1]] = input.value; break;
+						case 'checkbox': json.settings[info[0]][info[1]] = input.checked; break;
+						case 'number': json.settings[info[0]][info[1]] = input.valueAsNumber; break;
+					}
 				}
 				let iframe = document.createElement('iframe');
 				iframe.src = 'iframe.html#' + JSON.stringify(json);
