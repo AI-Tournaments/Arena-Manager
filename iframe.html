@@ -38,11 +38,29 @@
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
-						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
-							worker.onmessage = messageEvent => {
-								output.innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
-							};
-							worker.postMessage({arena: data});
+						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', arena))
+						.then(response => response.json())
+						.then(json => {
+							if(json.limits.teams.min === undefined ? true : json.limits.teams.min <= data.participants.length
+							&& json.limits.teams.max === undefined ? true : data.participants.length <= json.limits.teams.max
+							&& json.limits.participants.min === undefined ? true : json.limits.participants.min <= data.participants.flat().length
+							&& json.limits.participants.max === undefined ? true : data.participants.flat().length <= json.limits.participants.max
+							&& json.limits.participantsPerTeam.min === undefined ? true : json.limits.participantsPerTeam.min <= data.participants.sort((x,y)=>y.length-x.length)[0].length
+							&& json.limits.participantsPerTeam.max === undefined ? true : data.participants.sort((x,y)=>x.length-y.length)[0].length <= json.limits.participantsPerTeam.max){
+								createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
+									worker.onmessage = messageEvent => {
+										output.innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
+									};
+									let errorCount = 0;
+									worker.onerror = errorEvent => {
+										let errorID = 'error' + errorCount++;
+										output.innerHTML += '<label for="message_'+errorID+'" class="Error">Error</label><pre id="message_' + errorID + '" class="Error">' + errorEvent.message + '</pre>';
+									}
+									worker.postMessage({arena: data});
+								});
+							}else{
+								output.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">This arena requiers 2 participants.' + messageEvent.data.arena.participants.flat().length + '/' + messageEvent.data.arena.participants.length + ' was givven.</pre>';
+							}
 						});
 					}else{
 						output.innerHTML = 'No arena defined.';
