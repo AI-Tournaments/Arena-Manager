@@ -186,17 +186,32 @@
 				select.multiple = true;
 				document.getElementById('participant-groups').appendChild(participantTeam);
 			}
-			function start(){ // TODO: 
+			function start(){
+				// TODO: Validate!
 				let json = {
-					arena: 'Kalaha',
-					participants: [], // TODO: Fill
-					settings: {
-						boardLength: 6,
-						startValue: 4,
-						averageOf: 4,
-						rules: []
-					}
+					arena: document.title.split(' ')[0],
+					participants: [],
+					settings: {}
 				};
+				for(const select of document.getElementsByClassName('participants')){
+					if(select.id !== 'participants-selectable'){
+						let team = [];
+						json.participants.push(team);
+						for(const option of select.options){
+							team.push({
+								name: option.dataset.name,
+								url: option.dataset.url
+							});
+						}
+					}
+				}
+				for(const input of settings.getElementsByTagName('input')){
+					let info = input.name.split('.');
+					if(json.settings[info[0]] === undefined){
+						json.settings[info[0]] = {};
+					}
+					json.settings[info[0]][info[1]] = input.type === 'checkbox' ? input.checked : input.value;
+				}
 				let iframe = document.createElement('iframe');
 				iframe.src = 'iframe.html#' + JSON.stringify(json);
 				iframe.sandbox = 'allow-scripts';
@@ -218,5 +233,6 @@
 			</div>
 		</div>
 		<form id="settings"></form>
+		<input type="button" id="btnStart" value="Start" onclick="start()" disabled>
 	</body>
 </html>

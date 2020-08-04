@@ -38,16 +38,6 @@
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
-						for(let i=0; i < data.participants.length; i++){
-							let info = {};
-							info.src = data.participants[i];
-							let nameParts = info.src.replace(/^.*\/\//, '').split('/');
-							info.name = nameParts[1] + '/' + nameParts[2];
-							for(const namePart of nameParts.slice(4)){
-								info.name += '/' + namePart;
-							}
-							data.participants[i] = info;
-						}
 						createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
 							worker.onmessage = messageEvent => {
 								output.innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
