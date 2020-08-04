@@ -68,7 +68,7 @@
 							element.parentNode.removeChild(element);
 						}
 						document.title = event.target.value + ' Arena';
-						getSettings(event.target.value);
+						getProperties(event.target.value);
 						getParticipants(option.value, option.dataset.full_name);
 					}
 				}
@@ -114,8 +114,8 @@
 					})
 				});
 			}
-			function getSettings(arena=''){
-				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/settings.json'.replace('GAME', arena))
+			function getProperties(arena=''){
+				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', arena))
 				.then(response => response.json())
 				.then(json => {
 					settings_json = json;
