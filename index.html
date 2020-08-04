@@ -21,7 +21,7 @@
 			let arenaList = undefined;
 			let participantList = undefined;
 			let settings = undefined;
-			let settings_json = undefined;
+			let arenaProperties = undefined;
 			let btnAddTeam = undefined;
 			let btnTransfer = undefined;
 			function getOption(element, event){
@@ -115,21 +115,57 @@
 				});
 			}
 			function getProperties(arena=''){
+				arenaProperties = undefined;
 				fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', arena))
 				.then(response => response.json())
 				.then(json => {
-					settings_json = json;
+					function addInput(fieldset, name, value){
+						let label = document.createElement('label');
+						label.innerHTML = name;
+						label.htmlFor = fieldset.name+'.'+name;
+						fieldset.appendChild(label);
+						let input = document.createElement('input');
+						input.id = label.htmlFor;
+						input.name = label.htmlFor;
+						switch(typeof value){
+							default: input.type = 'text'; break;
+							case 'boolean': input.type = 'checkbox'; break;
+						}
+						if(typeof value === 'boolean'){
+							input.checked = value;
+						}else{
+							input.value = value;
+						}
+						fieldset.appendChild(input);
+					}
+					arenaProperties = json;
 					for(let index = 0; index < Math.max(1, json.limits.teams.min); index++){
 						createTeam();
 					}
 					while(0 < settings.length){
 						settings.remove(0);
 					}
+					for(const key in arenaProperties.settings){
+						if(arenaProperties.settings.hasOwnProperty(key)){
+							const setting = arenaProperties.settings[key];
+							let fieldset = document.createElement('fieldset');
+							fieldset.name = key;
+							settings.appendChild(fieldset);
+							let legend = document.createElement('legend');
+							legend.innerHTML = key;
+							fieldset.appendChild(legend);
+							for(const subKey in setting){
+								if(setting.hasOwnProperty(subKey)){
+									addInput(fieldset, subKey, setting[subKey]);
+								}
+							}
+						}
+					}
 				});
 			}
 			function createTeam(){
 				let teamIndex = document.getElementsByClassName('participant-team').length + 1;
-				btnAddTeam.disabled = settings_json.limits.teams.max <= teamIndex;
+				btnAddTeam.disabled = arenaProperties.limits.teams.max <= teamIndex;
 				let teamID = 'participant-team-' + teamIndex;
 				let participantTeam = document.createElement('div');
 				participantTeam.classList.add('participant-team');
@@ -143,7 +179,7 @@
 				input.dataset.select = teamID;
 				input.value = btnTransfer.value;
 				input.onclick = transferToTeam;
-				label.for = teamID;
+				label.htmlFor = teamID;
 				label.innerHTML = 'Team ' + teamIndex;
 				select.id = teamID;
 				select.classList.add('participants');
