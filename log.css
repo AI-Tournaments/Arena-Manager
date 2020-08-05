@@ -1,0 +1,15 @@
+.log label {
+	font-family: monospace;
+}
+.log label.Pending {
+	color: blue;
+}
+.log label.Done {
+	color: green;
+}
+.log label.DNF {
+	color: red;
+}
+.log pre {
+	margin-top: 0;
+}

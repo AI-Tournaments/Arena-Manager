@@ -6,15 +6,7 @@
 		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-173346924-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-173346924-1');</script>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
-		<style>
-			html, body, iframe {
-				margin: 0;
-				padding: 0;
-				border: 0;
-				width: 100%;
-				height: 100%;
-			}
-		</style>
+		<link rel="stylesheet" href="log.css">
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
@@ -24,6 +16,7 @@
 			let arenaProperties = undefined;
 			let btnAddTeam = undefined;
 			let btnTransfer = undefined;
+			let contentWindows = [];
 			function getOption(element, event){
 				for(const option of element.getElementsByTagName('option')){
 					if(option.value === event.target.value){
@@ -222,6 +215,42 @@
 				iframe.sandbox = 'allow-scripts';
 				iframe.style.display = 'none';
 				document.body.appendChild(iframe);
+				let output = document.createElement('div');
+				output.classList.add('log');
+				document.body.appendChild(output);
+				setTimeout(()=>{getIFrameLog(iframe, output)}, 1000);
+			}
+			function getIFrameLog(iframe, output){
+				if(window.onmessage === null){
+					window.onmessage = messageEvent => {
+						if(messageEvent.origin === "null" && contentWindows.includes(messageEvent.source)){
+							while(0 < output.childElementCount){
+								output.removeChild(output.firstChild);
+							}
+							let isDone = false;
+							messageEvent.data.data.forEach(data => {
+								isDone |= data.type === 'Done';
+								let label = document.createElement('label');
+								label.htmlFor = iframe.src + ':' + data.id;
+								label.classList.add(data.type);
+								label.innerHTML = data.type;
+								output.appendChild(label);
+								let pre = document.createElement('pre');
+								pre.id = iframe.src + ':' + data.id;
+								pre.classList.add(data.type);
+								pre.innerHTML = JSON.stringify(data.value, 0, 4);
+								output.appendChild(pre);
+							});
+							if(isDone){
+								contentWindows.splice(contentWindows.indexOf(messageEvent.source), 1);
+							}else{
+								getIFrameLog(iframe);
+							}
+						}
+					};
+				}
+				contentWindows.push(iframe.contentWindow);
+				iframe.contentWindow.postMessage(undefined, '*');
 			}
 		</script>
 	</head>

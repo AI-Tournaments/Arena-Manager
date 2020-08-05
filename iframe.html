@@ -5,23 +5,7 @@
 		<title>X Arena (IFrame)</title>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
-		<style>
-			label {
-				font-family: monospace;
-			}
-			label.Pending {
-				color: blue;
-			}
-			label.Done {
-				color: green;
-			}
-			label.DNF {
-				color: red;
-			}
-			pre {
-				margin-top: 0;
-			}
-		</style>
+		<link rel="stylesheet" href="log.css">
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
@@ -32,6 +16,9 @@
 					return true;
 				}
 			}
+			window.onmessage = messageEvent => {
+				messageEvent.source.postMessage(getOutput(), messageEvent.origin);
+			};
 			function onload(){
 				if(isIframe()){
 					let output = document.getElementById('output');
@@ -74,25 +61,14 @@
 				for(const key in list){
 					if(list.hasOwnProperty(key)){
 						let element = list[key];
-						output.data.push({type: element.className, value: JSON.parse(element.innerHTML)});
+						output.data.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
 					}
 				}
 				return output;
 			}
-			function copyOutputToClipboard(){
-				const el = document.createElement('textarea');
-				el.value = JSON.stringify(getOutput());
-				document.body.appendChild(el);
-				el.select();
-				document.execCommand('copy');
-				document.body.removeChild(el);
-			}
 		</script>
 	</head>
 	<body onload="onload()">
-		<div>
-			<input type="button" onclick="copyOutputToClipboard()" value="Copy output">
-		</div>
-		<div id="output"></div>
+		<div id="output" class="log"></div>
 	</body>
 </html>
