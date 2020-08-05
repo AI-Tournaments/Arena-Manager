@@ -67,14 +67,6 @@
 				}
 			};
 			function getOutput(){
-				function copyToClipboard(str){
-					const el = document.createElement('textarea');
-					el.value = str;
-					document.body.appendChild(el);
-					el.select();
-					document.execCommand('copy');
-					document.body.removeChild(el);
-				};
 				let output = {};
 				output.arena = document.title.split(' ')[0];
 				output.data = [];
@@ -85,13 +77,21 @@
 						output.data.push({type: element.className, value: JSON.parse(element.innerHTML)});
 					}
 				}
-				copyToClipboard(JSON.stringify(output));
+				return output;
+			}
+			function copyOutputToClipboard(){
+				const el = document.createElement('textarea');
+				el.value = JSON.stringify(getOutput());
+				document.body.appendChild(el);
+				el.select();
+				document.execCommand('copy');
+				document.body.removeChild(el);
 			}
 		</script>
 	</head>
 	<body onload="onload()">
 		<div>
-			<input type="button" onclick="getOutput()" value="Copy output">
+			<input type="button" onclick="copyOutputToClipboard()" value="Copy output">
 		</div>
 		<div id="output"></div>
 	</body>
