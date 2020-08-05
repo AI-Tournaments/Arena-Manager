@@ -54,7 +54,9 @@
 									worker.postMessage({arena: data});
 								});
 							}else{
-								output.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">This arena requiers 2 participants.' + messageEvent.data.arena.participants.flat().length + '/' + messageEvent.data.arena.participants.length + ' was givven.</pre>';
+								let message = 'Participants does not meet the arena limitations.';
+								output.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
+								console.error(message);
 							}
 						});
 					}else{
