@@ -96,7 +96,7 @@
 						.then(response => response.json())
 						.then(data => {
 							data.tree.forEach(file =>{
-								if(!file.path.startsWith('.') && file.path.endsWith('.js')){
+								if(!file.path.startsWith('.') && file.type === 'blob' && file.path.endsWith('.js')){
 									let option = document.createElement('option');
 									option.dataset.name = fork.full_name + '/' + file.path;
 									option.dataset.url = 'https://raw.githubusercontent.com/' + fork.full_name + '/' + fork.default_branch + '/' + file.path;
