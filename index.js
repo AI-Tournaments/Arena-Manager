@@ -200,7 +200,7 @@ function start(){
 		}
 	}
 	let iframe = document.createElement('iframe');
-	iframe.src = 'iframe.html#' + JSON.stringify(json);
+	iframe.src = 'iframe.sandbox.html#' + JSON.stringify(json);
 	iframe.sandbox = 'allow-scripts';
 	iframe.style.display = 'none';
 	document.getElementById('iframeContainer').appendChild(iframe);
