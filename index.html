@@ -10,6 +10,7 @@
 		<style>
 			iframe {
 				width: 100%;
+				border: 0;
 			}
 		</style>
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
@@ -27,7 +28,7 @@
 				<select id="participants-selectable" class="participants" multiple></select>
 			</div>
 		</div>
-		<iframe id="settings" src="iframe.settings.html"></iframe>
+		<iframe id="settings" style="height: 0;" src="iframe.settings.html"></iframe>
 		<input type="button" id="btnStart" value="Start" onclick="start()" disabled>
 		<pre id="outputSum" class="log"></pre>
 		<div id="logContainer"></div>

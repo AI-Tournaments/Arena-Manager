@@ -13,7 +13,7 @@ window.onmessage = messageEvent => {
 		getArenaLog(messageEvent);
 	}else if(contentWindows.settingsIframe === messageEvent.source){
 		switch(messageEvent.data.type){
-			case 'teams': for(let i = 0; i < messageEvent.data.value; i++){createTeam();} break;
+			case 'teams': settingsIframe.style.height = messageEvent.data.value.height + 'px'; for(let i = 0; i < messageEvent.data.value.teams; i++){createTeam();} break;
 			case 'settings': begin(messageEvent.data.value); break;
 		}
 		
