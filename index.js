@@ -4,6 +4,8 @@ let participantList = undefined;
 let settingsIframe = undefined;
 let btnAddTeam = undefined;
 let btnTransfer = undefined;
+let logContainer = undefined;
+let outputSum = undefined;
 let contentWindows = {
 	iFrameLog: [],
 	settingsIframe: undefined
@@ -29,7 +31,6 @@ function getArenaLog(messageEvent){
 		while(0 < output.childElementCount){
 			output.removeChild(output.firstChild);
 		}
-		let outputSum = document.getElementById('outputSum');
 		let isDone = true;
 		let aborted = []; // TODO: Use.
 		let log = undefined;
@@ -126,6 +127,8 @@ function onload(){
 	participantList = document.getElementById('participants-selectable');
 	btnAddTeam = document.getElementById('add-team');
 	settingsIframe = document.getElementById('settings');
+	logContainer = document.getElementById('logContainer');
+	outputSum = document.getElementById('outputSum');
 	contentWindows.settingsIframe = settingsIframe.contentWindow;
 	btnTransfer = document.getElementById('transfer');
 	btnTransfer.onclick = transferToTeam;
@@ -208,6 +211,13 @@ function createTeam(){
 	document.getElementById('participant-groups').appendChild(participantTeam);
 }
 function start(){
+	while(0 < logContainer.childElementCount){
+		logContainer.removeChild(logContainer.firstChild);
+	}
+	outputSum.innerHTML = '';
+	for(var key in outputSum.dataset){
+		delete outputSum.dataset[key];
+	}
 	settingsIframe.contentWindow.postMessage({type: 'GetSettings'});
 }
 function begin(settings){
@@ -229,9 +239,8 @@ function begin(settings){
 			}
 		}
 	}
-	let container = document.getElementById('logContainer');
 	let div = document.createElement('div');
-	container.appendChild(div);
+	logContainer.appendChild(div);
 	let iframe = document.createElement('iframe');
 	iframe.src = 'iframe.sandbox.html#' + JSON.stringify(json);
 	iframe.sandbox = 'allow-scripts';
