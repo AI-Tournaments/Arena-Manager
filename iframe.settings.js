@@ -56,7 +56,7 @@ function setArena(messageEvent){
 				}
 			}
 		}
-		messageEvent.source.postMessage({type: 'teams', value: {teams: Math.max(1, json.limits.teams.min), height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
+		messageEvent.source.postMessage({type: 'properties', value: {properties: json, height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
 	});
 }
 function postSettings(messageEvent){

@@ -1,11 +1,13 @@
 'use strict'
 let arenaList = undefined;
+let arenaProperties = undefined;
 let participantList = undefined;
 let settingsIframe = undefined;
 let btnAddTeam = undefined;
 let btnTransfer = undefined;
 let logContainer = undefined;
 let outputSum = undefined;
+let btnStart = undefined;
 let contentWindows = {
 	iFrameLog: [],
 	settingsIframe: undefined
@@ -15,7 +17,13 @@ window.onmessage = messageEvent => {
 		getArenaLog(messageEvent);
 	}else if(contentWindows.settingsIframe === messageEvent.source){
 		switch(messageEvent.data.type){
-			case 'teams': settingsIframe.style.height = messageEvent.data.value.height + 'px'; for(let i = 0; i < messageEvent.data.value.teams; i++){createTeam();} break;
+			case 'properties':
+				arenaProperties = messageEvent.data.value.properties;
+				settingsIframe.style.height = messageEvent.data.value.height + 'px';
+				for(let i = 0; i < Math.max(1, arenaProperties.limits.teams.min); i++){
+					createTeam();
+				}
+				break;
 			case 'settings': begin(messageEvent.data.value); break;
 		}
 		
@@ -111,15 +119,27 @@ function sortOptions(selectElement){
 		selectElement.add(option);
 	}
 }
+function validate(){
+	let selectElements = document.getElementsByClassName('participant-team');
+	let allValid = arenaProperties.limits.teams.min <= selectElements.length && selectElements.length <= arenaProperties.limits.teams.max;
+	let total = 0;
+	for(const selectElement of selectElements){
+		total += selectElement.length;
+		allValid &= arenaProperties.limits.participantsPerTeam.min <= selectElement.length && selectElement.length <= arenaProperties.limits.participantsPerTeam.max;
+	}
+	allValid &= arenaProperties.limits.participants.min <= total && total <= arenaProperties.limits.participants.max;
+	return allValid;
+}
 function transferToTeam(event){
 	let selectElement_moveTo = document.getElementById(event.target.dataset.select);
-	for(const selectElement of document.getElementsByClassName('participants')){
+	let selectElements = document.getElementsByClassName('participants');
+	for(const selectElement of selectElements){
 		for(let option of [...selectElement.selectedOptions]){
 			selectElement_moveTo.add(option);
 			option.selected = false;
 		}
 	}
-	// TODO: Validate .participants.min/.max, .participantsPerTeam.min/.max
+	btnStart.disabled = !validate();
 	sortOptions(selectElement_moveTo);
 }
 function onload(){
@@ -129,6 +149,7 @@ function onload(){
 	settingsIframe = document.getElementById('settings');
 	logContainer = document.getElementById('logContainer');
 	outputSum = document.getElementById('outputSum');
+	btnStart = document.getElementById('btnStart');
 	contentWindows.settingsIframe = settingsIframe.contentWindow;
 	btnTransfer = document.getElementById('transfer');
 	btnTransfer.onclick = transferToTeam;
@@ -136,7 +157,7 @@ function onload(){
 		let option = getOption(arenaList, event);
 		if(option !== undefined){
 			btnAddTeam.disabled = true;
-			for(const element of document.getElementsByClassName('participant-team')){
+			for(const element of document.getElementsByClassName('participant-team-container')){
 				element.parentNode.removeChild(element);
 			}
 			document.title = event.target.value + ' Arena';
@@ -188,11 +209,11 @@ function getParticipants(arena='', full_name){
 }
 
 function createTeam(){
-	let teamIndex = document.getElementsByClassName('participant-team').length + 1;
+	let teamIndex = document.getElementsByClassName('participant-team-container').length + 1;
 	btnAddTeam.disabled = false; // TODO: arenaProperties.limits.teams.max <= teamIndex;
 	let teamID = 'participant-team-' + teamIndex;
 	let participantTeam = document.createElement('div');
-	participantTeam.classList.add('participant-team');
+	participantTeam.classList.add('participant-team-container');
 	let input = document.createElement('input');
 	participantTeam.appendChild(input);
 	let label = document.createElement('label');
@@ -207,6 +228,7 @@ function createTeam(){
 	label.innerHTML = 'Team ' + teamIndex;
 	select.id = teamID;
 	select.classList.add('participants');
+	select.classList.add('participant-team');
 	select.multiple = true;
 	document.getElementById('participant-groups').appendChild(participantTeam);
 }
@@ -221,7 +243,6 @@ function start(){
 	settingsIframe.contentWindow.postMessage({type: 'GetSettings'});
 }
 function begin(settings){
-	// TODO: Validate!
 	let json = {
 		arena: document.title.split(' ')[0],
 		participants: [],
