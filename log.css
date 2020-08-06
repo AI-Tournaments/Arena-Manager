@@ -1,15 +1,21 @@
+.log {
+	tab-size: 4;
+}
+.log>div {
+	border: 1px solid black;
+}
+.log pre {
+	margin-top: 0;
+}
 .log label {
 	font-family: monospace;
 }
 .log label.Pending {
 	color: blue;
 }
-.log label.Done {
+.log label.FinalScore {
 	color: green;
 }
-.log label.DNF {
+.log label.Aborted {
 	color: red;
-}
-.log pre {
-	margin-top: 0;
 }

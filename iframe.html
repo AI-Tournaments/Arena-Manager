@@ -21,7 +21,6 @@
 			};
 			function onload(){
 				if(isIframe()){
-					let output = document.getElementById('output');
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
@@ -34,15 +33,23 @@
 							&& json.limits.participants.max === undefined ? true : data.participants.flat().length <= json.limits.participants.max
 							&& json.limits.participantsPerTeam.min === undefined ? true : json.limits.participantsPerTeam.min <= data.participants.sort((x,y)=>y.length-x.length)[0].length
 							&& json.limits.participantsPerTeam.max === undefined ? true : data.participants.sort((x,y)=>x.length-y.length)[0].length <= json.limits.participantsPerTeam.max){
-								createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
-									worker.onmessage = messageEvent => {
-										output.innerHTML += '<label for="message_'+messageEvent.data.message.id+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + messageEvent.data.message.id + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message, 0, 4) + '</pre>';
-									};
-									worker.postMessage({arena: data});
-								});
+								for(let index = 0; index < data.settings.general.averageOf; index++){
+									let output = document.createElement('div');
+									output.classList.add('log');
+									document.body.appendChild(output);
+									createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
+										worker.onmessage = messageEvent => {
+											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
+											if(messageEvent.data.type === 'FinalScore'){
+												worker.terminate();
+											}
+										};
+										worker.postMessage({arena: data});
+									});
+								}
 							}else{
 								let message = 'Participants does not meet the arena limitations.';
-								output.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
+								document.body.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
 								console.error(message);
 							}
 						});
@@ -57,18 +64,24 @@
 				let output = {};
 				output.arena = document.title.split(' ')[0];
 				output.data = [];
-				let list = document.getElementById('output').getElementsByTagName('pre');
-				for(const key in list){
-					if(list.hasOwnProperty(key)){
-						let element = list[key];
-						output.data.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
+				let outputList = document.getElementsByClassName('log');
+				for(const outputKey in outputList){
+					if(outputList.hasOwnProperty(outputKey)){
+						let outputElement = outputList[outputKey];
+						let segment = [];
+						output.data.push(segment);
+						let list = outputElement.getElementsByTagName('pre');
+						for(const key in list){
+							if(list.hasOwnProperty(key)){
+								let element = list[key];
+								segment.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
+							}
+						}
 					}
 				}
 				return output;
 			}
 		</script>
 	</head>
-	<body onload="onload()">
-		<div id="output" class="log"></div>
-	</body>
+	<body onload="onload()"></body>
 </html>
