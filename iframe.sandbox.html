@@ -17,7 +17,7 @@
 				}
 			}
 			window.onmessage = messageEvent => {
-				messageEvent.source.postMessage(getOutput(), messageEvent.origin);
+				messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
 			};
 			function onload(){
 				if(isIframe()){

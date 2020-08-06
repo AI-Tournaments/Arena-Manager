@@ -1,11 +1,97 @@
 'use strict'
 let arenaList = undefined;
 let participantList = undefined;
-let settings = undefined;
-let arenaProperties = undefined;
+let settingsIframe = undefined;
 let btnAddTeam = undefined;
 let btnTransfer = undefined;
-let contentWindows = [];
+let contentWindows = {
+	iFrameLog: [],
+	settingsIframe: undefined
+};
+window.onmessage = messageEvent => {
+	if(contentWindows.iFrameLog.includes(messageEvent.source)){
+		getArenaLog(messageEvent);
+	}else if(contentWindows.settingsIframe === messageEvent.source){
+		switch(messageEvent.data.type){
+			case 'teams': for(let i = 0; i < messageEvent.data.value; i++){createTeam();} break;
+			case 'settings': begin(messageEvent.data.value); break;
+		}
+		
+	}else{
+		console.error('Source element not defined!');
+		console.error(messageEvent.source.frameElement);
+	}
+}
+function getArenaLog(messageEvent){
+	let iframe = document.getElementById(messageEvent.data.id);
+	let output = iframe.parentElement.getElementsByClassName('log')[0];
+	if(messageEvent.origin === 'null'){
+		while(0 < output.childElementCount){
+			output.removeChild(output.firstChild);
+		}
+		let outputSum = document.getElementById('outputSum');
+		let isDone = true;
+		let aborted = []; // TODO: Use.
+		let log = undefined;
+		messageEvent.data.value.data.forEach(posts => {
+			let container = document.createElement('div');
+			output.appendChild(container);
+			let isDone_local = false;
+			let score = undefined;
+			posts.forEach(post => {
+				isDone_local |= post.type === 'FinalScore' || post.type === 'Aborted';
+				if(post.type === 'FinalScore'){
+					score = post.value.score;
+					log = post.value.history;
+				}else if(post.type === 'Aborted'){
+					score = null;
+					aborted.push(post.value);
+				}
+				let label = document.createElement('label');
+				label.htmlFor = iframe.src + ':' + post.id;
+				label.classList.add(post.type);
+				label.innerHTML = post.type;
+				container.appendChild(label);
+				let pre = document.createElement('pre');
+				pre.id = iframe.src + ':' + post.id;
+				pre.classList.add(post.type);
+				pre.innerHTML = JSON.stringify(post.value,null,'\t');
+				container.appendChild(pre);
+			});
+			isDone &= isDone_local;
+			if(isDone_local){
+				if(score === null){
+					outputSum.dataset.aborted = JSON.stringify(aborted);
+				}else{
+					let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
+					score.forEach(s => {
+						let entry = array.find(entry => entry.name === s.name);
+						if(entry === undefined){
+							entry = {type: 'score', name: s.name, score: 0, scores: []};
+							array.push(entry);
+						}
+						entry.scores.push(s.score);
+						entry.score = entry.scores.reduce(function(a,b){return a+b;})/entry.scores.length;
+					});
+					outputSum.dataset.array = JSON.stringify(array);
+					outputSum.innerHTML = JSON.stringify(array,null,'\t');
+				}
+			}
+		});
+		if(isDone){
+			let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
+			array.push({type: 'log', log: log})
+			if(outputSum.dataset.aborted !== undefined){
+				array.push({type: 'aborted', aborted: aborted})
+			}
+			outputSum.dataset.array = JSON.stringify(array);
+			outputSum.innerHTML = JSON.stringify(array,null,'\t');
+			contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
+		}else{
+			getIFrameLog(iframe);
+		}
+	}
+};
 function getOption(element, event){
 	for(const option of element.getElementsByTagName('option')){
 		if(option.value === event.target.value){
@@ -38,8 +124,9 @@ function transferToTeam(event){
 function onload(){
 	arenaList = document.getElementById('arena-datalist');
 	participantList = document.getElementById('participants-selectable');
-	settings = document.getElementById('settings');
 	btnAddTeam = document.getElementById('add-team');
+	settingsIframe = document.getElementById('settings');
+	contentWindows.settingsIframe = settingsIframe.contentWindow;
 	btnTransfer = document.getElementById('transfer');
 	btnTransfer.onclick = transferToTeam;
 	document.getElementById('arena').onchange = event => {
@@ -50,7 +137,7 @@ function onload(){
 				element.parentNode.removeChild(element);
 			}
 			document.title = event.target.value + ' Arena';
-			getProperties(event.target.value);
+			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: event.target.value});
 			getParticipants(option.value, option.dataset.full_name);
 		}
 	}
@@ -96,59 +183,10 @@ function getParticipants(arena='', full_name){
 		})
 	});
 }
-function getProperties(arena=''){
-	arenaProperties = undefined;
-	fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', arena))
-	.then(response => response.json())
-	.then(json => {
-		function addInput(fieldset, name, value){
-			let label = document.createElement('label');
-			label.innerHTML = name;
-			label.htmlFor = fieldset.name+'.'+name;
-			fieldset.appendChild(label);
-			let input = document.createElement('input');
-			input.id = label.htmlFor;
-			input.name = label.htmlFor;
-			switch(typeof value){
-				default: input.type = 'text'; break;
-				case 'boolean': input.type = 'checkbox'; break;
-				case 'number': input.type = 'number'; break;
-			}
-			if(typeof value === 'boolean'){
-				input.checked = value;
-			}else{
-				input.value = value;
-			}
-			fieldset.appendChild(input);
-		}
-		arenaProperties = json;
-		for(let index = 0; index < Math.max(1, json.limits.teams.min); index++){
-			createTeam();
-		}
-		while(0 < settings.length){
-			settings.remove(0);
-		}
-		for(const key in arenaProperties.settings){
-			if(arenaProperties.settings.hasOwnProperty(key)){
-				const setting = arenaProperties.settings[key];
-				let fieldset = document.createElement('fieldset');
-				fieldset.name = key;
-				settings.appendChild(fieldset);
-				let legend = document.createElement('legend');
-				legend.innerHTML = key;
-				fieldset.appendChild(legend);
-				for(const subKey in setting){
-					if(setting.hasOwnProperty(subKey)){
-						addInput(fieldset, subKey, setting[subKey]);
-					}
-				}
-			}
-		}
-	});
-}
+
 function createTeam(){
 	let teamIndex = document.getElementsByClassName('participant-team').length + 1;
-	btnAddTeam.disabled = arenaProperties.limits.teams.max <= teamIndex;
+	btnAddTeam.disabled = false; // TODO: arenaProperties.limits.teams.max <= teamIndex;
 	let teamID = 'participant-team-' + teamIndex;
 	let participantTeam = document.createElement('div');
 	participantTeam.classList.add('participant-team');
@@ -170,11 +208,14 @@ function createTeam(){
 	document.getElementById('participant-groups').appendChild(participantTeam);
 }
 function start(){
+	settingsIframe.contentWindow.postMessage({type: 'GetSettings'});
+}
+function begin(settings){
 	// TODO: Validate!
 	let json = {
 		arena: document.title.split(' ')[0],
 		participants: [],
-		settings: {}
+		settings: settings
 	};
 	for(const select of document.getElementsByClassName('participants')){
 		if(select.id !== 'participants-selectable'){
@@ -188,99 +229,22 @@ function start(){
 			}
 		}
 	}
-	for(const input of settings.getElementsByTagName('input')){
-		let info = input.name.split('.');
-		if(json.settings[info[0]] === undefined){
-			json.settings[info[0]] = {};
-		}
-		switch(input.type){
-			default: json.settings[info[0]][info[1]] = input.value; break;
-			case 'checkbox': json.settings[info[0]][info[1]] = input.checked; break;
-			case 'number': json.settings[info[0]][info[1]] = input.valueAsNumber; break;
-		}
-	}
+	let container = document.getElementById('logContainer');
+	let div = document.createElement('div');
+	container.appendChild(div);
 	let iframe = document.createElement('iframe');
 	iframe.src = 'iframe.sandbox.html#' + JSON.stringify(json);
 	iframe.sandbox = 'allow-scripts';
 	iframe.style.display = 'none';
-	document.getElementById('iframeContainer').appendChild(iframe);
+	iframe.id = Date() + '_' +  Math.random();
+	div.appendChild(iframe);
 	let output = document.createElement('div');
 	output.style.display = 'none';
 	output.classList.add('log');
-	document.getElementById('outputContainer').appendChild(output);
+	div.appendChild(output);
 	setTimeout(()=>{getIFrameLog(iframe, output)}, 1000);
 }
-function getIFrameLog(iframe, output){
-	if(window.onmessage === null){
-		window.onmessage = messageEvent => {
-			if(messageEvent.origin === "null" && contentWindows.includes(messageEvent.source)){
-				while(0 < output.childElementCount){
-					output.removeChild(output.firstChild);
-				}
-				let outputSum = document.getElementById('outputSum');
-				let isDone = true;
-				let aborted = []; // TODO: Use.
-				let log = undefined;
-				messageEvent.data.data.forEach(posts => {
-					let container = document.createElement('div');
-					output.appendChild(container);
-					let isDone_local = false;
-					let score = undefined;
-					posts.forEach(post => {
-						isDone_local |= post.type === 'FinalScore' || post.type === 'Aborted';
-						if(post.type === 'FinalScore'){
-							score = post.value.score;
-							log = post.value.history;
-						}else if(post.type === 'Aborted'){
-							score = null;
-							aborted.push(post.value);
-						}
-						let label = document.createElement('label');
-						label.htmlFor = iframe.src + ':' + post.id;
-						label.classList.add(post.type);
-						label.innerHTML = post.type;
-						container.appendChild(label);
-						let pre = document.createElement('pre');
-						pre.id = iframe.src + ':' + post.id;
-						pre.classList.add(post.type);
-						pre.innerHTML = JSON.stringify(post.value,null,'\t');
-						container.appendChild(pre);
-					});
-					isDone &= isDone_local;
-					if(isDone_local){
-						if(score === null){
-							outputSum.dataset.aborted = JSON.stringify(aborted);
-						}else{
-							let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
-							score.forEach(s => {
-								let entry = array.find(entry => entry.name === s.name);
-								if(entry === undefined){
-									entry = {type: 'score', name: s.name, score: 0, scores: []};
-									array.push(entry);
-								}
-								entry.scores.push(s.score);
-								entry.score = entry.scores.reduce(function(a,b){return a+b;})/entry.scores.length;
-							});
-							outputSum.dataset.array = JSON.stringify(array);
-							outputSum.innerHTML = JSON.stringify(array,null,'\t');
-						}
-					}
-				});
-				if(isDone){
-						let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
-						array.push({type: 'log', log: log})
-						if(outputSum.dataset.aborted !== undefined){
-							array.push({type: 'aborted', aborted: aborted})
-						}
-						outputSum.dataset.array = JSON.stringify(array);
-						outputSum.innerHTML = JSON.stringify(array,null,'\t');
-					contentWindows.splice(contentWindows.indexOf(messageEvent.source), 1);
-				}else{
-					getIFrameLog(iframe, output);
-				}
-			}
-		};
-	}
-	contentWindows.push(iframe.contentWindow);
-	iframe.contentWindow.postMessage(undefined, '*');
+function getIFrameLog(iframe){
+	contentWindows.iFrameLog.push(iframe.contentWindow);
+	iframe.contentWindow.postMessage(iframe.id, '*');
 }
