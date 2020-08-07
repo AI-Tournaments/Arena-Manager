@@ -17,12 +17,13 @@
 						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', data.arena))
 						.then(response => response.json())
 						.then(json => {
-							if(json.limits.teams.min === undefined ? true : json.limits.teams.min <= data.participants.length
-							&& json.limits.teams.max === undefined ? true : data.participants.length <= json.limits.teams.max
-							&& json.limits.participants.min === undefined ? true : json.limits.participants.min <= data.participants.flat().length
-							&& json.limits.participants.max === undefined ? true : data.participants.flat().length <= json.limits.participants.max
-							&& json.limits.participantsPerTeam.min === undefined ? true : json.limits.participantsPerTeam.min <= data.participants.sort((x,y)=>y.length-x.length)[0].length
-							&& json.limits.participantsPerTeam.max === undefined ? true : data.participants.sort((x,y)=>x.length-y.length)[0].length <= json.limits.participantsPerTeam.max){
+							let limits = json.header.limits;
+							if(limits.teams.min === undefined ? true : limits.teams.min <= data.participants.length
+							&& limits.teams.max === undefined ? true : data.participants.length <= limits.teams.max
+							&& limits.participants.min === undefined ? true : limits.participants.min <= data.participants.flat().length
+							&& limits.participants.max === undefined ? true : data.participants.flat().length <= limits.participants.max
+							&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= data.participants.sort((x,y)=>y.length-x.length)[0].length
+							&& limits.participantsPerTeam.max === undefined ? true : data.participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max){
 								for(let index = 0; index < data.settings.general.averageOf; index++){
 									let output = document.createElement('div');
 									output.classList.add('log');

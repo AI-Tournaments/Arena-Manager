@@ -45,7 +45,7 @@ function a(){
 				case 'properties':
 					arenaProperties = messageEvent.data.value.properties;
 					settingsIframe.style.height = messageEvent.data.value.height + 'px';
-					for(let i = 0; i < Math.max(1, arenaProperties.limits.teams.min); i++){
+					for(let i = 0; i < Math.max(1, arenaProperties.header.limits.teams.min); i++){
 						createTeam();
 					}
 					break;
@@ -146,7 +146,7 @@ function a(){
 	}
 	function validateTeams(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		return arenaProperties.limits.teams.min <= selectElements.length && selectElements.length <= arenaProperties.limits.teams.max;
+		return arenaProperties.header.limits.teams.min <= selectElements.length && selectElements.length <= arenaProperties.header.limits.teams.max;
 	}
 	function validateStart(){
 		let selectElements = document.getElementsByClassName('participant-team');
@@ -154,9 +154,9 @@ function a(){
 		let total = 0;
 		for(const selectElement of selectElements){
 			total += selectElement.length;
-			allValid &= arenaProperties.limits.participantsPerTeam.min <= selectElement.length && selectElement.length <= arenaProperties.limits.participantsPerTeam.max;
+			allValid &= arenaProperties.header.limits.participantsPerTeam.min <= selectElement.length && selectElement.length <= arenaProperties.header.limits.participantsPerTeam.max;
 		}
-		allValid &= arenaProperties.limits.participants.min <= total && total <= arenaProperties.limits.participants.max;
+		allValid &= arenaProperties.header.limits.participants.min <= total && total <= arenaProperties.header.limits.participants.max;
 		return allValid;
 	}
 	function transferToTeam(event){
