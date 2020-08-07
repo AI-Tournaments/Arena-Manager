@@ -38,8 +38,12 @@ function a(){
 		});
 	});
 	window.onmessage = messageEvent => {
-		if(contentWindows.iFrameLog.includes(messageEvent.source)){
-			getArenaLog(messageEvent);
+		if(messageEvent.data.type === 'auto-run'){
+			document.title = messageEvent.data.title;
+			begin(messageEvent.data.settings, messageEvent.data.bracket);
+			sendLog(messageEvent);
+		}else if(contentWindows.iFrameLog.includes(messageEvent.source)){
+			writeArenaLog(messageEvent);
 		}else if(settingsIframe.contentWindow === messageEvent.source){
 			switch(messageEvent.data.type){
 				case 'properties':
@@ -57,7 +61,14 @@ function a(){
 			console.error(messageEvent.source.frameElement);
 		}
 	}
-	function getArenaLog(messageEvent){
+	function sendLog(messageEvent){
+		if(outputSum.dataset.done){
+			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: JSON.parse(outputSum.dataset.array)}}, messageEvent.origin);
+		}else{
+			setTimeout(()=>{sendLog(messageEvent)}, 1000);
+		}
+	}
+	function writeArenaLog(messageEvent){
 		let iframe = document.getElementById(messageEvent.data.id);
 		let output = iframe.parentElement.getElementsByClassName('log')[0];
 		if(messageEvent.origin === 'null'){
@@ -119,6 +130,7 @@ function a(){
 					array.push({type: 'aborted', aborted: aborted})
 				}
 				outputSum.dataset.array = JSON.stringify(array);
+				outputSum.dataset.done = true;
 				outputSum.innerHTML = JSON.stringify(array,null,'\t');
 				contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
 			}else{
@@ -237,21 +249,23 @@ function a(){
 		}
 		settingsIframe.contentWindow.postMessage({type: 'GetSettings'});
 	}
-	function begin(settings){
+	function begin(settings, bracket=[]){
 		let json = {
 			arena: document.title.split(' ')[0],
-			participants: [],
+			participants: bracket,
 			settings: settings
 		};
-		for(const select of document.getElementsByClassName('participants')){
-			if(select.id !== 'participants-selectable'){
-				let team = [];
-				json.participants.push(team);
-				for(const option of select.options){
-					team.push({
-						name: option.dataset.name,
-						url: option.dataset.url
-					});
+		if(0 === json.participants.length){
+			for(const select of document.getElementsByClassName('participants')){
+				if(select.id !== 'participants-selectable'){
+					let team = [];
+					json.participants.push(team);
+					for(const option of select.options){
+						team.push({
+							name: option.dataset.name,
+							url: option.dataset.url
+						});
+					}
 				}
 			}
 		}
