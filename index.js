@@ -166,7 +166,7 @@ function onload(){
 			}
 			document.title = event.target.value + ' Arena';
 			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: event.target.value});
-			getParticipants(option.value, option.dataset.full_name);
+			getParticipants(option.value);
 		}
 	}
 	fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(repos => {
@@ -180,7 +180,7 @@ function onload(){
 		});
 	});
 }
-function getParticipants(arena='', full_name){
+function getParticipants(arena=''){
 	for(const selectElement of document.getElementsByClassName('participants')){
 		while(0 < selectElement.length){
 			selectElement.remove(0);
