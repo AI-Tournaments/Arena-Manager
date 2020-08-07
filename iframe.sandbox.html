@@ -9,17 +9,7 @@
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
-			function isIframe(){
-				try{
-					return window.self !== window.top;
-				}catch(e){
-					return true;
-				}
-			}
-			window.onmessage = messageEvent => {
-				messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
-			};
-			function onload(){
+			function a(){
 				if(isIframe()){
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
 					document.title = document.title.replace('X', data.arena);
@@ -59,29 +49,39 @@
 				}else{
 					window.location.replace(window.location.href.replace('iframe.html', ''));
 				}
-			};
-			function getOutput(){
-				let output = {};
-				output.arena = document.title.split(' ')[0];
-				output.data = [];
-				let outputList = document.getElementsByClassName('log');
-				for(const outputKey in outputList){
-					if(outputList.hasOwnProperty(outputKey)){
-						let outputElement = outputList[outputKey];
-						let segment = [];
-						output.data.push(segment);
-						let list = outputElement.getElementsByTagName('pre');
-						for(const key in list){
-							if(list.hasOwnProperty(key)){
-								let element = list[key];
-								segment.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
+				function isIframe(){
+					try{
+						return window.self !== window.top;
+					}catch(e){
+						return true;
+					}
+				}
+				window.onmessage = messageEvent => {
+					messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
+				};
+				function getOutput(){
+					let output = {};
+					output.arena = document.title.split(' ')[0];
+					output.data = [];
+					let outputList = document.getElementsByClassName('log');
+					for(const outputKey in outputList){
+						if(outputList.hasOwnProperty(outputKey)){
+							let outputElement = outputList[outputKey];
+							let segment = [];
+							output.data.push(segment);
+							let list = outputElement.getElementsByTagName('pre');
+							for(const key in list){
+								if(list.hasOwnProperty(key)){
+									let element = list[key];
+									segment.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
+								}
 							}
 						}
 					}
+					return output;
 				}
-				return output;
-			}
+			};
 		</script>
 	</head>
-	<body onload="onload()"></body>
+	<body onload="a()"></body>
 </html>

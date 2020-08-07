@@ -19,11 +19,11 @@
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script src="index.js"></script>
 	</head>
-	<body onload="onload()">
+	<body onload="a()">
 		<label for="arena">Arena:</label>
 		<input list="arena-datalist" name="arena" id="arena"/>
 		<datalist id="arena-datalist"></datalist>
-		<input type="button" id="add-team" value="Add team" onclick="createTeam()" disabled>
+		<input type="button" id="add-team" value="Add team" disabled>
 		<div id="participant-groups">
 			<div>
 				<input type="button" id="transfer" data-select="participants-selectable" value="Transfer here">
@@ -32,7 +32,7 @@
 			</div>
 		</div>
 		<iframe id="settings" style="height: 0;" src="iframe.settings.html"></iframe>
-		<input type="button" id="btnStart" value="Start" onclick="start()" disabled>
+		<input type="button" id="btnStart" value="Start" disabled>
 		<pre id="outputSum" class="log"></pre>
 		<div id="logContainer"></div>
 	</body>
