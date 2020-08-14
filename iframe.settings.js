@@ -14,24 +14,36 @@ function a(){
 		fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', arena))
 		.then(response => response.json())
 		.then(json => {
-			function addInput(fieldset, name, value){
+			function addInput(fieldset, name, value, arrayIndex){
 				let label = document.createElement('label');
-				label.innerHTML = name;
-				label.htmlFor = fieldset.name+'.'+name;
+				if(arrayIndex===0){
+					label.innerHTML = name;
+					label.htmlFor = fieldset.name+'.'+name;
+					fieldset.appendChild(label);
+					label = document.createElement('label');
+				}
+				label.innerHTML = typeof value === 'object' ? value[arrayIndex] : name;
+				label.htmlFor = fieldset.name+'.'+name + (arrayIndex===undefined?'':'_'+value[arrayIndex]);
 				fieldset.appendChild(label);
 				let input = document.createElement('input');
-				input.id = label.htmlFor;
-				input.name = label.htmlFor;
 				switch(typeof value){
 					default: input.type = 'text'; break;
+					case 'object': input.type = 'radio'; break;
 					case 'boolean': input.type = 'checkbox'; break;
 					case 'number': input.type = 'number'; break;
 				}
 				if(typeof value === 'boolean'){
 					input.checked = value;
+				}else if(typeof value === 'object'){
+					if(arrayIndex===0){
+						input.checked = true;
+					}
+					input.value = value[arrayIndex];
 				}else{
 					input.value = value;
 				}
+				input.id = label.htmlFor;
+				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
 				fieldset.appendChild(input);
 			}
 			arenaProperties = json;
@@ -49,7 +61,15 @@ function a(){
 					fieldset.appendChild(legend);
 					for(const subKey in setting){
 						if(setting.hasOwnProperty(subKey)){
-							addInput(fieldset, subKey, setting[subKey]);
+							let value = setting[subKey];
+							if(typeof value === 'object'){
+								let index = 0;
+								value.forEach(v => {
+									addInput(fieldset, subKey, value, index++);
+								});
+							}else{
+								addInput(fieldset, subKey, value);
+							}
 						}
 					}
 				}
@@ -64,11 +84,14 @@ function a(){
 			if(json[info[0]] === undefined){
 				json[info[0]] = {};
 			}
+			let value;
 			switch(input.type){
-				default: json[info[0]][info[1]] = input.value; break;
-				case 'checkbox': json[info[0]][info[1]] = input.checked; break;
-				case 'number': json[info[0]][info[1]] = input.valueAsNumber; break;
+				default: value = input.value; break;
+				case 'radio': if(input.checked){value = input.value}else{continue}; break;
+				case 'checkbox': value = input.checked; break;
+				case 'number': value = input.valueAsNumber; break;
 			}
+			json[info[0]][info[1]] = value;
 		}
 		messageEvent.source.postMessage({type: 'settings', value: json}, messageEvent.origin);
 	}
