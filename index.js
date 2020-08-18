@@ -275,7 +275,7 @@ function a(){
 		iframe.src = 'iframe.sandbox.html#' + JSON.stringify(json);
 		iframe.sandbox = 'allow-scripts';
 		iframe.style.display = 'none';
-		iframe.id = Date() + '_' +  Math.random();
+		iframe.id = Date() + '_' + Math.random();
 		div.appendChild(iframe);
 		let output = document.createElement('div');
 		output.style.display = 'none';
