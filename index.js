@@ -77,7 +77,7 @@ function a(){
 			}
 			let isDone = true;
 			let aborted = []; // TODO: Use.
-			let log = undefined;
+			let log = [];
 			messageEvent.data.value.data.forEach(posts => {
 				let container = document.createElement('div');
 				output.appendChild(container);
@@ -87,7 +87,7 @@ function a(){
 					isDone_local |= post.type === 'FinalScore' || post.type === 'Aborted';
 					if(post.type === 'FinalScore'){
 						score = post.value.score;
-						log = post.value.history;
+						log.push(post.value.log);
 					}else if(post.type === 'Aborted'){
 						score = null;
 						aborted.push(post.value);
@@ -125,7 +125,7 @@ function a(){
 			});
 			if(isDone){
 				let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
-				array.push({type: 'log', log: log})
+				array.push({type: 'log', data: log})
 				if(outputSum.dataset.aborted !== undefined){
 					array.push({type: 'aborted', aborted: aborted})
 				}
