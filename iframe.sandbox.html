@@ -9,9 +9,11 @@
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
+			let arena;
 			function a(){
 				if(isIframe()){
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
+					arena = data.arena;
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
 						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', data.arena))
@@ -31,7 +33,7 @@
 									createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
 										worker.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
-											if(messageEvent.data.type === 'FinalScore'){
+											if(messageEvent.data.type === 'Done'){
 												worker.terminate();
 											}
 										};
@@ -62,7 +64,7 @@
 				};
 				function getOutput(){
 					let output = {};
-					output.arena = document.title.split(' ')[0];
+					output.arena = arena;
 					output.data = [];
 					let outputList = document.getElementsByClassName('log');
 					for(const outputKey in outputList){

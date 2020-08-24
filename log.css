@@ -13,7 +13,7 @@
 .log label.Pending {
 	color: blue;
 }
-.log label.FinalScore {
+.log label.Done {
 	color: green;
 }
 .log label.Aborted {

@@ -77,17 +77,15 @@ function a(){
 			}
 			let isDone = true;
 			let aborted = []; // TODO: Use.
-			let log = [];
 			messageEvent.data.value.data.forEach(posts => {
 				let container = document.createElement('div');
 				output.appendChild(container);
 				let isDone_local = false;
 				let score = undefined;
 				posts.forEach(post => {
-					isDone_local |= post.type === 'FinalScore' || post.type === 'Aborted';
-					if(post.type === 'FinalScore'){
+					isDone_local |= post.type === 'Done' || post.type === 'Aborted';
+					if(post.type === 'Done'){
 						score = post.value.score;
-						log.push(post.value.log);
 					}else if(post.type === 'Aborted'){
 						score = null;
 						aborted.push(post.value);
@@ -124,14 +122,9 @@ function a(){
 				}
 			});
 			if(isDone){
-				let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
-				array.push({type: 'log', data: log})
-				if(outputSum.dataset.aborted !== undefined){
-					array.push({type: 'aborted', aborted: aborted})
-				}
-				outputSum.dataset.array = JSON.stringify(array);
+				outputSum.dataset.array = JSON.stringify(messageEvent.data.value);
 				outputSum.dataset.done = true;
-				outputSum.innerHTML = JSON.stringify(array,null,'\t');
+				outputSum.innerHTML = JSON.stringify(messageEvent.data.value,null,'\t');
 				contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
 			}else{
 				getIFrameLog(iframe);
