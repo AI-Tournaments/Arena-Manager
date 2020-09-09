@@ -183,16 +183,18 @@ function a(){
 			}
 		}
 		let promises = [];
-		fetch('https://api.github.com/repos/AI-Tournaments/'+arena+'-AI-Tournament-Participant/forks').then(response => response.json()).then(forks => {
-			forks.forEach(fork => {
-				promises.push(fetch('https://api.github.com/repos/' + fork.full_name + '/git/trees/master')
+		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournament-Participant+topic:'+arena,{
+			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
+		}).then(response => response.json()).then(response => {
+			response.items.forEach(repo => {
+				promises.push(fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
 				.then(response => response.json())
 				.then(data => {
 					data.tree.forEach(file =>{
-						if(!file.path.startsWith('.') && file.type === 'blob' && file.path.endsWith('.js')){
+						if(file.type === 'blob' && file.path === 'participant.js'){
 							let option = document.createElement('option');
-							option.dataset.name = fork.full_name + '/' + file.path;
-							option.dataset.url = 'https://raw.githubusercontent.com/' + fork.full_name + '/' + fork.default_branch + '/' + file.path;
+							option.dataset.name = repo.full_name.replace('AI-Tournament-Participant-'+arena+'-','');
+							option.dataset.url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
 							option.innerHTML = option.dataset.name;
 							participantList.appendChild(option);
 						}
