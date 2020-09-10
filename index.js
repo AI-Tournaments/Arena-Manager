@@ -126,6 +126,13 @@ function a(){
 				outputSum.dataset.done = true;
 				outputSum.innerHTML = JSON.stringify(messageEvent.data.value,null,'\t');
 				contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
+				for(const element of document.getElementsByClassName('replay-container')){
+					element.parentNode.removeChild(element);
+				}
+				let replayContainer = document.createElement('iframe');
+				replayContainer.classList.add('replay-container');
+				replayContainer.src = '../Replay/#'+outputSum.dataset.array;
+				document.body.appendChild(replayContainer);
 			}else{
 				getIFrameLog(iframe);
 			}
