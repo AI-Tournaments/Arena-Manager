@@ -183,7 +183,7 @@ function a(){
 			}
 		}
 		let promises = [];
-		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournament-Participant+topic:'+arena,{
+		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournament+topic:Participant+topic:'+arena,{
 			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
 		}).then(response => response.json()).then(response => {
 			response.items.forEach(repo => {
