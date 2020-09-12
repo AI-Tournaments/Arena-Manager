@@ -190,7 +190,7 @@ function a(){
 			}
 		}
 		let promises = [];
-		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournament+topic:Participant+topic:'+arena,{
+		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
 			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
 		}).then(response => response.json()).then(response => {
 			response.items.forEach(repo => {
@@ -200,7 +200,7 @@ function a(){
 					data.tree.forEach(file =>{
 						if(file.type === 'blob' && file.path === 'participant.js'){
 							let option = document.createElement('option');
-							option.dataset.name = repo.full_name.replace('AI-Tournament-Participant-'+arena+'-','');
+							option.dataset.name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
 							option.dataset.url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
 							option.innerHTML = option.dataset.name;
 							participantList.appendChild(option);
