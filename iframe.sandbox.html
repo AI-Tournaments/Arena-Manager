@@ -37,6 +37,9 @@
 												worker.terminate();
 											}
 										};
+										if(location.href.includes('?debug')){
+											debugger;
+										}
 										worker.postMessage(data);
 									});
 								}

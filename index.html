@@ -30,8 +30,14 @@
 	</head>
 	<body onload="a()">
 		<label for="arena">Arena:</label>
-		<input list="arena-datalist" name="arena" id="arena"/>
-		<datalist id="arena-datalist"></datalist>
+		<select name="arena" id="arena"></select>
+		<select id="arena-filter">
+			<option value="official">Official only</option>
+			<option value="all">Include community arenas</option>
+			<option value="community">Community arenas only</option>
+		</select>
+		<input type="checkbox" id="sort-by-stars">
+		<label for="sort-by-stars">Sort by stars</label>
 		<input type="button" id="add-team" value="Add team" disabled>
 		<div id="participant-groups">
 			<div>

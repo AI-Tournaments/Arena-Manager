@@ -1,12 +1,16 @@
 'use strict'
+let addParticipant;
 function a(){
 	let arenaProperties;
-	let arenaList = document.getElementById('arena-datalist');
+	let arenaList = document.getElementById('arena');
+	let arenaFilter = document.getElementById('arena-filter');
+	let inputSortByStars = document.getElementById('sort-by-stars');
 	let participantList = document.getElementById('participants-selectable');
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
 	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
+	arenaFilter.addEventListener('change', getArenas);
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
@@ -27,16 +31,7 @@ function a(){
 			getParticipants(option.value);
 		}
 	}
-	fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(repos => {
-		repos.forEach(repo => {
-			if(repo.full_name.endsWith('-Arena')){
-				let option = document.createElement('option');
-				option.value = repo.full_name.replace(/.*\/|-Arena/g, '');
-				option.dataset.full_name = repo.full_name;
-				arenaList.appendChild(option);
-			}
-		});
-	});
+	getArenas();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
 			document.title = messageEvent.data.title;
@@ -60,6 +55,36 @@ function a(){
 			console.error('Source element not defined!');
 			console.error(messageEvent.source.frameElement);
 		}
+	}
+	addParticipant = function(url='', name='Manually added participant'){
+		let option = addParticipantOption(url, name);
+		option.classList.add('local');
+		sortOptions(participantList);
+	}
+	function getArenas(){
+		while(0 < arenaList.length){
+			arenaList.remove(0);
+		}
+		function addOptions(repos){
+			repos.forEach(repo => {
+				if(repo.full_name.endsWith('-Arena')){
+					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
+					cssStar = cssStar.substring(1,cssStar.length-1);
+					let option = document.createElement('option');
+					option.innerHTML = repo.full_name.replace(/.*\/|-Arena/g, '') + ' ' + cssStar + repo.stargazers_count;
+					option.dataset.full_name = repo.full_name;
+					option.dataset.stars = repo.stargazers_count;
+					arenaList.appendChild(option);
+				}
+			});
+		}
+		if(['all', 'official'].includes(arenaFilter.selectedOptions[0].value)){
+			fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
+		}
+		if(['all', 'community'].includes(arenaFilter.selectedOptions[0].value)){
+			fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Arena').then(response => response.json()).then(response => addOptions(response.items));
+		}
+		sortOptions(arenaList);
 	}
 	function sendLog(messageEvent){
 		if(outputSum.dataset.done){
@@ -146,10 +171,13 @@ function a(){
 		}
 	}
 	function sortOptions(selectElement){
+		function value(option){
+			return inputSortByStars.checked ? option.dataset.stars : option.value;
+		}
 		let options = [...selectElement.options];
 		options.sort(function(a, b){
-			if(a.value < b.value){return -1;}
-			if(b.value < a.value){return 1;}
+			if(a.classList.contains('local') ? true : value(a) < value(b)){return -1;}
+			if(b.classList.contains('local') ? true : value(b) < value(a)){return 1;}
 			return 0;
 		});
 		for(let option of options){
@@ -199,11 +227,9 @@ function a(){
 				.then(data => {
 					data.tree.forEach(file =>{
 						if(file.type === 'blob' && file.path === 'participant.js'){
-							let option = document.createElement('option');
-							option.dataset.name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
-							option.dataset.url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
-							option.innerHTML = option.dataset.name;
-							participantList.appendChild(option);
+							let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
+							let name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
+							addParticipantOption(url, name);
 						}
 					});
 				})
@@ -215,6 +241,14 @@ function a(){
 				sortOptions(participantList);
 			})
 		});
+	}
+	function addParticipantOption(url, name){
+		let option = document.createElement('option');
+		option.dataset.url = url;
+		option.dataset.name = name;
+		option.innerHTML = option.dataset.name;
+		participantList.appendChild(option);
+		return option;
 	}
 
 	function createTeam(){
@@ -274,7 +308,7 @@ function a(){
 		let div = document.createElement('div');
 		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
-		iframe.src = 'iframe.sandbox.html#' + JSON.stringify(json);
+		iframe.src = 'iframe.sandbox.html'+(location.href.includes('?debug')?'?debug':'')+'#' + JSON.stringify(json);
 		iframe.sandbox = 'allow-scripts';
 		iframe.style.display = 'none';
 		iframe.id = Date() + '_' + Math.random();
