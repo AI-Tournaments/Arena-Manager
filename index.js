@@ -82,7 +82,7 @@ function a(){
 			fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
 		}
 		if(['all', 'community'].includes(arenaFilter.selectedOptions[0].value)){
-			fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Arena').then(response => response.json()).then(response => addOptions(response.items));
+			fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
 		}
 		sortOptions(arenaList);
 	}
