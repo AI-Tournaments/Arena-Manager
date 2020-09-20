@@ -19,16 +19,16 @@ function a(){
 	let contentWindows = {
 		iFrameLog: []
 	};
-	document.getElementById('arena').onchange = event => {
+	arenaList.onchange = event => {
 		let option = getOption(arenaList, event);
 		if(option !== undefined){
 			btnAddTeam.disabled = true;
 			for(const element of document.getElementsByClassName('participant-team-container')){
 				element.parentNode.removeChild(element);
 			}
-			document.title = event.target.value + ' Arena';
-			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: event.target.value});
-			getParticipants(option.value);
+			document.title = option.dataset.short_name + ' Arena';
+			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: option.dataset.short_name});
+			getParticipants(option.dataset.short_name);
 		}
 	}
 	getArenas();
@@ -71,12 +71,15 @@ function a(){
 					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 					cssStar = cssStar.substring(1,cssStar.length-1);
 					let option = document.createElement('option');
-					option.innerHTML = repo.full_name.replace(/.*\/|-Arena/g, '') + ' ' + cssStar + repo.stargazers_count;
+					option.dataset.short_name = repo.full_name.replace(/.*\/|-Arena/g, '');
+					option.innerHTML = option.dataset.short_name + ' ' + cssStar + repo.stargazers_count;
 					option.dataset.full_name = repo.full_name;
 					option.dataset.stars = repo.stargazers_count;
 					arenaList.appendChild(option);
 				}
 			});
+			sortOptions(arenaList);
+			arenaList.onchange({target: arenaList.options[0]});
 		}
 		if(['all', 'official'].includes(arenaFilter.selectedOptions[0].value)){
 			fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
@@ -84,7 +87,6 @@ function a(){
 		if(['all', 'community'].includes(arenaFilter.selectedOptions[0].value)){
 			fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
 		}
-		sortOptions(arenaList);
 	}
 	function sendLog(messageEvent){
 		if(outputSum.dataset.done){
