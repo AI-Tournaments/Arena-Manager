@@ -15,7 +15,11 @@ class Participants{
 			team.forEach(participant => {
 				let _participantWrapper = {};
 				let _participant = {};
-				_participantWrapper.private = {};
+				_participantWrapper.private = {
+					url: participant.url,
+					score: 0,
+					worker: null
+				};
 				_participantWrapper.private.score = 0;
 				_participantWrapper.private.worker = null;
 				_participantWrapper.participant = _participant;
@@ -26,7 +30,7 @@ class Participants{
 				_participant.payload = {};
 				_participant.onmessage = null;
 				_participant.onerror = null;
-				promises.push(createWorkerFromRemoteURL(_participant.url, true).then(worker => {
+				promises.push(createWorkerFromRemoteURL(_participantWrapper.private.url, true).then(worker => {
 					_participantWrapper.private.worker = worker;
 					worker.onmessage = messageEvent => {
 						_participantWrapper.private.lastCalled = undefined;
