@@ -65,7 +65,7 @@ class Participants{
 					names.push(name);
 				});
 			});
-			_teams.forEach(team,index => {
+			_teams.forEach((team,index) => {
 				let _opponents = JSON.parse(JSON.stringify(opponents));
 				_opponents[index] = undefined;
 				this.postToTeam(index, {opponents: _opponents});
@@ -89,7 +89,7 @@ class Participants{
 			}
 		}
 		this.postToAll = (message='') => {
-			_teams.forEach(team,index => {
+			_teams.forEach((team,index) => {
 				postToTeam(index, message);
 			});
 		}
