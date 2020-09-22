@@ -30,17 +30,28 @@
 									let output = document.createElement('div');
 									output.classList.add('log');
 									document.body.appendChild(output);
-									createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(worker => {
-										worker.onmessage = messageEvent => {
+									createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(arena => {
+										arena.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
-											if(messageEvent.data.type === 'Done'){
-												worker.terminate();
+											switch(messageEvent.data.type){
+												case 'Ready-To-Start':
+													if(false){
+														blockNetwork();
+													};
+													arena.postMessage('Start');
+													break;
+												case 'Done':
+													arena.terminate();
+													break;
 											}
 										};
 										if(location.href.includes('?debug')){
 											debugger;
 										}
-										worker.postMessage(data);
+										arena.onerror = errorEvent => {
+											console.log(errorEvent);
+										};
+										arena.postMessage(data);
 									});
 								}
 							}else{
