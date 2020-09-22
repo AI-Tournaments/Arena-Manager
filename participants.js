@@ -4,8 +4,7 @@ class Participants{
 	 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
 	 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
 	 */
-	constructor(data={}){
-		this.ready = new Promise();
+	constructor(data={}, onReady=()=>{}, onError=()=>{}, participantDropped=()=>{}){
 		let terminated = false;
 		let promises = [];
 		let _teams = [];
@@ -68,8 +67,8 @@ class Participants{
 				this.postToTeam(index, {opponents: _opponents});
 			});
 			executionWatcher(data.settings.general.timelimit_ms);
-			ready.resolve();
-		}).catch(error => this.ready.reject(error));
+			onReady();
+		}).catch(error => onError(error));
 		function executionWatcher(executionLimit=1000){
 			wrappers.forEach(wrapper => {
 				let executionTimeViolation = wrapper.private.lastCalled === undefined ? false : executionLimit < new Date().getTime() - wrapper.private.lastCalled;
@@ -77,9 +76,7 @@ class Participants{
 					wrapper.team.splice(wrapper.team.indexOf(wrapper), 1);
 					if(executionTimeViolation){
 						wrapper.private.worker.terminate();
-						if(typeof this.participantDropped === 'function'){
-							this.participantDropped(wrapper.participant.name, 'Execution time violation.');
-						}
+						participantDropped(wrapper.participant.name, 'Execution time violation.');
 					}
 				}
 			});
@@ -87,7 +84,6 @@ class Participants{
 				setTimeout(executionWatcher, executionLimit, executionLimit);
 			}
 		}
-		this.participantDropped = null;
 		this.postToAll = (message='') => {
 			_teams.forEach(team,index => {
 				postToTeam(index, message);
