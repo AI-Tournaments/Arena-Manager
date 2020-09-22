@@ -95,7 +95,7 @@ class Participants{
 		}
 		this.postToTeam = (team=-1, message='') => {
 			_teams[team].forEach(participant => {
-				participant.worker.postMessage(message);
+				participant.private.worker.postMessage(message);
 			});
 		}
 		this.get = (team=-1, participant=-1) => {
