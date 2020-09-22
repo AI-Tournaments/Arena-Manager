@@ -16,11 +16,10 @@ class Participants{
 			team.forEach(participant => {
 				let _participantWrapper = {};
 				let _participant = {};
-				let private = {};
-				private.score = 0;
-				private.worker = null;
+				_participantWrapper.private = {};
+				_participantWrapper.private.score = 0;
+				_participantWrapper.private.worker = null;
 				_participantWrapper.participant = _participant;
-				_participantWrapper.private = private;
 				_participantWrapper.team = team;
 				_team.push(_participantWrapper);
 				wrappers.push(_participantWrapper);
@@ -29,9 +28,9 @@ class Participants{
 				_participant.onmessage = null;
 				_participant.onerror = null;
 				promises.push(createWorkerFromRemoteURL(_participant.url, true).then(worker => {
-					private.worker = worker;
+					_participantWrapper.private.worker = worker;
 					worker.onmessage = messageEvent => {
-						private.lastCalled = undefined;
+						_participantWrapper.private.lastCalled = undefined;
 						if(typeof _participant.onmessage === 'function'){
 							_participant.onmessage(messageEvent);
 						}
@@ -42,7 +41,7 @@ class Participants{
 						}
 					}
 					_participant.postMessage = data => {
-						private.lastCalled = new Date().getTime();
+						_participantWrapper.private.lastCalled = new Date().getTime();
 						worker.postMessage(data);
 					}
 				}));
