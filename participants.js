@@ -99,7 +99,7 @@ class Participants{
 			});
 		}
 		this.get = (team=-1, participant=-1) => {
-			return this.teams[team][participant].participant;
+			return _teams[team][participant].participant;
 		}
 		this.addScore = (participant, score) => {
 			teams.forEach(team => {
