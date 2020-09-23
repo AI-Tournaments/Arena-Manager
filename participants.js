@@ -119,12 +119,12 @@ class Participants{
 				let result = {};
 				scores.push(result);
 				result.score = team.score;
-				result.bonus = [];
+				result.members = [];
 				team.members.forEach(wrapper => {
-					let bonus = {};
-					result.bonus.push(bonus);
-					bonus.name = wrapper.participant.name;
-					bonus.score = wrapper.private.name;
+					let member = {};
+					result.members.push(member);
+					member.name = wrapper.participant.name;
+					member.bonus = wrapper.private.score;
 				});
 			});
 			return scores;
