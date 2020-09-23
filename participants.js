@@ -11,7 +11,7 @@ class Participants{
 		let wrappers = [];
 		data.participants.forEach(team => {
 			let _team = [];
-			_teams.push(_team);
+			_teams.push({score: 0, members: _team});
 			team.forEach(participant => {
 				let _participantWrapper = {};
 				let _participant = {};
@@ -55,7 +55,7 @@ class Participants{
 			_teams.forEach(team => {
 				let names = [];
 				opponents.push(names);
-				team.forEach(participant => {
+				team.members.forEach(participant => {
 					let name = null;
 					if(data.settings.general.displayOpponents === 'Yes'){
 						name = participant.name;
@@ -94,24 +94,40 @@ class Participants{
 			});
 		}
 		this.postToTeam = (team=-1, message='') => {
-			_teams[team].forEach(participant => {
+			_teams[team].members.forEach(participant => {
 				participant.private.worker.postMessage(message);
 			});
 		}
 		this.get = (team=-1, participant=-1) => {
-			return _teams[team][participant].participant;
+			return _teams[team].members[participant].participant;
 		}
-		this.addScore = (participant, score) => {
-			teams.forEach(team => {
-				team.forEach(_participant => {
+		this.addScore = (team, score) => {
+			_teams[team].score += score;
+		}
+		/*this.addBonusScore = (participant, score) => {
+			_teams.forEach(team => {
+				team.members.forEach(_participant => {
 					if(participant === _participant.participant){
 						_participant.private.score += score;
 					}
 				});
 			});
-		}
+		}*/
 		this.getScores = () => {
-			return {};
+			let scores = [];
+			_teams.forEach(team => {
+				let result = {};
+				scores.push(result);
+				result.score = team.score;
+				result.bonus = [];
+				team.members.forEach(wrapper => {
+					let bonus = {};
+					result.bonus.push(bonus);
+					bonus.name = wrapper.participant.name;
+					bonus.score = wrapper.private.name;
+				});
+			});
+			return scores;
 		}
 		this.getTeamColor = index => {
 			let color = {};
