@@ -68,7 +68,7 @@ class Participants{
 			_teams.forEach((team,index) => {
 				let _opponents = JSON.parse(JSON.stringify(opponents));
 				_opponents[index] = undefined;
-				this.postToTeam(index, {opponents: _opponents});
+				this.postToTeam(index, {settings: data.settings, opponents: _opponents});
 			});
 			executionWatcher(data.settings.general.timelimit_ms);
 			onReady();
