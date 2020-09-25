@@ -17,6 +17,7 @@
 	"settings": {
 		"general": {
 			"averageOf": 1,
+			"allowRemoteExecution": false,
 			"displayOpponents": ["Hide", "AccountOnly", "Yes"],
 			"timelimit_ms": 1000
 		}

@@ -35,7 +35,7 @@
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
 											switch(messageEvent.data.type){
 												case 'Ready-To-Start':
-													if(false){
+													if(!data.settings.general.allowRemoteExecution){
 														blockNetwork();
 													};
 													arena.postMessage('Start');
@@ -65,6 +65,10 @@
 					}
 				}else{
 					window.location.replace(window.location.href.replace('iframe.html', ''));
+				}
+				function blockNetwork(){
+					window.stop();
+					window.requestAnimationFrame(blockNetwork);
 				}
 				function isIframe(){
 					try{
