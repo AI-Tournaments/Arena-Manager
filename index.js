@@ -1,16 +1,15 @@
 'use strict'
 let addParticipant;
 function a(){
+	let _sortByStars = false;
 	let arenaProperties;
-	let arenaList = document.getElementById('arena');
-	let arenaFilter = document.getElementById('arena-filter');
-	let inputSortByStars = document.getElementById('sort-by-stars');
+	let selectArena = document.getElementById('selectArena');
 	let participantList = document.getElementById('participants-selectable');
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
 	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
-	arenaFilter.addEventListener('change', getArenas);
+	selectArena.contentWindow.postMessage(undefined);
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
@@ -19,24 +18,29 @@ function a(){
 	let contentWindows = {
 		iFrameLog: []
 	};
-	arenaList.onchange = event => {
-		let option = getOption(arenaList, event);
-		if(option !== undefined){
-			btnAddTeam.disabled = true;
-			for(const element of document.getElementsByClassName('participant-team-container')){
-				element.parentNode.removeChild(element);
-			}
-			document.title = option.dataset.short_name + ' Arena';
-			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: option.dataset.short_name});
-			getParticipants(option.dataset.short_name);
-		}
-	}
-	getArenas();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
 			document.title = messageEvent.data.title;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
 			sendLog(messageEvent);
+		}else if(messageEvent.data.type === 'arena-changed'){
+			_sortByStars = messageEvent.data.value.settings.sortByStars;
+			selectArena.style.height = messageEvent.data.value.settings.height + 'px';
+			let json = messageEvent.data.value.option;
+			btnAddTeam.disabled = true;
+			for(const element of document.getElementsByClassName('participant-team-container')){
+				element.parentNode.removeChild(element);
+			}
+			document.title = json.name + ' Arena';
+			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: json.full_name});
+			getParticipants(json.name);
+			fetch('https://raw.githubusercontent.com/'+json.full_name+'/master/README.md').then(response => response.text()).then(readme => {
+				fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
+				headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
+			}).then(response => response.json()).then(response => {
+					document.getElementById('arena-description').innerHTML = response.html;
+				});
+			});
 		}else if(contentWindows.iFrameLog.includes(messageEvent.source)){
 			writeArenaLog(messageEvent);
 		}else if(settingsIframe.contentWindow === messageEvent.source){
@@ -50,7 +54,6 @@ function a(){
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
 			}
-			
 		}else{
 			console.error('Source element not defined!');
 			console.error(messageEvent.source.frameElement);
@@ -60,33 +63,6 @@ function a(){
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(participantList);
-	}
-	function getArenas(){
-		while(0 < arenaList.length){
-			arenaList.remove(0);
-		}
-		function addOptions(repos){
-			repos.forEach(repo => {
-				if(repo.full_name.endsWith('-Arena')){
-					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
-					cssStar = cssStar.substring(1,cssStar.length-1);
-					let option = document.createElement('option');
-					option.dataset.short_name = repo.full_name.replace(/.*\/|-Arena/g, '');
-					option.innerHTML = option.dataset.short_name + ' ' + cssStar + repo.stargazers_count;
-					option.dataset.full_name = repo.full_name;
-					option.dataset.stars = repo.stargazers_count;
-					arenaList.appendChild(option);
-				}
-			});
-			sortOptions(arenaList);
-			arenaList.onchange({target: arenaList.options[0]});
-		}
-		if(['all', 'official'].includes(arenaFilter.selectedOptions[0].value)){
-			fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
-		}
-		if(['all', 'community'].includes(arenaFilter.selectedOptions[0].value)){
-			fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
-		}
 	}
 	function sendLog(messageEvent){
 		if(outputSum.dataset.done){
@@ -164,17 +140,10 @@ function a(){
 				getIFrameLog(iframe);
 			}
 		}
-	};
-	function getOption(element, event){
-		for(const option of element.getElementsByTagName('option')){
-			if(option.value === event.target.value){
-				return option;
-			}
-		}
 	}
 	function sortOptions(selectElement){
 		function value(option){
-			return inputSortByStars.checked ? option.dataset.stars : option.value;
+			return _sortByStars ? option.dataset.stars : option.value;
 		}
 		let options = [...selectElement.options];
 		options.sort(function(a, b){
@@ -252,7 +221,6 @@ function a(){
 		participantList.appendChild(option);
 		return option;
 	}
-
 	function createTeam(){
 		let teamIndex = document.getElementsByClassName('participant-team-container').length + 1;
 		btnAddTeam.disabled = !validateTeams();

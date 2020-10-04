@@ -19,6 +19,9 @@
 			#outputSum {
 				display: none;
 			}
+			#arena-description>*:first-child{
+				margin-top: 0;
+			}
 			.replay-container {
 				display: inherit;
 				width: -webkit-fill-available;
@@ -29,15 +32,11 @@
 		<script src="index.js"></script>
 	</head>
 	<body onload="a()">
-		<label for="arena">Arena:</label>
-		<select name="arena" id="arena"></select>
-		<select id="arena-filter">
-			<option value="official">Official only</option>
-			<option value="all">Include community arenas</option>
-			<option value="community">Community arenas only</option>
-		</select>
-		<input type="checkbox" id="sort-by-stars">
-		<label for="sort-by-stars">Sort by stars</label>
+		<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
+		<fieldset>
+			<legend>Readme</legend>
+			<div id="arena-description"></div>
+		</fieldset>
 		<input type="button" id="add-team" value="Add team" disabled>
 		<div id="participant-groups">
 			<div>

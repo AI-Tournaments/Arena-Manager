@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Select Arena</title>
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-173346924-1"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'UA-173346924-1');</script>
+		<meta content="width=device-width, initial-scale=1.0" name="viewport">
+		<meta content="yes" name="mobile-web-app-capable">
+		<link rel="stylesheet" href="../defaults.css">
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+			}
+			.link {
+				text-decoration: none;
+			}
+			.link::after {
+				content: var(--link);
+			}
+		</style>
+		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
+		<script src="iframe.selectArena.js"></script>
+	</head>
+	<body onload="a()">
+		<label for="arena">Arena:</label>
+		<select name="arena" id="arena"></select>
+		<a id="link-arena" class="link" target="_blank"></a>
+		<select id="arena-filter">
+			<option value="official">Official only</option>
+			<option value="all">Include community arenas</option>
+			<option value="community">Community arenas only</option>
+		</select>
+		<input type="checkbox" id="sort-by-stars">
+		<label for="sort-by-stars">Sort by stars</label>
+	</body>
+</html>
