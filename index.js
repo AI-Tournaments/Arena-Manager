@@ -9,7 +9,6 @@ function a(){
 	let logContainer = document.getElementById('logContainer');
 	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
-	selectArena.contentWindow.postMessage(undefined);
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
@@ -18,6 +17,8 @@ function a(){
 	let contentWindows = {
 		iFrameLog: []
 	};
+	window.onhashchange = ()=>selectArena.contentWindow.postMessage(location.hash.substring(1));
+	window.onhashchange();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
 			document.title = messageEvent.data.title;

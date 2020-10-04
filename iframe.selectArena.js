@@ -15,19 +15,25 @@ function a(){
 		}
 	}
 	window.onmessage = messageEvent => {
-		sourceWindow = messageEvent.source;
-		getArenas();
+		if(sourceWindow === undefined){
+			sourceWindow = messageEvent.source;
+			getArenas(messageEvent.data);
+		}
 	}
-	function getArenas(){
+	function getArenas(preSelectedArena=''){
 		while(0 < arenaList.length){
 			arenaList.remove(0);
 		}
 		function addOptions(repos){
+			let preSelected = undefined;
 			repos.forEach(repo => {
 				if(repo.full_name.endsWith('-Arena')){
 					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 					cssStar = cssStar.substring(1,cssStar.length-1);
 					let option = document.createElement('option');
+					if(preSelectedArena === repo.full_name){
+						preSelected = option;
+					}
 					let json = {};
 					json.name = repo.full_name.replace(/.*\/|-Arena/g, '');
 					json.html_url = repo.html_url;
@@ -39,7 +45,13 @@ function a(){
 				}
 			});
 			sortOptions(arenaList);
-			arenaList.onchange({target: arenaList.options[0]});
+			if(preSelected === undefined){
+				arenaList.onchange({target: arenaList.options[0]});
+			}else{
+				arenaList.options[0].selected = false;
+				preSelected.selected = true;
+				arenaList.onchange({target: preSelected});
+			}
 		}
 		if(['all', 'official'].includes(arenaFilter.selectedOptions[0].value)){
 			fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
