@@ -15,16 +15,28 @@ function a(){
 		.then(response => response.json())
 		.then(json => {
 			function addInput(fieldset, name, value, arrayIndex){
+				let wrapper;
+				if(arrayIndex === undefined || arrayIndex === 0){
+					wrapper = document.createElement('div');
+					fieldset.appendChild(wrapper);
+				}
 				let label = document.createElement('label');
 				if(arrayIndex===0){
 					label.innerHTML = name;
 					label.htmlFor = fieldset.name+'.'+name;
-					fieldset.appendChild(label);
+					wrapper.id = label.htmlFor;
+					wrapper.appendChild(label);
+					let innerWrapper = document.createElement('div');
+					innerWrapper.classList.add('radio-set');
+					wrapper.appendChild(innerWrapper);
+					wrapper = innerWrapper;
 					label = document.createElement('label');
+				}else if(0 < arrayIndex){
+					wrapper = document.getElementById(fieldset.name+'.'+name).getElementsByClassName('radio-set')[0];
 				}
 				label.innerHTML = typeof value === 'object' ? value[arrayIndex] : name;
 				label.htmlFor = fieldset.name+'.'+name + (arrayIndex===undefined?'':'_'+value[arrayIndex]);
-				fieldset.appendChild(label);
+				wrapper.appendChild(label);
 				let input = document.createElement('input');
 				switch(typeof value){
 					default: input.type = 'text'; break;
@@ -44,7 +56,7 @@ function a(){
 				}
 				input.id = label.htmlFor;
 				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
-				fieldset.appendChild(input);
+				wrapper.appendChild(input);
 			}
 			arenaProperties = json;
 			while(0 < settings.length){
