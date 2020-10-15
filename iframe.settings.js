@@ -59,8 +59,8 @@ function a(){
 				wrapper.appendChild(input);
 			}
 			arenaProperties = json;
-			while(0 < settings.length){
-				settings.remove(0);
+			while(0 < settings.childElementCount){
+				settings.removeChild(settings.firstChild);
 			}
 			for(const key in arenaProperties.settings){
 				if(arenaProperties.settings.hasOwnProperty(key)){
