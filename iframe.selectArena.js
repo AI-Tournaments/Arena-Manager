@@ -27,7 +27,7 @@ function a(){
 		function addOptions(repos){
 			let preSelected = undefined;
 			repos.forEach(repo => {
-				if(repo.full_name.endsWith('-Arena')){
+				if(repo.owner.login === 'AI-Tournaments' ? repo.full_name.endsWith('-Arena') : true){
 					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 					cssStar = cssStar.substring(1,cssStar.length-1);
 					let option = document.createElement('option');
