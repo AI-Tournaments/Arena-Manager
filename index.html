@@ -30,13 +30,25 @@
 				width: -webkit-fill-available;
 				height: -webkit-fill-available;
 			}
+			fieldset>legend {
+				cursor: pointer;
+				user-select: none;
+			}fieldset>legend::after {
+				content: ' ' var(--arrow-down);
+			}
+			fieldset.hidden>legend::after {
+				content: ' ' var(--arrow-up);
+			}
+			fieldset.hidden>:not(legend) {
+				display: none;
+			}
 		</style>
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script src="index.js"></script>
 	</head>
 	<body onload="a()">
 		<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
-		<fieldset>
+		<fieldset class="hidden">
 			<legend>Readme</legend>
 			<div id="arena-description"></div>
 		</fieldset>

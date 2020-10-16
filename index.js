@@ -9,6 +9,10 @@ function a(){
 	let logContainer = document.getElementById('logContainer');
 	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
+	let arenaDescription = document.getElementById('arena-description');
+	arenaDescription.parentElement.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
+		arenaDescription.parentElement.classList.toggle('hidden');
+	});
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
@@ -39,7 +43,7 @@ function a(){
 				fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
 				headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
 			}).then(response => response.json()).then(response => {
-					document.getElementById('arena-description').innerHTML = response.html;
+				arenaDescription.innerHTML = response.html;
 				});
 			});
 		}else if(contentWindows.iFrameLog.includes(messageEvent.source)){
