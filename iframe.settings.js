@@ -11,7 +11,7 @@ function a(){
 	function setArena(messageEvent){
 		let arena = messageEvent.data.value
 		arenaProperties = undefined;
-		fetch('https://raw.githubusercontent.com/ARENA/master/properties.json'.replace('ARENA', arena))
+		fetch('https://raw.githubusercontent.com/ARENA/master/properties.json'.replace('ARENA', arena)) // TODO: Do not use "master". https://github.com/orgs/AI-Tournaments/projects/2#card-47502056
 		.then(response => response.json())
 		.then(json => {
 			function addInput(fieldset, name, value, properties, arrayIndex){

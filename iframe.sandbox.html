@@ -16,7 +16,7 @@
 					arena = data.arena;
 					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
-						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', data.arena))
+						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', data.arena)) // TODO: Do not use "-Arena" and "master". https://github.com/orgs/AI-Tournaments/projects/2#card-47502157
 						.then(response => response.json())
 						.then(json => {
 							let limits = json.header.limits;
