@@ -14,7 +14,7 @@ function a(){
 		fetch('https://raw.githubusercontent.com/ARENA/master/properties.json'.replace('ARENA', arena))
 		.then(response => response.json())
 		.then(json => {
-			function addInput(fieldset, name, value, arrayIndex){
+			function addInput(fieldset, name, value, properties, arrayIndex){
 				let wrapper;
 				if(arrayIndex === undefined || arrayIndex === 0){
 					wrapper = document.createElement('div');
@@ -38,6 +38,8 @@ function a(){
 				label.htmlFor = fieldset.name+'.'+name + (arrayIndex===undefined?'':'_'+value[arrayIndex]);
 				wrapper.appendChild(label);
 				let input = document.createElement('input');
+				input.id = label.htmlFor;
+				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
 				switch(typeof value){
 					default: input.type = 'text'; break;
 					case 'object': input.type = 'radio'; break;
@@ -54,8 +56,14 @@ function a(){
 				}else{
 					input.value = value;
 				}
-				input.id = label.htmlFor;
-				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
+				for(const key in properties) {
+					if(properties.hasOwnProperty(key)){
+						let value = properties[key];
+						if(value !== null){
+							input[key] = value;
+						}
+					}
+				}
 				wrapper.appendChild(input);
 			}
 			arenaProperties = json;
@@ -74,13 +82,17 @@ function a(){
 					for(const subKey in setting){
 						if(setting.hasOwnProperty(subKey)){
 							let value = setting[subKey];
+							let properties = arenaProperties.header.settings[key];
+							if(properties !== undefined){
+								properties = properties[subKey];
+							}
 							if(typeof value === 'object'){
 								let index = 0;
 								value.forEach(v => {
-									addInput(fieldset, subKey, value, index++);
+									addInput(fieldset, subKey, value, properties, index++);
 								});
 							}else{
-								addInput(fieldset, subKey, value);
+								addInput(fieldset, subKey, value, properties);
 							}
 						}
 					}
