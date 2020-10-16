@@ -101,6 +101,9 @@ class Participants{
 		this.get = (team=-1, participant=-1) => {
 			return _teams[team].members[participant].participant;
 		}
+		this.getSettings = ()=>{
+			return data.settings;
+		}
 		this.addScore = (team, score) => {
 			_teams[team].score += score;
 		}
