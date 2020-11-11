@@ -2,6 +2,7 @@
 let addParticipant;
 function a(){
 	let _sortByStars = false;
+	let _json;
 	let arenaProperties;
 	let selectArena = document.getElementById('selectArena');
 	let participantList = document.getElementById('participants-selectable');
@@ -25,21 +26,22 @@ function a(){
 	window.onhashchange();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
-			document.title = messageEvent.data.title;
+			_json = messageEvent.data.arena;
+			document.title = _json.name + ' Arena';
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
 			sendLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
 			_sortByStars = messageEvent.data.value.settings.sortByStars;
 			selectArena.style.height = messageEvent.data.value.settings.height + 'px';
-			let json = messageEvent.data.value.option;
+			_json = messageEvent.data.value.option;
 			btnAddTeam.disabled = true;
 			for(const element of document.getElementsByClassName('participant-team-container')){
 				element.parentNode.removeChild(element);
 			}
-			document.title = json.name + ' Arena';
-			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: json.full_name});
-			getParticipants(json.name);
-			fetch('https://raw.githubusercontent.com/'+json.full_name+'/master/README.md').then(response => response.text()).then(readme => {
+			document.title = _json.name + ' Arena';
+			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.full_name+'/'+_json.default_branch});
+			getParticipants(_json.name);
+			fetch('https://raw.githubusercontent.com/'+_json.full_name+'/'+_json.default_branch+'/README.md').then(response => response.text()).then(readme => {
 				fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
 				headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
 			}).then(response => response.json()).then(response => {
@@ -264,7 +266,7 @@ function a(){
 	}
 	function begin(settings, bracket=[]){
 		let json = {
-			arena: document.title.split(' ')[0],
+			arena: _json.full_name+'/'+_json.default_branch,
 			participants: bracket,
 			settings: settings
 		};

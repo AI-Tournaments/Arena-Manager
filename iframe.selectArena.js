@@ -39,6 +39,7 @@ function a(){
 					json.html_url = repo.html_url;
 					option.innerHTML = json.name + ' ' + cssStar + repo.stargazers_count;
 					json.full_name = repo.full_name;
+					json.default_branch = repo.default_branch;
 					json.stars = repo.stargazers_count;
 					option.dataset.json = JSON.stringify(json);
 					arenaList.appendChild(option);

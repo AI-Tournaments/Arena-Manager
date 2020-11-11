@@ -9,14 +9,18 @@
 		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
 		<script>
 			'use strict'
-			let arena;
+			let _arena;
 			function a(){
 				if(isIframe()){
 					let data = JSON.parse(decodeURI(location.hash.substring(1)));
-					arena = data.arena;
-					document.title = document.title.replace('X', data.arena);
 					if(data.arena !== undefined){
-						fetch('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/properties.json'.replace('GAME', data.arena)) // TODO: Do not use "-Arena" and "master". https://github.com/orgs/AI-Tournaments/projects/2#card-47502157
+						let arenaURL = 'https://raw.githubusercontent.com/'+data.arena;
+						let arenaArray = data.arena.split('/');
+						arenaArray.pop();
+						data.arena = arenaArray.join('/');
+						_arena = data.arena;
+						document.title = document.title.replace('X', data.arena);
+						fetch(arenaURL+'/properties.json')
 						.then(response => response.json())
 						.then(json => {
 							let limits = json.header.limits;
@@ -30,7 +34,7 @@
 									let output = document.createElement('div');
 									output.classList.add('log');
 									document.body.appendChild(output);
-									createWorkerFromRemoteURL('https://raw.githubusercontent.com/AI-Tournaments/GAME-Arena/master/arena.js'.replace('GAME', data.arena), true).then(arena => {
+									createWorkerFromRemoteURL(arenaURL+'/arena.js', true).then(arena => {
 										arena.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
 											switch(messageEvent.data.type){
@@ -45,12 +49,12 @@
 													break;
 											}
 										};
-										if(location.href.includes('?debug')){
-											debugger;
-										}
 										arena.onerror = errorEvent => {
 											console.log(errorEvent);
 										};
+										if(location.href.includes('?debug')){
+											debugger;
+										}
 										arena.postMessage(data);
 									});
 								}
@@ -64,7 +68,7 @@
 						output.innerHTML = 'No arena defined.';
 					}
 				}else{
-					window.location.replace(window.location.href.replace('iframe.html', ''));
+					window.location.replace(window.location.href.replace('iframe.html', '')); // TODO: Fix.
 				}
 				function blockNetwork(){
 					window.stop();
@@ -82,7 +86,7 @@
 				};
 				function getOutput(){
 					let output = {};
-					output.arena = arena;
+					output.arena = _arena;
 					output.data = [];
 					let outputList = document.getElementsByClassName('log');
 					for(const outputKey in outputList){
