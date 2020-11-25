@@ -196,12 +196,12 @@ function a(){
 			}
 		}
 		let promises = [];
-		fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
+		GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
 			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
 		}).then(response => response.json()).then(response => {
 			response.items.forEach(repo => {
 				if(!repo.topics.includes('retired')){
-					promises.push(fetch('https://api.github.com/repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
+					promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
 					.then(response => response.json())
 					.then(data => {
 						data.tree.forEach(file =>{

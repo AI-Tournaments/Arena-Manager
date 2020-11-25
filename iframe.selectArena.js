@@ -56,10 +56,10 @@ function a(){
 		}
 		for(const selectedOption of arenaFilter.selectedOptions){
 			if(['all', 'official'].includes(selectedOption.value)){
-				fetch('https://api.github.com/orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
+				GitHubApi.fetch('orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
 			}
 			if(['all', 'community'].includes(selectedOption.value)){
-				fetch('https://api.github.com/search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
+				GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
 			}
 		}
 	}
