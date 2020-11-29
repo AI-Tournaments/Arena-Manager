@@ -27,27 +27,29 @@ function a(){
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
 			_json = messageEvent.data.arena;
-			document.title = _json.name + ' Arena';
+			document.title = messageEvent.data.type;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
 			sendLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
-			_sortByStars = messageEvent.data.value.settings.sortByStars;
-			selectArena.style.height = messageEvent.data.value.settings.height + 'px';
-			_json = messageEvent.data.value.option;
-			btnAddTeam.disabled = true;
-			for(const element of document.getElementsByClassName('participant-team-container')){
-				element.parentNode.removeChild(element);
-			}
-			document.title = _json.name + ' Arena';
-			settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.full_name+'/'+_json.default_branch});
-			getParticipants(_json.name);
-			fetch('https://raw.githubusercontent.com/'+_json.full_name+'/'+_json.default_branch+'/README.md').then(response => response.text()).then(readme => {
-				fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
-				headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
-			}).then(response => response.json()).then(response => {
-				arenaDescription.innerHTML = response.html;
+			if(document.title !== 'auto-run'){
+				_sortByStars = messageEvent.data.value.settings.sortByStars;
+				selectArena.style.height = messageEvent.data.value.settings.height + 'px';
+				_json = messageEvent.data.value.option;
+				btnAddTeam.disabled = true;
+				for(const element of document.getElementsByClassName('participant-team-container')){
+					element.parentNode.removeChild(element);
+				}
+				document.title = _json.name + ' Arena';
+				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.full_name+'/'+_json.default_branch});
+				getParticipants(_json.name);
+				fetch('https://raw.githubusercontent.com/'+_json.full_name+'/'+_json.default_branch+'/README.md').then(response => response.text()).then(readme => {
+					fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
+					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
+				}).then(response => response.json()).then(response => {
+					arenaDescription.innerHTML = response.html;
+					});
 				});
-			});
+			}
 		}else if(contentWindows.iFrameLog.includes(messageEvent.source)){
 			writeArenaLog(messageEvent);
 		}else if(settingsIframe.contentWindow === messageEvent.source){
@@ -139,10 +141,12 @@ function a(){
 				for(const element of document.getElementsByClassName('replay-container')){
 					element.parentNode.removeChild(element);
 				}
-				let replayContainer = document.createElement('iframe');
-				replayContainer.classList.add('replay-container');
-				replayContainer.src = '../Replay/#'+outputSum.dataset.array;
-				document.body.appendChild(replayContainer);
+				if(!document.title.startsWith('auto-run')){
+					let replayContainer = document.createElement('iframe');
+					replayContainer.classList.add('replay-container');
+					replayContainer.src = '../Replay/#'+outputSum.dataset.array;
+					document.body.appendChild(replayContainer);
+				}
 			}else{
 				getIFrameLog(iframe);
 			}
