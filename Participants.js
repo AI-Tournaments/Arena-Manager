@@ -95,7 +95,26 @@ class Participants{
 		}
 		this.postToTeam = (team=-1, message='') => {
 			_teams[team].members.forEach(participant => {
-				participant.private.worker.postMessage(message);
+				participant.postMessage(message);
+			});
+		}
+		this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
+			_teams.forEach((team,index) => {
+				addCallbackToTeam(index, onmessage, onerror);
+			});
+		}
+		this.addCallbackToTeam = (team=-1,onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
+			_teams[team].members.forEach(participant => {
+				if(typeof onmessage === 'function'){
+					participant.onmessage = messageEvent=>{onmessage(participant, messageEvent)};
+				}else if(onmessage === null){
+					participant.onmessage = onmessage;
+				}
+				if(typeof onerror === 'function'){
+					participant.onerror = messageEvent=>{onerror(participant, messageEvent)};
+				}else if(onerror === null){
+					participant.onerror = onerror;
+				}
 			});
 		}
 		this.get = (team=-1, participant=-1) => {
