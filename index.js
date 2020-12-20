@@ -68,7 +68,7 @@ function a(){
 			console.error(messageEvent.source.frameElement);
 		}
 	}
-	addParticipant = function(url='', name='Manually added participant'){
+	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(participantList);
