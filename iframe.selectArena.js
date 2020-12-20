@@ -1,5 +1,4 @@
 'use strict'
-let addParticipant;
 function a(){
 	let sourceWindow = undefined;
 	let arenaList = document.getElementById('arena');
@@ -15,10 +14,37 @@ function a(){
 		}
 	}
 	window.onmessage = messageEvent => {
-		if(sourceWindow === undefined){
-			sourceWindow = messageEvent.source;
-			getArenas(messageEvent.data);
+		switch(messageEvent.data.type){
+			case 'get-arenas':
+				if(sourceWindow === undefined){
+					sourceWindow = messageEvent.source;
+					getArenas(messageEvent.data.value.preSelectedArena);
+				}
+				break;
+			case 'add-arena':
+				addArena(messageEvent.data.value[0], messageEvent.data.value[1]);
+				break;
 		}
+	}
+	function addArena(url, name){
+		let option = document.createElement('option');
+		let json = {};
+		json.name = name;
+		json.raw_url = url;
+		json.html_url = url;
+		option.innerHTML = json.name;
+		json.full_name = name;
+		json.default_branch = null;
+		json.stars = -1;
+		option.dataset.json = JSON.stringify(json);
+		arenaList.appendChild(option);
+		Array.from(arenaList.options).forEach(option => {
+			if(option.selected){
+				option.selected = false;
+			}
+		});
+		option.selected = true;
+		arenaList.onchange({target: option});
 	}
 	function getArenas(preSelectedArena=''){
 		while(0 < arenaList.length){

@@ -1,4 +1,5 @@
 'use strict'
+let addArena;
 let addParticipant;
 function a(){
 	let _sortByStars = false;
@@ -22,7 +23,7 @@ function a(){
 	let contentWindows = {
 		iFrameLog: []
 	};
-	window.onhashchange = ()=>selectArena.contentWindow.postMessage(location.hash.substring(1));
+	window.onhashchange = ()=>selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)});
 	window.onhashchange();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'auto-run'){
@@ -67,6 +68,12 @@ function a(){
 			console.error('Source element not defined!');
 			console.error(messageEvent.source.frameElement);
 		}
+	}
+	addArena = (url='', name='') => {
+		if(name === ''){
+			name = url;
+		}
+		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
