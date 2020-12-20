@@ -36,9 +36,9 @@ function a(){
 				selectArena.style.height = messageEvent.data.value.settings.height + 'px';
 				_json = messageEvent.data.value.option;
 				btnAddTeam.disabled = true;
-				for(const element of document.getElementsByClassName('participant-team-container')){
+				Array.from(document.getElementsByClassName('participant-team-container')).forEach(element => {
 					element.parentNode.removeChild(element);
-				}
+				});
 				document.title = _json.name + ' Arena';
 				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url});
 				getParticipants(_json.name);
@@ -138,9 +138,9 @@ function a(){
 				outputSum.dataset.done = true;
 				outputSum.innerHTML = JSON.stringify(messageEvent.data.value,null,'\t');
 				contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
-				for(const element of document.getElementsByClassName('replay-container')){
+				Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
 					element.parentNode.removeChild(element);
-				}
+				});
 				if(!document.title.startsWith('auto-run')){
 					let replayContainer = document.createElement('iframe');
 					replayContainer.classList.add('replay-container');
@@ -194,11 +194,11 @@ function a(){
 		sortOptions(selectElement_moveTo);
 	}
 	function getParticipants(arena=''){
-		for(const selectElement of document.getElementsByClassName('participants')){
+		Array.from(document.getElementsByClassName('participants')).forEach(selectElement => {
 			while(0 < selectElement.length){
 				selectElement.remove(0);
 			}
-		}
+		});
 		let promises = [];
 		GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
 			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
