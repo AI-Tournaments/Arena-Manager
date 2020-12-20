@@ -36,6 +36,7 @@ function a(){
 					}
 					let json = {};
 					json.name = repo.full_name.replace(/.*\/|-Arena/g, '');
+					json.raw_url = 'https://raw.githubusercontent.com/'+repo.full_name+'/'+repo.default_branch+'/';
 					json.html_url = repo.html_url;
 					option.innerHTML = json.name + ' ' + cssStar + repo.stargazers_count;
 					json.full_name = repo.full_name;

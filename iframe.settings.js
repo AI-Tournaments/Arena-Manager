@@ -10,9 +10,7 @@ function a(){
 	}
 	function setArena(messageEvent){
 		arenaProperties = undefined;
-		fetch('https://raw.githubusercontent.com/ARENA/properties.json'.replace('ARENA', messageEvent.data.value))
-		.then(response => response.json())
-		.then(json => {
+		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(json => {
 			function addInput(fieldset, name, value, properties, arrayIndex){
 				let wrapper;
 				if(arrayIndex === undefined || arrayIndex === 0){

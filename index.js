@@ -40,9 +40,9 @@ function a(){
 					element.parentNode.removeChild(element);
 				}
 				document.title = _json.name + ' Arena';
-				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.full_name+'/'+_json.default_branch});
+				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url});
 				getParticipants(_json.name);
-				fetch('https://raw.githubusercontent.com/'+_json.full_name+'/'+_json.default_branch+'/README.md').then(response => response.text()).then(readme => {
+				fetch(_json.raw_url+'README.md').then(response => response.text()).then(readme => {
 					fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
 					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
 				}).then(response => response.json()).then(response => {
@@ -228,7 +228,7 @@ function a(){
 	}
 	function addParticipantOption(url, name){
 		let option = document.createElement('option');
-		option.dataset.url = url;
+		option.dataset.raw_url = url;
 		option.dataset.name = name;
 		option.innerHTML = option.dataset.name;
 		participantList.appendChild(option);
@@ -271,6 +271,7 @@ function a(){
 	function begin(settings, bracket=[]){
 		let json = {
 			arena: _json.full_name+'/'+_json.default_branch,
+			raw_url: _json.raw_url,
 			participants: bracket,
 			settings: settings
 		};
@@ -282,7 +283,7 @@ function a(){
 					for(const option of select.options){
 						team.push({
 							name: option.dataset.name,
-							url: option.dataset.url
+							url: option.dataset.raw_url
 						});
 					}
 				}
