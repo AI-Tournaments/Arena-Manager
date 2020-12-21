@@ -56,12 +56,12 @@ class ArenaHelper{
 				_teams.forEach(team => {
 					let names = [];
 					opponents.push(names);
-					team.members.forEach(participant => {
+					team.members.forEach(wrapper => {
 						let name = null;
 						if(data.settings.general.displayOpponents === 'Yes'){
-							name = participant.name;
+							name = wrapper.participant.name;
 						}else if(data.settings.general.displayOpponents === 'AccountOnly'){
-							name = participant.name.split('/')[0];
+							name = wrapper.participant.name.split('/')[0];
 						}
 						names.push(name);
 					});
@@ -95,8 +95,8 @@ class ArenaHelper{
 				});
 			}
 			this.postToTeam = (team=-1, message='') => {
-				_teams[team].members.forEach(participant => {
-					participant.postMessage(message);
+				_teams[team].members.forEach(wrapper => {
+					wrapper.participant.postMessage(message);
 				});
 			}
 			this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
@@ -105,16 +105,16 @@ class ArenaHelper{
 				});
 			}
 			this.addCallbackToTeam = (team=-1,onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
-				_teams[team].members.forEach(participant => {
+				_teams[team].members.forEach(wrapper => {
 					if(typeof onmessage === 'function'){
-						participant.onmessage = messageEvent=>{onmessage(participant, messageEvent)};
+						wrapper.onmessage = messageEvent=>{onmessage(wrapper, messageEvent)};
 					}else if(onmessage === null){
-						participant.onmessage = onmessage;
+						wrapper.onmessage = onmessage;
 					}
 					if(typeof onerror === 'function'){
-						participant.onerror = messageEvent=>{onerror(participant, messageEvent)};
+						wrapper.onerror = messageEvent=>{onerror(wrapper, messageEvent)};
 					}else if(onerror === null){
-						participant.onerror = onerror;
+						wrapper.onerror = onerror;
 					}
 				});
 			}
