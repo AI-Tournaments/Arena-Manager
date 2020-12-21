@@ -31,7 +31,7 @@ class ArenaHelper{
 					_participant.payload = {};
 					_participant.onmessage = null;
 					_participant.onerror = null;
-					promises.push(ArenaHelper.CreateWorkerFromRemoteURL(_participantWrapper.private.url, true).then(worker => {
+					promises.push(ArenaHelper.CreateWorkerFromRemoteURL(_participantWrapper.private.url).then(worker => {
 						_participantWrapper.private.worker = worker;
 						worker.onmessage = messageEvent => {
 							_participantWrapper.private.lastCalled = undefined;
@@ -91,7 +91,7 @@ class ArenaHelper{
 			}
 			this.postToAll = (message='') => {
 				_teams.forEach((team,index) => {
-					postToTeam(index, message);
+					this.postToTeam(index, message);
 				});
 			}
 			this.postToTeam = (team=-1, message='') => {
@@ -101,7 +101,7 @@ class ArenaHelper{
 			}
 			this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
 				_teams.forEach((team,index) => {
-					addCallbackToTeam(index, onmessage, onerror);
+					this.addCallbackToTeam(index, onmessage, onerror);
 				});
 			}
 			this.addCallbackToTeam = (team=-1,onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
@@ -208,7 +208,10 @@ class ArenaHelper{
 			}
 			return asyncFetch(url);
 		}else{
-			return new Worker(createObjectURL(new Blob(['importScripts("'+url+'");'], {type: 'application/javascript'})), options);
+			async function createWorker(){
+				return new Worker(createObjectURL(new Blob(['importScripts("'+url+'");'], {type: 'application/javascript'})));
+			}
+			return new Promise(createWorker);
 		}
 	}
 }
