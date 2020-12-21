@@ -31,7 +31,7 @@ class ArenaHelper{
 					_participant.payload = {};
 					_participant.onmessage = null;
 					_participant.onerror = null;
-					promises.push(this.CreateWorkerFromRemoteURL(_participantWrapper.private.url, true).then(worker => {
+					promises.push(ArenaHelper.CreateWorkerFromRemoteURL(_participantWrapper.private.url, true).then(worker => {
 						_participantWrapper.private.worker = worker;
 						worker.onmessage = messageEvent => {
 							_participantWrapper.private.lastCalled = undefined;

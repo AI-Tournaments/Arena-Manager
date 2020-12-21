@@ -6,7 +6,7 @@
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
 		<link rel="stylesheet" href="log.css">
-		<script src="https://chrisacrobat.github.io/js-compilation/CreateWorkerFromRemoteURL.js"></script>
+		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
 		<script>
 			'use strict'
 			let _arena;
@@ -19,7 +19,7 @@
 						data.arena = arenaArray.join('/');
 						_arena = data.arena;
 						document.title = document.title.replace('X', data.arena);
-						fetch(data.raw_url+'/properties.json')
+						fetch(data.raw_url+'properties.json')
 						.then(response => response.json())
 						.then(json => {
 							let limits = json.header.limits;
@@ -33,7 +33,7 @@
 									let output = document.createElement('div');
 									output.classList.add('log');
 									document.body.appendChild(output);
-									createWorkerFromRemoteURL(data.raw_url+'/arena.js', true).then(arena => {
+									ArenaHelper.CreateWorkerFromRemoteURL(data.raw_url+'/arena.js', true).then(arena => {
 										arena.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
 											switch(messageEvent.data.type){
