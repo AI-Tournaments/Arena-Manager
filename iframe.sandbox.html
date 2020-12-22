@@ -33,7 +33,7 @@
 									let output = document.createElement('div');
 									output.classList.add('log');
 									document.body.appendChild(output);
-									ArenaHelper.CreateWorkerFromRemoteURL(data.raw_url+'/arena.js', true).then(arena => {
+									ArenaHelper.CreateWorkerFromRemoteURL(data.raw_url+'arena.js', true).then(arena => {
 										arena.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
 											switch(messageEvent.data.type){
