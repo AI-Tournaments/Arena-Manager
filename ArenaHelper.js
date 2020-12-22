@@ -46,7 +46,7 @@ class ArenaHelper{
 						}
 						_participant.postMessage = data => {
 							_participantWrapper.private.lastCalled = new Date().getTime();
-							worker.postMessage(data);
+							worker.postMessage(JSON.parse(JSON.stringify(data)));
 						}
 					}));
 				});
