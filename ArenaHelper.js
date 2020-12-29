@@ -88,7 +88,7 @@ class ArenaHelper{
 						wrapper.team.splice(wrapper.team.indexOf(wrapper), 1);
 						if(executionTimeViolation){
 							wrapper.private.worker.terminate();
-							participantDropped(wrapper.participant.name, 'Execution time violation.');
+							participantDropped(wrapper.participant, 'Execution time violation.');
 						}
 					}
 				});
