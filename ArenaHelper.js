@@ -7,7 +7,11 @@ class ArenaHelper{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
 	static postDone = ()=>{
-		postMessage({type: 'Done', message: {score: this.#participants.getScores(), settings: participants.getSettings(), log: this.#log}});
+		let colors = [];
+		this.#participants.participants.getSettings().participants.forEach((team, index) => {
+			colors.push(this.#participants.getTeamColor(index));
+		});
+		postMessage({type: 'Done', message: {score: this.#participants.getScores(), teamColors: colors, settings: participants.getSettings(), log: this.#log}});
 	}
 	static postAbort = (participant='', error='')=>{
 		let participantName = participant.name === undefined ? participant : participant.name;
@@ -66,6 +70,14 @@ class ArenaHelper{
 					}
 				});
 			}
+			this.killWorker = (participant, name)=>{
+				let participantWrapper = _teams[participant.team].members[participant.member];
+				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+				let index = participantWrapper.private.workers.findIndex(workerWrapper);
+				worms.splice(index, 1);
+				workerWrapper.lastCalled = null;
+				workerWrapper.worker.terminate();
+			}
 			this.postToAll = (message='') => {
 				_teams.forEach((team,index) => {
 					this.postToTeam(index, message);
@@ -104,15 +116,9 @@ class ArenaHelper{
 			this.addScore = (team, score) => {
 				_teams[team].score += score;
 			}
-			/*this.addBonusScore = (participant, score) => {
-				_teams.forEach(team => {
-					team.members.forEach(_participant => {
-						if(participant === _participant.participant){
-							_participant.private.score += score;
-						}
-					});
-				});
-			}*/
+			this.addBonusScore = (participant, score) => {
+				_teams[participant.team].members[participant.member].private.score += score;
+			}
 			this.getScores = () => {
 				let scores = [];
 				_teams.forEach(team => {
@@ -129,7 +135,8 @@ class ArenaHelper{
 				});
 				return scores;
 			}
-			this.getTeamColor = index => {
+			this.getTeamColor = indexOrParticipant => {
+				let index = typeof index === 'object' ? indexOrParticipant.team : indexOrParticipant;
 				let color = {};
 				let hue = Double(index)/Double(_teams.length);
 				let saturation = 0.5;
@@ -149,11 +156,13 @@ class ArenaHelper{
 				color.B = hue2rgb(_p, _q, hue - 1/3.0)*255;
 				return color;
 			}
-			this.terminate = () => {
+			this.terminateAllWorkers = () => {
 				terminated = true;
-				wrappers.forEach(wrapper => {
-					wrapper.private.lastCalled = null;
-					wrapper.private.worker.terminate();
+				wrappers.forEach(participantWrapper => {
+					participantWrapper.private.workers.forEach(workerWrapper => {
+						workerWrapper.lastCalled = null;
+						workerWrapper.worker.terminate();
+					});
 				});
 			}
 			data.participants.forEach((team, teamIndex) => {
