@@ -10,10 +10,13 @@ class ArenaHelper{
 			let promises = [];
 			let _teams = [];
 			let wrappers = [];
+			let ready = [];
 			data.participants.forEach(team => {
 				let _team = [];
 				_teams.push({score: 0, members: _team});
 				team.forEach(participant => {
+					let participantReady;
+					ready.push(new Promise(resolve => participantReady = resolve));
 					let _participantWrapper = {};
 					let _participant = {};
 					_participantWrapper.private = {
@@ -33,10 +36,14 @@ class ArenaHelper{
 					_participant.onerror = null;
 					promises.push(ArenaHelper.CreateWorkerFromRemoteURL(_participantWrapper.private.url, true).then(worker => {
 						_participantWrapper.private.worker = worker;
-						worker.onmessage = messageEvent => {
+						worker.onmessage = () => {
 							_participantWrapper.private.lastCalled = undefined;
-							if(typeof _participant.onmessage === 'function'){
-								_participant.onmessage(messageEvent);
+							participantReady();
+							worker.onmessage = messageEvent => {
+								_participantWrapper.private.lastCalled = undefined;
+								if(typeof _participant.onmessage === 'function'){
+									_participant.onmessage(messageEvent);
+								}
 							}
 						}
 						worker.onerror = messageEvent => {
@@ -72,7 +79,7 @@ class ArenaHelper{
 					this.postToTeam(index, {settings: data.settings, opponents: _opponents});
 				});
 				executionWatcher(data.settings.general.timelimit_ms);
-				onReady();
+				Promise.all(ready).then(onReady).catch(error => onError(error));
 			}).catch(error => onError(error));
 			function executionWatcher(executionLimit=1000){
 				wrappers.forEach(wrapper => {
@@ -107,14 +114,14 @@ class ArenaHelper{
 			this.addCallbackToTeam = (team=-1,onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
 				_teams[team].members.forEach(wrapper => {
 					if(typeof onmessage === 'function'){
-						wrapper.onmessage = messageEvent=>{onmessage(wrapper, messageEvent)};
+						wrapper.participant.onmessage = messageEvent=>{onmessage(wrapper.participant, messageEvent)};
 					}else if(onmessage === null){
-						wrapper.onmessage = onmessage;
+						wrapper.participant.onmessage = onmessage;
 					}
 					if(typeof onerror === 'function'){
-						wrapper.onerror = messageEvent=>{onerror(wrapper, messageEvent)};
+						wrapper.participant.onerror = messageEvent=>{onerror(wrapper.participant, messageEvent)};
 					}else if(onerror === null){
-						wrapper.onerror = onerror;
+						wrapper.participant.onerror = onerror;
 					}
 				});
 			}
