@@ -7,6 +7,7 @@ class ArenaHelper{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
 	static postDone = ()=>{
+		this.#participants.terminateAllWorkers();
 		let scores = this.#participants.getScores();
 		let colors = [];
 		scores.forEach((team, index) => {
@@ -15,6 +16,7 @@ class ArenaHelper{
 		postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: participants.getSettings(), log: this.#log}});
 	}
 	static postAbort = (participant='', error='')=>{
+		this.#participants.terminateAllWorkers();
 		let participantName = participant.name === undefined ? participant : participant.name;
 		postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
 	}
@@ -161,8 +163,7 @@ class ArenaHelper{
 				terminated = true;
 				wrappers.forEach(participantWrapper => {
 					participantWrapper.private.workers.forEach(workerWrapper => {
-						workerWrapper.lastCalled = null;
-						workerWrapper.worker.terminate();
+						this.killWorker(participantWrapper.participant, workerWrapper.name);
 					});
 				});
 			}
