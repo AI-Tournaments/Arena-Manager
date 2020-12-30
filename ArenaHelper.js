@@ -7,11 +7,12 @@ class ArenaHelper{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
 	static postDone = ()=>{
+		let scores = this.#participants.getScores();
 		let colors = [];
-		this.#participants.participants.getSettings().participants.forEach((team, index) => {
+		scores.forEach((team, index) => {
 			colors.push(this.#participants.getTeamColor(index));
 		});
-		postMessage({type: 'Done', message: {score: this.#participants.getScores(), teamColors: colors, settings: participants.getSettings(), log: this.#log}});
+		postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: participants.getSettings(), log: this.#log}});
 	}
 	static postAbort = (participant='', error='')=>{
 		let participantName = participant.name === undefined ? participant : participant.name;
@@ -136,9 +137,9 @@ class ArenaHelper{
 				return scores;
 			}
 			this.getTeamColor = indexOrParticipant => {
-				let index = typeof index === 'object' ? indexOrParticipant.team : indexOrParticipant;
+				let index = typeof indexOrParticipant === 'object' ? indexOrParticipant.team : indexOrParticipant;
 				let color = {};
-				let hue = Double(index)/Double(_teams.length);
+				let hue = index/_teams.length;
 				let saturation = 0.5;
 				let lightness = 0.5;
 				let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
