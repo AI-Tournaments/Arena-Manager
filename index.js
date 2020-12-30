@@ -4,6 +4,7 @@ let addParticipant;
 function a(){
 	let _sortByStars = false;
 	let _json;
+	let localArenas = {};
 	let arenaProperties;
 	let selectArena = document.getElementById('selectArena');
 	let participantList = document.getElementById('participants-selectable');
@@ -69,10 +70,11 @@ function a(){
 			console.error(messageEvent.source.frameElement);
 		}
 	}
-	addArena = (url='', name='') => {
+	addArena = (url='', name='', replayURL='') => {
 		if(name === ''){
 			name = url;
 		}
+		localArenas[url] = replayURL;
 		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
@@ -141,6 +143,13 @@ function a(){
 				}
 			});
 			if(isDone){
+				let defaultReplay = localArenas[_json.raw_url];
+				let replayData = {
+					header: {
+						defaultReplay: defaultReplay
+					},
+					body: messageEvent.data.value
+				};
 				outputSum.dataset.array = JSON.stringify(messageEvent.data.value);
 				outputSum.dataset.done = true;
 				outputSum.innerHTML = JSON.stringify(messageEvent.data.value,null,'\t');
@@ -151,7 +160,7 @@ function a(){
 				if(!document.title.startsWith('auto-run')){
 					let replayContainer = document.createElement('iframe');
 					replayContainer.classList.add('replay-container');
-					replayContainer.src = '../Replay/#'+outputSum.dataset.array;
+					replayContainer.src = '../Replay/#'+JSON.stringify(replayData);
 					document.body.appendChild(replayContainer);
 				}
 			}else{
