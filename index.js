@@ -245,8 +245,12 @@ function a(){
 				})
 			});
 		}else{
-			localParticipants.forEach(participant => {
-				addParticipant(participant);
+			localParticipants.reverse().forEach((participant, index) => {
+				if(typeof participant === 'object'){
+					addParticipant(participant[0], participant[1]);
+				}else{
+					addParticipant(participant, 'Manually added participant '+(index+1));
+				}
 			});
 			localParticipants = null;
 		}
