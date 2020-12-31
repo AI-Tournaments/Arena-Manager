@@ -154,9 +154,9 @@ class ArenaHelper{
 					if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
 					return _p;
 				}
-				color.R = hue2rgb(_p, _q, hue + 1/3.0)*255;
-				color.G = hue2rgb(_p, _q, hue)*255;
-				color.B = hue2rgb(_p, _q, hue - 1/3.0)*255;
+				color.R = hue2rgb(_p, _q, hue + 1/3.0);
+				color.G = hue2rgb(_p, _q, hue);
+				color.B = hue2rgb(_p, _q, hue - 1/3.0);
 				return color;
 			}
 			this.terminateAllWorkers = () => {
