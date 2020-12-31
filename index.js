@@ -5,6 +5,7 @@ function a(){
 	let _sortByStars = false;
 	let _json;
 	let localArenas = {};
+	let localParticipants = null
 	let arenaProperties;
 	let selectArena = document.getElementById('selectArena');
 	let participantList = document.getElementById('participants-selectable');
@@ -70,12 +71,13 @@ function a(){
 			console.error(messageEvent.source.frameElement);
 		}
 	}
-	addArena = (url='', name='', replayURL='') => {
+	addArena = (url='', name='', replayURL='', ...participants) => {
 		if(name === ''){
 			name = url;
 		}
 		localArenas[url] = replayURL;
 		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
+		localParticipants = participants;
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
@@ -215,32 +217,39 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		let promises = [];
-		GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
-			headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
-		}).then(response => response.json()).then(response => {
-			response.items.forEach(repo => {
-				if(!repo.topics.includes('retired')){
-					promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
-					.then(response => response.json())
-					.then(data => {
-						data.tree.forEach(file =>{
-							if(file.type === 'blob' && file.path === 'participant.js'){
-								let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
-								let name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
-								addParticipantOption(url, name);
-							}
-						});
-					})
-					.catch(error => {
-						console.error(error);
-					}));
-				}
+		if(localParticipants === null){
+			let promises = [];
+			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Participant+topic:'+arena,{
+				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
+			}).then(response => response.json()).then(response => {
+				response.items.forEach(repo => {
+					if(!repo.topics.includes('retired')){
+						promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
+						.then(response => response.json())
+						.then(data => {
+							data.tree.forEach(file =>{
+								if(file.type === 'blob' && file.path === 'participant.js'){
+									let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
+									let name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
+									addParticipantOption(url, name);
+								}
+							});
+						})
+						.catch(error => {
+							console.error(error);
+						}));
+					}
+				});
+				Promise.all(promises).then(() => {
+					sortOptions(participantList);
+				})
 			});
-			Promise.all(promises).then(() => {
-				sortOptions(participantList);
-			})
-		});
+		}else{
+			localParticipants.forEach(participant => {
+				addParticipant(participant);
+			});
+			localParticipants = null;
+		}
 	}
 	function addParticipantOption(url, name){
 		let option = document.createElement('option');
