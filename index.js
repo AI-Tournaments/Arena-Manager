@@ -25,6 +25,8 @@ function a(){
 	let contentWindows = {
 		iFrameLog: []
 	};
+	let arenaListReady;
+	let arenaListReadyPromise = new Promise(resolve => arenaListReady = resolve);
 	window.onhashchange = ()=>selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)});
 	window.onhashchange();
 	window.onmessage = messageEvent => {
@@ -76,8 +78,10 @@ function a(){
 			name = url;
 		}
 		localArenas[url] = replayURL;
+		arenaListReadyPromise.then(()=>{
 		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
 		localParticipants = participants;
+		});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
@@ -242,6 +246,7 @@ function a(){
 				});
 				Promise.all(promises).then(() => {
 					sortOptions(participantList);
+					arenaListReady();
 				})
 			});
 		}else{
