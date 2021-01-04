@@ -193,9 +193,16 @@ function a(){
 			selectElement.add(option);
 		}
 	}
-	function validateTeams(){
+	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		return arenaProperties.header.limits.teams.min <= selectElements.length && selectElements.length <= arenaProperties.header.limits.teams.max;
+		return selectElements.length <= arenaProperties.header.limits.teams.max;
+	}
+	function validateTeamsMin(){
+		let selectElements = document.getElementsByClassName('participant-team');
+		return arenaProperties.header.limits.teams.min <= selectElements.length;
+	}
+	function validateTeams(){
+		return validateTeamsMin() <= selectElements.length && validateTeamsMax();
 	}
 	function validateStart(){
 		let selectElements = document.getElementsByClassName('participant-team');
@@ -275,7 +282,7 @@ function a(){
 	}
 	function createTeam(){
 		let teamIndex = document.getElementsByClassName('participant-team-container').length + 1;
-		btnAddTeam.disabled = !validateTeams();
+		btnAddTeam.disabled = !validateTeamsMax();
 		let teamID = 'participant-team-' + teamIndex;
 		let participantTeam = document.createElement('div');
 		participantTeam.classList.add('participant-team-container');
