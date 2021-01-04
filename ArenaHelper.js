@@ -75,9 +75,10 @@ class ArenaHelper{
 			}
 			this.killWorker = (participant, name)=>{
 				let participantWrapper = _teams[participant.team].members[participant.member];
-				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
-				let index = participantWrapper.private.workers.findIndex(w => w === workerWrapper);
-				worms.splice(index, 1);
+				let workers = participantWrapper.private.workers;
+				let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
+				let index = workers.findIndex(w => w === workerWrapper);
+				workers.splice(index, 1);
 				workerWrapper.lastCalled = null;
 				workerWrapper.worker.terminate();
 			}
