@@ -79,8 +79,8 @@ function a(){
 		}
 		localArenas[url] = replayURL;
 		arenaListReadyPromise.then(()=>{
+			localParticipants = participants;
 		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
-		localParticipants = participants;
 		});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
@@ -180,8 +180,13 @@ function a(){
 		}
 		let options = [...selectElement.options];
 		options.sort(function(a, b){
+			if(a.classList.contains('local') && b.classList.contains('local')){
+				if(value(a) < value(b)){return -1;}
+				if(value(b) < value(a)){return 1;}
+			}else{
 			if(a.classList.contains('local') ? true : value(a) < value(b)){return -1;}
 			if(b.classList.contains('local') ? true : value(b) < value(a)){return 1;}
+			}
 			return 0;
 		});
 		for(let option of options){
