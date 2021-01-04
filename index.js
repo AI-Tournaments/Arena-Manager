@@ -202,7 +202,7 @@ function a(){
 		return arenaProperties.header.limits.teams.min <= selectElements.length;
 	}
 	function validateTeams(){
-		return validateTeamsMin() <= selectElements.length && validateTeamsMax();
+		return validateTeamsMin() && validateTeamsMax();
 	}
 	function validateStart(){
 		let selectElements = document.getElementsByClassName('participant-team');
