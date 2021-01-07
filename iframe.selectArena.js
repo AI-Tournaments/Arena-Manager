@@ -28,14 +28,15 @@ function a(){
 	}
 	function addArena(url, name){
 		let option = document.createElement('option');
-		let json = {};
-		json.name = name;
-		json.raw_url = url;
-		json.html_url = url;
+		let json = {
+			name: name,
+			raw_url: url,
+			html_url: url,
+			full_name: name,
+			default_branch: null,
+			stars: -1
+		};
 		option.innerHTML = json.name;
-		json.full_name = name;
-		json.default_branch = null;
-		json.stars = -1;
 		option.dataset.json = JSON.stringify(json);
 		arenaList.appendChild(option);
 		Array.from(arenaList.options).forEach(option => {
@@ -50,24 +51,28 @@ function a(){
 		while(0 < arenaList.length){
 			arenaList.remove(0);
 		}
-		function addOptions(repos){
+		GitHubApi.fetchArenas().then(repos => {
 			let preSelected = undefined;
+			let options = [...arenaFilter.selectedOptions].flatMap(selectedOption => selectedOption.value);
 			repos.forEach(repo => {
-				if(repo.owner.login === 'AI-Tournaments' ? repo.full_name.endsWith('-Arena') : true){
+				let official = repo.owner.login === 'AI-Tournaments';
+				if(options.includes('all') || (official && options.includes('official')) || (!official && options.includes('community'))){
 					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 					cssStar = cssStar.substring(1,cssStar.length-1);
 					let option = document.createElement('option');
 					if(preSelectedArena === repo.full_name){
 						preSelected = option;
 					}
-					let json = {};
-					json.name = repo.full_name.replace(/.*\/|-Arena/g, '');
-					json.raw_url = 'https://raw.githubusercontent.com/'+repo.full_name+'/'+repo.default_branch+'/';
-					json.html_url = repo.html_url;
+					let json = {
+						official: official,
+						name: repo.full_name.replace(/.*\/|-Arena/g, ''),
+						raw_url: 'https://raw.githubusercontent.com/'+repo.full_name+'/'+repo.default_branch+'/',
+						html_url: repo.html_url,
+						full_name: repo.full_name,
+						default_branch: repo.default_branch,
+						stars: repo.stargazers_count
+					};
 					option.innerHTML = json.name + ' ' + cssStar + repo.stargazers_count;
-					json.full_name = repo.full_name;
-					json.default_branch = repo.default_branch;
-					json.stars = repo.stargazers_count;
 					option.dataset.json = JSON.stringify(json);
 					arenaList.appendChild(option);
 				}
@@ -80,15 +85,7 @@ function a(){
 				preSelected.selected = true;
 				arenaList.onchange({target: preSelected});
 			}
-		}
-		for(const selectedOption of arenaFilter.selectedOptions){
-			if(['all', 'official'].includes(selectedOption.value)){
-				GitHubApi.fetch('orgs/AI-Tournaments/repos').then(response => response.json()).then(addOptions);
-			}
-			if(['all', 'community'].includes(selectedOption.value)){
-				GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:Community-Arena-v1').then(response => response.json()).then(response => addOptions(response.items));
-			}
-		}
+		});
 	}
 	function getOption(element, event){
 		for(const option of element.getElementsByTagName('option')){
