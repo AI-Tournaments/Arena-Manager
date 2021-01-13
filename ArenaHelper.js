@@ -20,43 +20,141 @@ class ArenaHelper{
 		let participantName = participant.name === undefined ? participant : participant.name;
 		postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
 	}
+	static #onmessage = messageEvent=>{
+		switch(messageEvent.data.type){
+			default:
+				debugger;
+				break;
+			case 'Start':
+				ArenaHelper.Participants.onReadyCallback();
+				break;
+		}
+		if(messageEvent.data === 'Start'){
+			debugger;
+			console.error('TODO: Change to messageEvent.data.type');
+			ArenaHelper.Participants.onReadyCallback();
+		}
+	}
+	static #onmessageerror = messageEvent=>{
+		console.error(messageEvent);
+		ArenaHelper.postAbort('Message-Error', error.data);
+	}
 	static Participants = class{
+		static onReadyCallback;
 		/** INPUT
 		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
 		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
 		 */
-		constructor(data={}, onReady=()=>{}, onError=()=>{}, participantDropped=()=>{}){
+		constructor(data={}, onReady=()=>{}, participantDropped=()=>{}){
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
 			ArenaHelper.#setParticipants(this);
+			onmessage = ArenaHelper.#onmessage;
+			onmessageerror = ArenaHelper.#onmessageerror;
+			function onMessageWatcher(){
+				if(onmessage !== ArenaHelper.#onmessage || onmessageerror !== ArenaHelper.#onmessageerror){
+					let message = 'onmessage is required by the ArenaHelper, do not reassign a callback to onmessage after arena initiation.';
+					console.error(message);
+					ArenaHelper.postAbort('OnMessage-Detached', message);
+				}else{
+					setTimeout(onMessageWatcher, 1000);
+				}
+			}
+			onMessageWatcher();
+			ArenaHelper.Participants.onReadyCallback = onReady;
 			let terminated = false;
 			let promises = [];
 			let _teams = [];
 			let wrappers = [];
 			let ready = [];
-			this.addWorker = (participant, name='', workerReady=()=>{}) => {
-				let participantWrapper = _teams[participant.team].members[participant.member];
-				if(undefined !== participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name)){
+			this.addWorker = (participant, name='') => {
+				let team = _teams[participant.team];
+				let participantWrapper = team.members[participant.member];
+				let worker = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+				if(worker !== undefined){
 					throw new Error('Participant already has worker with name "'+name+'".');
 				}
-				return ArenaHelper.CreateWorkerFromRemoteURL(participantWrapper.private.url, true).then(worker => {
-					let workerWrapper = {
-						lastCalled: undefined,
-						worker: worker,
-						name: name
+				let workerWrapper = {
+					lastCalled: undefined,
+					name: name,
+					promiseWorkerReady: null
+				};
+				if(team.precomputedWorkerData === null){
+					let opponents = [];
+					_teams.forEach((team, teamIndex) => {
+						if(participant.team === teamIndex){
+							opponents.push(null);
+						}else{
+							let names = [];
+							opponents.push(names);
+							team.members.forEach(participantWrapper => {
+								let name = null;
+								if(data.settings.general.displayOpponents === 'Yes'){
+									name = participantWrapper.participant.name;
+								}else if(data.settings.general.displayOpponents === 'AccountOnly'){
+									name = participantWrapper.participant.name.split('/')[0];
+								}
+								names.push(name);
+							});
+						}
+					});
+					team.precomputedWorkerData = {
+						settings: data.settings,
+						opponents: opponents
 					};
+				}
+				participantWrapper.private.workers.push(workerWrapper);
+				postMessage({
+					type: 'Add-Worker',
+					message: {
+						iframeId: 'team-'+participant.team+'_'+'member-'+participant.member,
+						participant: [participant.team, participant.member],
+						name: name,
+						url: participantWrapper.private.url,
+						workerData: team.precomputedWorkerData
+					}
+				});
+				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
+				/*//////////////// Old.
+				return ArenaHelper.CreateWorkerFromRemoteURL(participantWrapper.private.url, true).then(worker => {
 					participantWrapper.private.workers.push(workerWrapper);
 					worker.onmessage = messageEvent => {
-						if(participantWrapper.private.precomputedWorkerData === undefined){
-							participantWrapper.private.precomputedWorkerData = messageEvent.data;
-						}
-						workerWrapper.lastCalled = undefined;
-						workerReady();
+						console.error('Kill internet!');
+						Promise.all(promises).then(() => {
+							let opponents = [];
+							_teams.forEach((team, teamIndex) => {
+								if(participant.team === teamIndex){
+									opponents.push(null);
+								}else{
+									let names = [];
+									opponents.push(names);
+									team.members.forEach(participantWrapper => {
+										let name = null;
+										if(data.settings.general.displayOpponents === 'Yes'){
+											name = participantWrapper.participant.name;
+										}else if(data.settings.general.displayOpponents === 'AccountOnly'){
+											name = participantWrapper.participant.name.split('/')[0];
+										}
+										names.push(name);
+									});
+								}
+							});
+							team.precomputedWorkerData = {
+								settings: data.settings,
+								opponents: opponents
+							};
+							let workerData = JSON.parse(JSON.stringify(team.precomputedWorkerData));
+							worker.postMessage(index, workerData);
+						});
 						worker.onmessage = messageEvent => {
 							workerWrapper.lastCalled = undefined;
-							if(typeof participantWrapper.participant.onmessage === 'function'){
-								participantWrapper.participant.onmessage(messageEvent, participantWrapper.participant, workerWrapper.name);
+							workerReady();
+							worker.onmessage = messageEvent => {
+								workerWrapper.lastCalled = undefined;
+								if(typeof participantWrapper.participant.onmessage === 'function'){
+									participantWrapper.participant.onmessage(messageEvent, participantWrapper.participant, workerWrapper.name);
+								}
 							}
 						}
 					}
@@ -65,13 +163,15 @@ class ArenaHelper{
 							participantWrapper.participant.onerror(messageEvent);
 						}
 					}
-					if(participantWrapper.private.precomputedWorkerData !== undefined){
-						let data = JSON.parse(JSON.stringify(team.precomputedWorkerData));
-						data.name = name;
-						data.precomputedWorkerData = participantWrapper.private.precomputedWorkerData;
-						worker.postMessage(data);
-					}
+				x	if(participantWrapper.private.precomputedWorkerData !== undefined){
+				x		let data = JSON.parse(JSON.stringify(team.precomputedWorkerData));
+				x		data.name = name;
+				x		data.precomputedWorkerData = participantWrapper.private.precomputedWorkerData;
+				x		worker.postMessage(data);
+				x	}
+					worker.postMessage(null);
 				});
+				*/
 			}
 			this.killWorker = (participant, name)=>{
 				let participantWrapper = _teams[participant.team].members[participant.member];
@@ -126,22 +226,22 @@ class ArenaHelper{
 			this.getScores = () => {
 				let scores = [];
 				_teams.forEach(team => {
-					let result = {};
+					let result = {
+						score: team.score,
+						members: []
+					};
 					scores.push(result);
-					result.score = team.score;
-					result.members = [];
 					team.members.forEach(participantWrapper => {
-						let member = {};
-						result.members.push(member);
-						member.name = participantWrapper.participant.name;
-						member.bonus = participantWrapper.private.score;
+						result.members.push({
+							name: participantWrapper.participant.name,
+							bonus: participantWrapper.private.score
+						});
 					});
 				});
 				return scores;
 			}
 			this.getTeamColor = indexOrParticipant => {
 				let index = typeof indexOrParticipant === 'object' ? indexOrParticipant.team : indexOrParticipant;
-				let color = {};
 				let hue = index/_teams.length;
 				let saturation = 0.5;
 				let lightness = 0.5;
@@ -155,10 +255,11 @@ class ArenaHelper{
 					if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
 					return _p;
 				}
-				color.R = hue2rgb(_p, _q, hue + 1/3.0);
-				color.G = hue2rgb(_p, _q, hue);
-				color.B = hue2rgb(_p, _q, hue - 1/3.0);
-				return color;
+				return {
+					R: hue2rgb(_p, _q, hue + 1/3.0),
+					G: hue2rgb(_p, _q, hue),
+					B: hue2rgb(_p, _q, hue - 1/3.0)
+				};
 			}
 			this.terminateAllWorkers = () => {
 				terminated = true;
@@ -169,83 +270,47 @@ class ArenaHelper{
 				});
 			}
 			data.participants.forEach((team, teamIndex) => {
-				let _team = [];
-				_teams.push({score: 0, members: _team});
+				let members = [];
+				_teams.push({score: 0, members: members, precomputedWorkerData: null});
 				team.forEach((participant, participantIndex) => {
 					let participantReady;
 					ready.push(new Promise(resolve => participantReady = resolve));
-					let _participantWrapper = {};
-					let _participant = {};
-					_participantWrapper.private = {
-						url: participant.url,
-						score: 0,
-						workers: [],
-						precomputedWorkerData: undefined
+					let _participantWrapper = {
+						participant: {
+							name: participant.name,
+							team: teamIndex,
+							member: participantIndex,
+							payload: {},
+							onmessage: null,
+							onerror: null,
+							postMessage: (data, workerName) => {
+								let workerWrapper = workerName === undefined ? _participantWrapper.private.workers[0] : participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === workerName);
+								workerWrapper.lastCalled = new Date().getTime();
+								workerWrapper.worker.postMessage(JSON.parse(JSON.stringify(data)));
+							}
+						},
+						team: team,
+						private: {
+							url: participant.url,
+							score: 0,
+							workers: []
+						}
 					};
-					_participantWrapper.participant = _participant;
-					_participantWrapper.team = team;
-					_team.push(_participantWrapper);
+					members.push(_participantWrapper);
 					wrappers.push(_participantWrapper);
-					_participant.name = participant.name;
-					_participant.team = teamIndex;
-					_participant.member = participantIndex;
-					_participant.payload = {};
-					_participant.onmessage = null;
-					_participant.onerror = null;
-					_participant.postMessage = (data, workerName) => {
-						let workerWrapper = workerName === undefined ? _participantWrapper.private.workers[0] : participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === workerName);
-						workerWrapper.lastCalled = new Date().getTime();
-						workerWrapper.worker.postMessage(JSON.parse(JSON.stringify(data)));
-					}
-					promises.push(this.addWorker(_participant, 'main', participantReady));
+					let promise = this.addWorker(_participantWrapper.participant, '');
+					promise.then(participantReady);
+					promises.push(promise);
 				});
 			});
-			Promise.all(promises).then(() => {
-				let opponents = [];
-				_teams.forEach(team => {
-					let names = [];
-					opponents.push(names);
-					team.members.forEach(participantWrapper => {
-						let name = null;
-						if(data.settings.general.displayOpponents === 'Yes'){
-							name = participantWrapper.participant.name;
-						}else if(data.settings.general.displayOpponents === 'AccountOnly'){
-							name = participantWrapper.participant.name.split('/')[0];
-						}
-						names.push(name);
-					});
-				});
-				_teams.forEach((team,index) => {
-					let _opponents = JSON.parse(JSON.stringify(opponents));
-					_opponents[index] = undefined;
-					team.precomputedWorkerData = {
-						settings: data.settings,
-						opponents: _opponents
-					};
-					let workerData = JSON.parse(JSON.stringify(team.precomputedWorkerData));
-					workerData.name = 'main';
-					this.postToTeam(index, workerData);
-				});
-				executionWatcher(data.settings.general.timelimit_ms);
-				Promise.all(ready).then(onReady).catch(error => onError(error));
-			}).catch(error => onError(error));
-			function executionWatcher(executionLimit=1000){
-				wrappers.forEach(participantWrapper => {
-					participantWrapper.private.workers.forEach(workerWrapper => {
-						let executionTimeViolation = workerWrapper.lastCalled === undefined ? false : executionLimit < new Date().getTime() - workerWrapper.lastCalled;
-						if(workerWrapper.lastCalled === null || executionTimeViolation){
-							participantWrapper.team.splice(participantWrapper.team.indexOf(participantWrapper), 1);
-							if(executionTimeViolation){
-								workerWrapper.worker.terminate();
-								participantDropped(participantWrapper.participant, 'Execution time violation.', workerWrapper.name);
-							}
-						}
-					});
-				});
-				if(!terminated){
-					setTimeout(executionWatcher, executionLimit, executionLimit);
-				}
+			let _onError = error=>{
+				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
+			Promise.all(promises).then(() => {
+				Promise.all(ready).then(()=>{
+					postMessage({type: 'Ready-To-Start', message: null});
+				}).catch(error => _onError(error));
+			}).catch(error => _onError(error));
 		}
 	}
 	static CreateWorkerFromRemoteURL(url='', useFetch=false){

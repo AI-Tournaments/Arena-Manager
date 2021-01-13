@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Participant worker (IFrame)</title>
+		<meta content="width=device-width, initial-scale=1.0" name="viewport">
+		<meta content="yes" name="mobile-web-app-capable">
+		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
+		<script>
+			'use strict'
+			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
+			let _worker = null;
+			let _parent = null;
+			function a(){
+				function isIframe(){
+					try{
+						return window.self !== window.top;
+					}catch(e){
+						return true;
+					}
+				}
+				if(isIframe()){
+					/*
+					Promise.all(promises).then(() => {
+						executionWatcher(data.settings.general.timelimit_ms);
+					}).catch(error => _onError(error));
+					function executionWatcher(executionLimit=1000){
+						wrappers.forEach(participantWrapper => {
+							participantWrapper.private.workers.forEach(workerWrapper => {
+								let executionTimeViolation = workerWrapper.lastCalled === undefined ? false : executionLimit < new Date().getTime() - workerWrapper.lastCalled;
+								if(workerWrapper.lastCalled === null || executionTimeViolation){
+									participantWrapper.team.splice(participantWrapper.team.indexOf(participantWrapper), 1);
+									if(executionTimeViolation){
+										workerWrapper.worker.terminate();
+										participantDropped(participantWrapper.participant, 'Execution time violation.', workerWrapper.name);
+									}
+								}
+							});
+						});
+						if(!terminated){
+							setTimeout(executionWatcher, executionLimit, executionLimit);
+						}
+					}
+					*/
+					function blockNetwork(){
+						window.stop();
+						window.requestAnimationFrame(blockNetwork);
+					}
+					window.onmessage = messageEvent => {
+						if(_parent === null){
+							_parent = messageEvent.source;
+						}
+						window.onmessage = messageEvent => {
+							if(_parent === null){
+								_parent = messageEvent.source;
+							}
+							switch(messageEvent.data.type){
+								case 'post': post(messageEvent.data.data.name); break;
+								case 'update': update(messageEvent.data.data.name); break;
+							}
+						}
+						ArenaHelper.CreateWorkerFromRemoteURL(_data.url, true).then(worker=>{
+							_worker = worker;
+							if(!messageEvent.data.allowRemoteExecution){
+								blockNetwork();
+							}
+							_worker.onerror = messageEvent => {
+								debugger;
+							}
+							_worker.onmessage = messageEvent => {
+								debugger;
+							}
+							_worker.postMessage(messageEvent.data);
+							_parent.postMessage({type: 'Event', payload: {event: 'Worker-Created', source: {participant: _data.participant, name: _data.name}}}, '*');
+						});
+					}
+				}else{
+					window.location.replace(window.location.href.replace('\/(?:.(?!\/))+$', '/'));
+				}
+			}
+		</script>
+	</head>
+	<body onload="a()"></body>
+</html>
