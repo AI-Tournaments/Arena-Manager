@@ -9,9 +9,9 @@
 		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
 		<script>
 			'use strict'
-			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
-			let _arenaWorker = null;
 			let _parent = null;
+			let _arenaWorker = null;
+			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
 			function a(){
 				function isIframe(){
 					try{
@@ -27,19 +27,22 @@
 					}
 					function addWorker(data){
 						function post(){
-							iframe.contentWindow.postMessage({type: 'Add-Worker', data: {name: data.name, participant: data.participant, workerData: data.workerData}}, '*');
+							iframe.contentWindow.postMessage({url: data.url, name: data.name, participant: data.participant, workerData: data.workerData}, '*');
 						}
 						let iframe = document.getElementById(data.iframeId);
 						if(iframe === null){
 							iframe = document.createElement('iframe');
 							iframe.id = data.iframeId;
-							iframe.src = 'iframe.sandbox.participant.html#'+data.url;
+							iframe.src = 'iframe.sandbox.participant.worker.html';
 							iframe.sandbox = 'allow-scripts';
 							document.body.appendChild(iframe);
 							setTimeout(post,1000);
 						}else{
-							post();
+							_arenaWorker.postMessage('Participant-worker "'+data.iframeId+'" already exist!');
 						}
+					}
+					function messageWorker(message){
+						document.getElementById(message.receiver).contentWindow.postMessage(message.body, '*');
 					}
 					function getOutput(){
 						let output = {
@@ -101,7 +104,7 @@
 													if(!_data.settings.general.allowRemoteExecution){
 														blockNetwork();
 													};
-													arena.postMessage('Start');
+													arena.postMessage({type: 'Start'});
 													break;
 												case 'Done':
 												case 'Aborted':
@@ -109,6 +112,9 @@
 													break;
 												case 'Add-Worker':
 													addWorker(messageEvent.data.message);
+													break;
+												case 'Message-Worker':
+													messageWorker(messageEvent.data.message);
 													break;
 											}
 										};

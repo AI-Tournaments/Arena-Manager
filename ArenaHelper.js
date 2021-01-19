@@ -2,6 +2,11 @@
 class ArenaHelper{
 	static #log = [];
 	static #participants = null;
+	static #participants_onError = null;
+	static #participants_onMessage = null;
+	static #participants_workerCreated = null;
+	static #participants_onReadyCallback = null;
+	static #participants_getParticipantWrapper = null;
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value, raw=false)=>{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
@@ -22,25 +27,31 @@ class ArenaHelper{
 	}
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
-			default:
-				debugger;
-				break;
-			case 'Start':
-				ArenaHelper.Participants.onReadyCallback();
-				break;
-		}
-		if(messageEvent.data === 'Start'){
-			debugger;
-			console.error('TODO: Change to messageEvent.data.type');
-			ArenaHelper.Participants.onReadyCallback();
+			default: debugger; break;
+			case 'Start': ArenaHelper.#participants_onReadyCallback(); break;
+			case 'Event': ArenaHelper.#event(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}
 	}
 	static #onmessageerror = messageEvent=>{
 		console.error(messageEvent);
 		ArenaHelper.postAbort('Message-Error', error.data);
 	}
+	static #event = (event, source, payload) => {
+		switch(event){
+			default: debugger; break;
+			case 'Message': ArenaHelper.#participants_onMessage(source, payload); break;
+			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
+			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
+		}
+	}
 	static Participants = class{
-		static onReadyCallback;
+		static #messageWorker = (name='', participantWrapper, body) => {
+			let workerWrapper = name === undefined ? participantWrapper.private.workers[0] : participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+			if(!workerWrapper.ready){
+				throw new Error('Error: Worker called before it was ready.');
+			}
+			postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
+		}
 		/** INPUT
 		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
 		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
@@ -49,6 +60,10 @@ class ArenaHelper{
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
+			let terminated = false;
+			let promises = [];
+			let _teams = [];
+			let wrappers = [];
 			ArenaHelper.#setParticipants(this);
 			onmessage = ArenaHelper.#onmessage;
 			onmessageerror = ArenaHelper.#onmessageerror;
@@ -62,23 +77,34 @@ class ArenaHelper{
 				}
 			}
 			onMessageWatcher();
-			ArenaHelper.Participants.onReadyCallback = onReady;
-			let terminated = false;
-			let promises = [];
-			let _teams = [];
-			let wrappers = [];
-			let ready = [];
+			ArenaHelper.#participants_onReadyCallback = onReady;
+			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
+			ArenaHelper.#participants_onError = (source, payload) => {
+				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+				debugger;
+			}
+			ArenaHelper.#participants_onMessage = (source, payload) => {
+				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+				debugger;
+			}
+			ArenaHelper.#participants_workerCreated = source => {
+				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === source.name);
+				workerWrapper.ready = true;
+				workerWrapper.promiseWorkerReady();
+			}
 			this.addWorker = (participant, name='') => {
 				let team = _teams[participant.team];
 				let participantWrapper = team.members[participant.member];
-				let worker = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
-				if(worker !== undefined){
+				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+				if(workerWrapper !== undefined){
 					throw new Error('Participant already has worker with name "'+name+'".');
 				}
-				let workerWrapper = {
-					lastCalled: undefined,
+				workerWrapper = {
 					name: name,
-					promiseWorkerReady: null
+					promiseWorkerReady: null,
+					ready: false,
+					iframeId: 'team-'+participant.team+'_'+'member-'+participant.member+'_'+name
 				};
 				if(team.precomputedWorkerData === null){
 					let opponents = [];
@@ -108,7 +134,7 @@ class ArenaHelper{
 				postMessage({
 					type: 'Add-Worker',
 					message: {
-						iframeId: 'team-'+participant.team+'_'+'member-'+participant.member,
+						iframeId: workerWrapper.iframeId,
 						participant: [participant.team, participant.member],
 						name: name,
 						url: participantWrapper.private.url,
@@ -179,20 +205,23 @@ class ArenaHelper{
 				let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
 				let index = workers.findIndex(w => w === workerWrapper);
 				workers.splice(index, 1);
-				workerWrapper.lastCalled = null;
 				workerWrapper.worker.terminate();
 			}
 			this.postToAll = (message='') => {
+				let promises = [];
 				_teams.forEach((team,index) => {
-					this.postToTeam(index, message);
+					promises.push(...this.postToTeam(index, message));
 				});
+				return promises;
 			}
 			this.postToTeam = (team=-1, message='') => {
+				let promises = [];
 				_teams[team].members.forEach(participantWrapper => {
-					participantWrapper.participant.postMessage(message);
+					promises.push(participantWrapper.participant.postMessage(message));
 				});
+				return promises;
 			}
-			this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
+/*			this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
 				_teams.forEach((team,index) => {
 					this.addCallbackToTeam(index, onmessage, onerror);
 				});
@@ -211,6 +240,7 @@ class ArenaHelper{
 					}
 				});
 			}
+*/
 			this.get = (team=-1, participant=-1) => {
 				return _teams[team].members[participant].participant;
 			}
@@ -273,9 +303,7 @@ class ArenaHelper{
 				let members = [];
 				_teams.push({score: 0, members: members, precomputedWorkerData: null});
 				team.forEach((participant, participantIndex) => {
-					let participantReady;
-					ready.push(new Promise(resolve => participantReady = resolve));
-					let _participantWrapper = {
+					let participantWrapper = {
 						participant: {
 							name: participant.name,
 							team: teamIndex,
@@ -283,10 +311,14 @@ class ArenaHelper{
 							payload: {},
 							onmessage: null,
 							onerror: null,
-							postMessage: (data, workerName) => {
-								let workerWrapper = workerName === undefined ? _participantWrapper.private.workers[0] : participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === workerName);
-								workerWrapper.lastCalled = new Date().getTime();
-								workerWrapper.worker.postMessage(JSON.parse(JSON.stringify(data)));
+							postMessage: async (data, workerName) => {
+								let responseReceived;
+								let responseDropped;
+								ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
+								return new Promise((resolve, reject) => {responseReceived = resolve; responseDropped = reject;});
+							},
+							sendUpdate: (data, workerName) => {
+								ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'update', message: data});
 							}
 						},
 						team: team,
@@ -296,10 +328,13 @@ class ArenaHelper{
 							workers: []
 						}
 					};
-					members.push(_participantWrapper);
-					wrappers.push(_participantWrapper);
-					let promise = this.addWorker(_participantWrapper.participant, '');
-					promise.then(participantReady);
+					members.push(participantWrapper);
+					wrappers.push(participantWrapper);
+				});
+			});
+			_teams.forEach(team => {
+				team.members.forEach(participantWrapper => {
+					let promise = this.addWorker(participantWrapper.participant, '');
 					promises.push(promise);
 				});
 			});
@@ -307,9 +342,7 @@ class ArenaHelper{
 				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
 			Promise.all(promises).then(() => {
-				Promise.all(ready).then(()=>{
-					postMessage({type: 'Ready-To-Start', message: null});
-				}).catch(error => _onError(error));
+				postMessage({type: 'Ready-To-Start', message: null});
 			}).catch(error => _onError(error));
 		}
 	}

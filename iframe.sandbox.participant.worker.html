@@ -8,9 +8,8 @@
 		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
 		<script>
 			'use strict'
-			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
-			let _worker = null;
 			let _parent = null;
+			let _worker = null;
 			function a(){
 				function isIframe(){
 					try{
@@ -42,6 +41,10 @@
 						}
 					}
 					*/
+					function post(data){
+						console.log("// TODO: Add executionWatcher.");
+						_worker.postMessage(data)
+					}
 					function blockNetwork(){
 						window.stop();
 						window.requestAnimationFrame(blockNetwork);
@@ -55,23 +58,25 @@
 								_parent = messageEvent.source;
 							}
 							switch(messageEvent.data.type){
-								case 'post': post(messageEvent.data.data.name); break;
-								case 'update': update(messageEvent.data.data.name); break;
+								default: debugger; break;
+								case 'post': post(messageEvent.data); break;
+								case 'update': _worker.postMessage(messageEvent.data); break;
 							}
 						}
-						ArenaHelper.CreateWorkerFromRemoteURL(_data.url, true).then(worker=>{
+						ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, true).then(worker=>{
 							_worker = worker;
-							if(!messageEvent.data.allowRemoteExecution){
+							if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 								blockNetwork();
 							}
+							let source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
 							_worker.onerror = messageEvent => {
-								debugger;
+								_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: {colno: messageEvent.colno, lineno: messageEvent.lineno, message: messageEvent.message}}}, '*');
 							}
 							_worker.onmessage = messageEvent => {
-								debugger;
+								_parent.postMessage({type: 'Event', data: {event: 'Message', source: source, payload: messageEvent.data}}, '*');
 							}
-							_worker.postMessage(messageEvent.data);
-							_parent.postMessage({type: 'Event', payload: {event: 'Worker-Created', source: {participant: _data.participant, name: _data.name}}}, '*');
+							_worker.postMessage(messageEvent.data.workerData);
+							_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: source}}, '*');
 						});
 					}
 				}else{
