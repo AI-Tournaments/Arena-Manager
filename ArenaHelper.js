@@ -45,18 +45,44 @@ class ArenaHelper{
 		}
 	}
 	static Participants = class{
+		static #getWorker = (participantWrapper, name) => {
+			return participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+		}
 		static #messageWorker = (name='', participantWrapper, body) => {
-			let workerWrapper = name === undefined ? participantWrapper.private.workers[0] : participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
 			if(!workerWrapper.ready){
 				throw new Error('Error: Worker called before it was ready.');
 			}
+			let promise;
+			if(body.type === 'post'){
+				body.index = workerWrapper.messageIndex++;
+				let responseReceived;
+				let responseRejected;
+				promise = new Promise((resolve, reject) => {responseReceived = resolve; responseRejected = reject;});
+				workerWrapper.pendingMessages.push({index: body.index, responseReceived: responseReceived, responseRejected: responseRejected});
+			}
 			postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
+			return promise;
+		}
+		static #getPendingMessage = (participantWrapper, workerName, messageIndex) => {
+			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, workerName);
+			let message;
+			for(let index = 0; index < workerWrapper.pendingMessages.length; index++){
+				if(workerWrapper.pendingMessages[index].index === messageIndex){
+					message = workerWrapper.pendingMessages[index];
+					workerWrapper.pendingMessages.splice(index, 1);
+					return message;
+				}
+			}
+			if(message === undefined){
+				throw new Error('Message not found.');
+			}
 		}
 		/** INPUT
 		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
 		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
 		 */
-		constructor(data={}, onReady=()=>{}, participantDropped=()=>{}){
+		constructor(data={}, onReadyToStart=()=>{}, participantDropped=()=>{}){
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
@@ -77,26 +103,29 @@ class ArenaHelper{
 				}
 			}
 			onMessageWatcher();
-			ArenaHelper.#participants_onReadyCallback = onReady;
+			ArenaHelper.#participants_onReadyCallback = onReadyToStart;
 			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
-			ArenaHelper.#participants_onError = (source, payload) => {
+			ArenaHelper.#participants_onError = (source, messageIndex) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				debugger;
+				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex);
+				console.log("// TODO: Kill participant.");
+				pendingMessage.responseRejected('Participant dropped.');
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				debugger;
+				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
+				pendingMessage.responseReceived(payload.message);
 			}
 			ArenaHelper.#participants_workerCreated = source => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === source.name);
+				let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, source.name);
 				workerWrapper.ready = true;
 				workerWrapper.promiseWorkerReady();
 			}
 			this.addWorker = (participant, name='') => {
 				let team = _teams[participant.team];
 				let participantWrapper = team.members[participant.member];
-				let workerWrapper = participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
+				let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
 				if(workerWrapper !== undefined){
 					throw new Error('Participant already has worker with name "'+name+'".');
 				}
@@ -104,7 +133,9 @@ class ArenaHelper{
 					name: name,
 					promiseWorkerReady: null,
 					ready: false,
-					iframeId: 'team-'+participant.team+'_'+'member-'+participant.member+'_'+name
+					iframeId: 'team-'+participant.team+'_'+'member-'+participant.member+'_'+name,
+					messageIndex: 0,
+					pendingMessages: []
 				};
 				if(team.precomputedWorkerData === null){
 					let opponents = [];
@@ -312,10 +343,7 @@ class ArenaHelper{
 							onmessage: null,
 							onerror: null,
 							postMessage: async (data, workerName) => {
-								let responseReceived;
-								let responseDropped;
-								ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
-								return new Promise((resolve, reject) => {responseReceived = resolve; responseDropped = reject;});
+								return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
 							},
 							sendUpdate: (data, workerName) => {
 								ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'update', message: data});
