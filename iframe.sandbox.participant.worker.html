@@ -10,6 +10,8 @@
 			'use strict'
 			let _parent = null;
 			let _worker = null;
+			let _nextMessage = 0;
+			let _messageQueue = [];
 			function a(){
 				function isIframe(){
 					try{
@@ -43,11 +45,28 @@
 					*/
 					function post(data){
 						console.log("// TODO: Add executionWatcher.");
-						_worker.postMessage(data)
+						if(_nextMessage === data.index){
+							_worker.postMessage(data)
+						}else{
+							_messageQueue.push(data);
+						}
 					}
 					function blockNetwork(){
 						window.stop();
 						window.requestAnimationFrame(blockNetwork);
+					}
+					function updateQueue(){
+						_nextMessage++;
+						let message = _messageQueue.find(message => message.index === _nextMessage);
+						if(message !== undefined){
+							for(let index = 0; index < _messageQueue.length; index++){
+								if(_messageQueue[index] === message){
+									_messageQueue.splice(index, 1);
+									break;
+								}
+							}
+							post(message);
+						}
 					}
 					window.onmessage = messageEvent => {
 						if(_parent === null){
@@ -70,10 +89,11 @@
 							}
 							let source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
 							_worker.onerror = messageEvent => {
-								_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: {colno: messageEvent.colno, lineno: messageEvent.lineno, message: messageEvent.message}}}, '*');
+								_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: _nextMessage}}, '*');
 							}
 							_worker.onmessage = messageEvent => {
-								_parent.postMessage({type: 'Event', data: {event: 'Message', source: source, payload: messageEvent.data}}, '*');
+								_parent.postMessage({type: 'Event', data: {event: 'Message', source: source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
+								updateQueue();
 							}
 							_worker.postMessage(messageEvent.data.workerData);
 							_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: source}}, '*');
