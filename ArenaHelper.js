@@ -109,12 +109,12 @@ class ArenaHelper{
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex);
 				console.log("// TODO: Kill participant.");
-				pendingMessage.responseRejected('Participant dropped.');
+				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'Participant dropped.'});
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
-				pendingMessage.responseReceived(payload.message);
+				pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
 			}
 			ArenaHelper.#participants_workerCreated = source => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
