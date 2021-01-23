@@ -5,13 +5,20 @@
 		<title>Participant worker (IFrame)</title>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
-		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
 		<script>
 			'use strict'
 			let _parent = null;
 			let _worker = null;
 			let _nextMessage = 0;
 			let _messageQueue = [];
+			let script = document.createElement('script');
+			let scriptLoaded;
+			let scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
+			script.onload = function(){
+				scriptLoaded();
+			}
+			script.src = decodeURI(location.hash.substring(1));
+			document.head.appendChild(script);
 			function a(){
 				function isIframe(){
 					try{
@@ -82,7 +89,8 @@
 								case 'update': _worker.postMessage(messageEvent.data); break;
 							}
 						}
-						ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, true).then(worker=>{
+						scriptLoaded_promise.then(() => {
+							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url).then(worker=>{
 							_worker = worker;
 							if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 								blockNetwork();
@@ -97,6 +105,7 @@
 							}
 							_worker.postMessage(messageEvent.data.workerData);
 							_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: source}}, '*');
+						});
 						});
 					}
 				}else{

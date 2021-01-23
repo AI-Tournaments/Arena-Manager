@@ -6,12 +6,19 @@
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
 		<link rel="stylesheet" href="log.css">
-		<script src="https://ai-tournaments.github.io/AI-Tournaments/Arena/ArenaHelper.js"></script>
 		<script>
 			'use strict'
 			let _parent = null;
 			let _arenaWorker = null;
 			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
+			let script = document.createElement('script');
+			let scriptLoaded;
+			let scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
+			script.onload = function(){
+				scriptLoaded();
+			}
+			script.src = _data.ArenaHelper_url;
+			document.head.appendChild(script);
 			function a(){
 				function isIframe(){
 					try{
@@ -33,7 +40,7 @@
 						if(iframe === null){
 							iframe = document.createElement('iframe');
 							iframe.id = data.iframeId;
-							iframe.src = 'iframe.sandbox.participant.worker.html';
+							iframe.src = 'iframe.sandbox.participant.worker.html#'+_data.ArenaHelper_url;
 							iframe.sandbox = 'allow-scripts';
 							document.body.appendChild(iframe);
 							setTimeout(post,1000);
@@ -95,7 +102,8 @@
 									let output = document.createElement('div');
 									output.classList.add('log');
 									document.body.appendChild(output);
-									ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js', true).then(arena => {
+									scriptLoaded_promise.then(() => {
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js').then(arena => {
 										_arenaWorker = arena;
 										arena.onmessage = messageEvent => {
 											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
@@ -103,7 +111,7 @@
 												case 'Ready-To-Start':
 													if(!_data.settings.general.allowRemoteExecution){
 														blockNetwork();
-													};
+														}
 													arena.postMessage({type: 'Start'});
 													break;
 												case 'Done':
@@ -123,6 +131,7 @@
 										};
 										if(location.href.includes('?debug')){debugger;}
 										arena.postMessage(_data);
+									});
 									});
 								}
 							}else{

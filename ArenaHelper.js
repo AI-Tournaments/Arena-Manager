@@ -174,7 +174,7 @@ class ArenaHelper{
 				});
 				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
 				/*//////////////// Old.
-				return ArenaHelper.CreateWorkerFromRemoteURL(participantWrapper.private.url, true).then(worker => {
+				return ArenaHelper.CreateWorkerFromRemoteURL(participantWrapper.private.url).then(worker => {
 					participantWrapper.private.workers.push(workerWrapper);
 					worker.onmessage = messageEvent => {
 						console.error('Kill internet!');
@@ -374,37 +374,25 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static CreateWorkerFromRemoteURL(url='', useFetch=false){
+	static CreateWorkerFromRemoteURL(url=''){
 		function createObjectURL(blob){
 			let urlObject = URL.createObjectURL(blob);
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
 			return urlObject;
 		}
-		if(useFetch){
-			async function asyncFetch(url){
-				let worker = undefined;
-				await fetch(url)
-				.then(response => response.text())
-				.then(text => {
-					let blob;
-					try{
-						blob = new Blob([text], {type: 'application/javascript'});
-					}catch(e){
-						window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
-						blob = new BlobBuilder();
-						blob.append(text);
-						blob = blob.getBlob();
-					}
-					worker = new Worker(createObjectURL(blob));
-				});
-				return worker;
+		return fetch(url)
+		.then(response => response.text())
+		.then(text => {
+			let blob;
+			try{
+				blob = new Blob([text], {type: 'application/javascript'});
+			}catch(e){
+				window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
+				blob = new BlobBuilder();
+				blob.append(text);
+				blob = blob.getBlob();
 			}
-			return asyncFetch(url);
-		}else{
-			async function createWorker(){
-				return new Worker(createObjectURL(new Blob(['importScripts("'+url+'");'], {type: 'application/javascript'})));
-			}
-			return new Promise(createWorker);
-		}
+			return new Worker(createObjectURL(blob));
+		});
 	}
 }
