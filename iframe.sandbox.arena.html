@@ -107,7 +107,7 @@
 									output.classList.add('log');
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
-										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js').then(arena => {
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js', [_data.ArenaHelper_url]).then(arena => {
 											_arenaWorker = arena;
 											arena.onmessage = messageEvent => {
 												output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
