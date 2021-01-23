@@ -375,7 +375,7 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static CreateWorkerFromRemoteURL(url=''){
+	static CreateWorkerFromRemoteURL(url='', includeScripts=[]){
 		function createObjectURL(blob){
 			let urlObject = URL.createObjectURL(blob);
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
@@ -384,6 +384,21 @@ class ArenaHelper{
 		return fetch(url)
 		.then(response => response.text())
 		.then(text => {
+			let postBack = 'postMessage(null); ';
+			if(text.toLowerCase().startsWith('use strict', 1)){
+				postBack = '\'use strict\'; ' + postBack;
+			}
+			let _importScripts = '';
+			includeScripts.reverse().forEach(scriptUrl => {
+				if(_importScripts !== ''){
+					_importScripts += ', ';
+				}
+				_importScripts += '\''+scriptUrl+'\'';
+			});
+			if(0 < includeScripts.length){
+				_importScripts = 'importScripts('+_importScripts+'); ';
+			}
+			text = _importScripts + postBack + text;
 			let blob;
 			try{
 				blob = new Blob([text], {type: 'application/javascript'});
@@ -393,7 +408,11 @@ class ArenaHelper{
 				blob.append(text);
 				blob = blob.getBlob();
 			}
-			return new Worker(createObjectURL(blob));
+			let worker = new Worker(createObjectURL(blob));
+			let resolve;
+			let promise = new Promise(_resolve => resolve = _resolve);
+			worker.onmessage = () => resolve(worker);
+			return promise;
 		});
 	}
 }
