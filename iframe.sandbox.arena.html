@@ -33,9 +33,6 @@
 						window.requestAnimationFrame(blockNetwork);
 					}
 					function addWorker(data){
-						function post(){
-							iframe.contentWindow.postMessage({url: data.url, name: data.name, participant: data.participant, workerData: data.workerData}, '*');
-						}
 						let iframe = document.getElementById(data.iframeId);
 						if(iframe === null){
 							iframe = document.createElement('iframe');
@@ -43,7 +40,14 @@
 							iframe.src = 'iframe.sandbox.participant.worker.html#'+_data.ArenaHelper_url;
 							iframe.sandbox = 'allow-scripts';
 							document.body.appendChild(iframe);
-							setTimeout(post,1000);
+							setTimeout(()=>{
+								iframe.contentWindow.postMessage({
+									url: data.url,
+									name: data.name,
+									participant: data.participant,
+									workerData: data.workerData
+								}, '*');
+							}, 1000);
 						}else{
 							_arenaWorker.postMessage('Participant-worker "'+data.iframeId+'" already exist!');
 						}
@@ -104,34 +108,34 @@
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
 										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js').then(arena => {
-										_arenaWorker = arena;
-										arena.onmessage = messageEvent => {
-											output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
-											switch(messageEvent.data.type){
-												case 'Ready-To-Start':
-													if(!_data.settings.general.allowRemoteExecution){
-														blockNetwork();
+											_arenaWorker = arena;
+											arena.onmessage = messageEvent => {
+												output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
+												switch(messageEvent.data.type){
+													case 'Ready-To-Start':
+														if(!_data.settings.general.allowRemoteExecution){
+															blockNetwork();
 														}
-													arena.postMessage({type: 'Start'});
-													break;
-												case 'Done':
-												case 'Aborted':
-													arena.terminate();
-													break;
-												case 'Add-Worker':
-													addWorker(messageEvent.data.message);
-													break;
-												case 'Message-Worker':
-													messageWorker(messageEvent.data.message);
-													break;
-											}
-										};
-										arena.onerror = errorEvent => {
-											console.log(errorEvent);
-										};
-										if(location.href.includes('?debug')){debugger;}
-										arena.postMessage(_data);
-									});
+														arena.postMessage({type: 'Start'});
+														break;
+													case 'Done':
+													case 'Aborted':
+														arena.terminate();
+														break;
+													case 'Add-Worker':
+														addWorker(messageEvent.data.message);
+														break;
+													case 'Message-Worker':
+														messageWorker(messageEvent.data.message);
+														break;
+												}
+											};
+											arena.onerror = errorEvent => {
+												console.log(errorEvent);
+											};
+											if(location.href.includes('?debug')){debugger;}
+											arena.postMessage(_data);
+										});
 									});
 								}
 							}else{
