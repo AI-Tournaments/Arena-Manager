@@ -318,6 +318,7 @@ function a(){
 		let json = {
 			arena: _json.full_name+'/'+_json.default_branch,
 			ArenaHelper_url: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
+			ParticipantHelper_url: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
 			raw_url: _json.raw_url,
 			participants: bracket,
 			settings: settings
