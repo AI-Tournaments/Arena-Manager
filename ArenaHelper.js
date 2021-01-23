@@ -86,6 +86,7 @@ class ArenaHelper{
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
+			ArenaHelper.#participants = this;
 			let terminated = false;
 			let promises = [];
 			let _teams = [];
