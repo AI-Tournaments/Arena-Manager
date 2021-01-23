@@ -107,6 +107,9 @@
 									output.classList.add('log');
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
+										if(json.header.randomness){
+											console.log('// TODO: Add json.header.randomness="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js" ('+json.header.randomness+') to ArenaHelper.CreateWorkerFromRemoteURL(,[]).');
+										}
 										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js', [_data.ArenaHelper_url]).then(arena => {
 											_arenaWorker = arena;
 											arena.onmessage = messageEvent => {
