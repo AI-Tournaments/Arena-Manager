@@ -337,16 +337,19 @@ function a(){
 				}
 			}
 		}
+		let isDebugMode = location.href.includes('?debug');
 		let div = document.createElement('div');
 		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
-		iframe.src = 'iframe.sandbox.arena.html'+(location.href.includes('?debug')?'?debug':'')+'#' + JSON.stringify(json);
+		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'')+'#' + JSON.stringify(json);
 		iframe.sandbox = 'allow-scripts';
 		iframe.style.display = 'none';
 		iframe.id = Date() + '_' + Math.random();
 		div.appendChild(iframe);
 		let output = document.createElement('div');
+		if(!isDebugMode){
 		output.style.display = 'none';
+		}
 		output.classList.add('log');
 		div.appendChild(output);
 		setTimeout(()=>{getIFrameLog(iframe, output)}, 1000);
