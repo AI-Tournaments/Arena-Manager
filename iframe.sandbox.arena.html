@@ -17,7 +17,7 @@
 			script.onload = function(){
 				scriptLoaded();
 			}
-			script.src = _data.ArenaHelper_url;
+			script.src = _data.urls.ArenaHelper;
 			document.head.appendChild(script);
 			function a(){
 				function isIframe(){
@@ -37,13 +37,14 @@
 						if(iframe === null){
 							iframe = document.createElement('iframe');
 							iframe.id = data.iframeId;
-							iframe.src = 'iframe.sandbox.participant.worker.html#'+_data.ArenaHelper_url;
+							iframe.src = 'iframe.sandbox.participant.worker.html#'+_data.urls.ArenaHelper;
 							iframe.sandbox = 'allow-scripts';
 							document.body.appendChild(iframe);
 							setTimeout(()=>{
 								iframe.contentWindow.postMessage({
 									url: data.url,
 									name: data.name,
+									ParticipantHelper_url: _data.urls.ParticipantHelper,
 									participant: data.participant,
 									workerData: data.workerData
 								}, '*');
@@ -92,7 +93,7 @@
 						arenaArray.pop();
 						_data.arena = arenaArray.join('/');
 						document.title = document.title.replace('X', _data.arena);
-						fetch(_data.raw_url+'properties.json')
+						fetch(_data.urls.arena+'properties.json')
 						.then(response => response.json())
 						.then(json => {
 							let limits = json.header.limits;
@@ -107,10 +108,11 @@
 									output.classList.add('log');
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
+										let includeScripts = [/* Import from config */];
 										if(json.header.randomness){
-											console.log('// TODO: Add json.header.randomness="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js" ('+json.header.randomness+') to ArenaHelper.CreateWorkerFromRemoteURL(,[]).');
+											includeScripts = [...includeScripts, ];
 										}
-										ArenaHelper.CreateWorkerFromRemoteURL(_data.raw_url+'arena.js', [_data.ArenaHelper_url]).then(arena => {
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.urls.arena+'arena.js', [...includeScripts, _data.urls.ArenaHelper]).then(arena => {
 											_arenaWorker = arena;
 											arena.onmessage = messageEvent => {
 												output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';

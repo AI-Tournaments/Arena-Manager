@@ -1,5 +1,17 @@
 'use strict'
 function a(){
+	let generalSettings = {
+		averageOf: 1,
+		displayOpponents: ['Hide', 'AccountOnly', 'Yes'],
+		timelimit_ms: 1000,
+		_meta: {
+			averageOf: {min: 1, max: null},
+			timelimit_ms: {min: 1, max: null}
+		}
+	};
+	let advanceSettings = {
+		allowRemoteExecution: false
+	};
 	let arenaProperties;
 	let settings = document.getElementById('settings');
 	window.onmessage = messageEvent => {
@@ -11,7 +23,7 @@ function a(){
 	function setArena(messageEvent){
 		arenaProperties = undefined;
 		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(json => {
-			function addInput(fieldset, name, value, properties, arrayIndex){
+			function addInput(fieldset, name, value, meta={}, arrayIndex){
 				let wrapper;
 				if(arrayIndex === undefined || arrayIndex === 0){
 					wrapper = document.createElement('div');
@@ -53,9 +65,9 @@ function a(){
 				}else{
 					input.value = value;
 				}
-				for(const key in properties) {
-					if(properties.hasOwnProperty(key)){
-						let value = properties[key];
+				for(const key in meta) {
+					if(meta.hasOwnProperty(key)){
+						let value = meta[key];
 						if(value !== null){
 							input[key] = value;
 						}
@@ -63,11 +75,18 @@ function a(){
 				}
 				wrapper.appendChild(input);
 			}
+			function getMeta(setting, key){
+				if(setting['_meta'] === undefined || setting['_meta'][key] === undefined){
+					return {};
+				}
+				return setting['_meta'][key];
+			}
 			arenaProperties = json;
 			while(0 < settings.childElementCount){
 				settings.removeChild(settings.firstChild);
 			}
-			for(const key in arenaProperties.settings){
+			arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
+			Object.keys(arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
 				if(arenaProperties.settings.hasOwnProperty(key)){
 					const setting = arenaProperties.settings[key];
 					let fieldset = document.createElement('fieldset');
@@ -76,30 +95,29 @@ function a(){
 					let legend = document.createElement('legend');
 					legend.innerHTML = key;
 					fieldset.appendChild(legend);
-					for(const subKey in setting){
-						if(setting.hasOwnProperty(subKey)){
-							let value = setting[subKey];
-							let properties = arenaProperties.header.settings[key];
-							if(properties !== undefined){
-								properties = properties[subKey];
-							}
+					for(const settingKey in setting){
+						if(settingKey !== '_meta' && setting.hasOwnProperty(settingKey)){
+							let value = setting[settingKey];
+							let meta = getMeta(setting, settingKey);
 							if(typeof value === 'object'){
 								let index = 0;
 								value.forEach(v => {
-									addInput(fieldset, subKey, value, properties, index++);
+									addInput(fieldset, settingKey, value, meta, index++);
 								});
 							}else{
-								addInput(fieldset, subKey, value, properties);
+								addInput(fieldset, settingKey, value, meta);
 							}
 						}
 					}
 				}
-			}
+			});
 			messageEvent.source.postMessage({type: 'properties', value: {properties: json, height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
 		});
 	}
 	function postSettings(messageEvent){
-		let json = {};
+		let json = {
+			general: JSON.parse(JSON.stringify(advanceSettings))
+		};
 		for(const input of settings.getElementsByTagName('input')){
 			let info = input.name.split('.');
 			if(json[info[0]] === undefined){

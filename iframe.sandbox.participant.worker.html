@@ -90,14 +90,14 @@
 							}
 						}
 						scriptLoaded_promise.then(() => {
-							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url).then(worker=>{
+							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, [...[/* Import from config */], messageEvent.data.ParticipantHelper_url]).then(worker=>{
 								_worker = worker;
 								if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 									blockNetwork();
 								}
 								let source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
 								_worker.onerror = messageEvent => {
-									_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: _nextMessage}}, '*');
+									_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 								}
 								_worker.onmessage = messageEvent => {
 									_parent.postMessage({type: 'Event', data: {event: 'Message', source: source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');

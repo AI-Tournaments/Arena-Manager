@@ -5,8 +5,12 @@ class ArenaHelper{
 	static #participants_onError = null;
 	static #participants_onMessage = null;
 	static #participants_workerCreated = null;
-	static #participants_onReadyCallback = null;
+	static #arenaReady = null;
 	static #participants_getParticipantWrapper = null;
+	static #postMessage_native = ()=>{};
+	static #postMessage = data => {
+		ArenaHelper.#postMessage_native.call(globalThis, data);
+	}
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value, raw=false)=>{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
@@ -18,17 +22,17 @@ class ArenaHelper{
 		scores.forEach((team, index) => {
 			colors.push(this.#participants.getTeamColor(index));
 		});
-		postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: participants.getSettings(), log: this.#log}});
+		ArenaHelper.#postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: participants.getSettings(), log: this.#log}});
 	}
 	static postAbort = (participant='', error='')=>{
 		this.#participants.terminateAllWorkers();
 		let participantName = participant.name === undefined ? participant : participant.name;
-		postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
+		ArenaHelper.#postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
 	}
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
 			default: debugger; break;
-			case 'Start': ArenaHelper.#participants_onReadyCallback(); break;
+			case 'Start': ArenaHelper.#arenaReady(this.#participants); break;
 			case 'Event': ArenaHelper.#event(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}
 	}
@@ -43,6 +47,45 @@ class ArenaHelper{
 			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
 		}
+	}
+	static init(){
+		function fatal(message){
+			console.error(message);
+			ArenaHelper.postAbort('Fatal-Abort', message);
+			throw new Error(message);
+		}
+		let onmessage_preInit = messageEvent => {
+			new ArenaHelper.Participants(messageEvent.data);
+			onmessage = ArenaHelper.#onmessage;
+		}
+		onmessage = onmessage_preInit;
+		onmessageerror = ArenaHelper.#onmessageerror;
+		ArenaHelper.#postMessage_native = postMessage;
+		let postMessage_error = () => {
+			fatal('postMessage() is locked by ArenaHelper, use any of the ArenaHelper.post...() methods instead.');
+		}
+		postMessage = postMessage_error;
+		let _ArenaHelperPostMessage = ArenaHelper.#postMessage;
+		function onMessageWatcher(){
+			let error = null;
+			if(onmessage !== ArenaHelper.#onmessage && onmessage !== onmessage_preInit){
+				error = 'onmessage';
+			}else if(onmessageerror !== ArenaHelper.#onmessageerror){
+				error = 'onmessageerror';
+			}else if(postMessage !== postMessage_error){
+				error = 'postMessage';
+			}else if(_ArenaHelperPostMessage ==! ArenaHelper.#postMessage){
+				fatal('INTERNAL ERROR!');
+			}else{
+				setTimeout(onMessageWatcher, 1000);
+			}
+			if(error !== null){
+				fatal(error+' is required by the ArenaHelper, use ArenaHelper.'+error+'.');
+			}
+		}
+		onMessageWatcher();
+		ArenaHelper.init = new Promise(resolve => ArenaHelper.#arenaReady = resolve);
+		ArenaHelper.#postMessage(null);
 	}
 	static Participants = class{
 		static #getWorker = (participantWrapper, name) => {
@@ -61,7 +104,7 @@ class ArenaHelper{
 				promise = new Promise((resolve, reject) => {responseReceived = resolve; responseRejected = reject;});
 				workerWrapper.pendingMessages.push({index: body.index, responseReceived: responseReceived, responseRejected: responseRejected});
 			}
-			postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
+			ArenaHelper.#postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
 			return promise;
 		}
 		static #getPendingMessage = (participantWrapper, workerName, messageIndex) => {
@@ -82,7 +125,7 @@ class ArenaHelper{
 		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
 		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
 		 */
-		constructor(data={}, onReadyToStart=()=>{}, participantDropped=()=>{}){
+		constructor(data={}){
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
@@ -92,22 +135,10 @@ class ArenaHelper{
 			let _teams = [];
 			let wrappers = [];
 			ArenaHelper.#setParticipants(this);
-			onmessage = ArenaHelper.#onmessage;
-			onmessageerror = ArenaHelper.#onmessageerror;
-			function onMessageWatcher(){
-				if(onmessage !== ArenaHelper.#onmessage || onmessageerror !== ArenaHelper.#onmessageerror){
-					let message = 'onmessage is required by the ArenaHelper, do not reassign a callback to onmessage after arena initiation.';
-					console.error(message);
-					ArenaHelper.postAbort('OnMessage-Detached', message);
-				}else{
-					setTimeout(onMessageWatcher, 1000);
-				}
-			}
-			onMessageWatcher();
-			ArenaHelper.#participants_onReadyCallback = onReadyToStart;
 			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
 			ArenaHelper.#participants_onError = (source, messageIndex) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+				console.error('// TODO: Write error message!');
 				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex);
 				console.log("// TODO: Kill participant.");
 				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'Participant dropped.'});
@@ -163,7 +194,7 @@ class ArenaHelper{
 					};
 				}
 				participantWrapper.private.workers.push(workerWrapper);
-				postMessage({
+				ArenaHelper.#postMessage({
 					type: 'Add-Worker',
 					message: {
 						iframeId: workerWrapper.iframeId,
@@ -174,62 +205,6 @@ class ArenaHelper{
 					}
 				});
 				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
-				/*//////////////// Old.
-				return ArenaHelper.CreateWorkerFromRemoteURL(participantWrapper.private.url).then(worker => {
-					participantWrapper.private.workers.push(workerWrapper);
-					worker.onmessage = messageEvent => {
-						console.error('Kill internet!');
-						Promise.all(promises).then(() => {
-							let opponents = [];
-							_teams.forEach((team, teamIndex) => {
-								if(participant.team === teamIndex){
-									opponents.push(null);
-								}else{
-									let names = [];
-									opponents.push(names);
-									team.members.forEach(participantWrapper => {
-										let name = null;
-										if(data.settings.general.displayOpponents === 'Yes'){
-											name = participantWrapper.participant.name;
-										}else if(data.settings.general.displayOpponents === 'AccountOnly'){
-											name = participantWrapper.participant.name.split('/')[0];
-										}
-										names.push(name);
-									});
-								}
-							});
-							team.precomputedWorkerData = {
-								settings: data.settings,
-								opponents: opponents
-							};
-							let workerData = JSON.parse(JSON.stringify(team.precomputedWorkerData));
-							worker.postMessage(index, workerData);
-						});
-						worker.onmessage = messageEvent => {
-							workerWrapper.lastCalled = undefined;
-							workerReady();
-							worker.onmessage = messageEvent => {
-								workerWrapper.lastCalled = undefined;
-								if(typeof participantWrapper.participant.onmessage === 'function'){
-									participantWrapper.participant.onmessage(messageEvent, participantWrapper.participant, workerWrapper.name);
-								}
-							}
-						}
-					}
-					worker.onerror = messageEvent => {
-						if(typeof participantWrapper.participant.onerror === 'function'){
-							participantWrapper.participant.onerror(messageEvent);
-						}
-					}
-				x	if(participantWrapper.private.precomputedWorkerData !== undefined){
-				x		let data = JSON.parse(JSON.stringify(team.precomputedWorkerData));
-				x		data.name = name;
-				x		data.precomputedWorkerData = participantWrapper.private.precomputedWorkerData;
-				x		worker.postMessage(data);
-				x	}
-					worker.postMessage(null);
-				});
-				*/
 			}
 			this.killWorker = (participant, name)=>{
 				let participantWrapper = _teams[participant.team].members[participant.member];
@@ -253,26 +228,6 @@ class ArenaHelper{
 				});
 				return promises;
 			}
-/*			this.addCallbackToAll = (onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
-				_teams.forEach((team,index) => {
-					this.addCallbackToTeam(index, onmessage, onerror);
-				});
-			}
-			this.addCallbackToTeam = (team=-1,onmessage=(participant,messageEvent)=>{},onerror=(participant,messageEvent)=>{}) => {
-				_teams[team].members.forEach(participantWrapper => {
-					if(typeof onmessage === 'function'){
-						participantWrapper.participant.onmessage = messageEvent=>{onmessage(participantWrapper.participant, messageEvent)};
-					}else if(onmessage === null){
-						participantWrapper.participant.onmessage = onmessage;
-					}
-					if(typeof onerror === 'function'){
-						participantWrapper.participant.onerror = messageEvent=>{onerror(participantWrapper.participant, messageEvent)};
-					}else if(onerror === null){
-						participantWrapper.participant.onerror = onerror;
-					}
-				});
-			}
-*/
 			this.get = (team=-1, participant=-1) => {
 				return _teams[team].members[participant].participant;
 			}
@@ -284,6 +239,18 @@ class ArenaHelper{
 			}
 			this.addBonusScore = (participant, score) => {
 				_teams[participant.team].members[participant.member].private.score += score;
+			}
+			this.countTeams = () => _teams.length;
+			this.countMembers = teamIndex => {
+				let count = 0;
+				if(teamIndex === undefined){
+					_teams.forEach(team => {
+						count += team.members.length;
+					})
+				}else{
+					_teams[teamIndex].members.length;
+				}
+				return count;
 			}
 			this.getScores = () => {
 				let scores = [];
@@ -371,7 +338,7 @@ class ArenaHelper{
 				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
 			Promise.all(promises).then(() => {
-				postMessage({type: 'Ready-To-Start', message: null});
+				ArenaHelper.#postMessage({type: 'Ready-To-Start', message: null});
 			}).catch(error => _onError(error));
 		}
 	}
@@ -384,21 +351,9 @@ class ArenaHelper{
 		return fetch(url)
 		.then(response => response.text())
 		.then(text => {
-			let postBack = 'postMessage(null); ';
-			if(text.toLowerCase().startsWith('use strict', 1)){
-				postBack = '\'use strict\'; ' + postBack;
-			}
-			let _importScripts = '';
-			includeScripts.reverse().forEach(scriptUrl => {
-				if(_importScripts !== ''){
-					_importScripts += ', ';
-				}
-				_importScripts += '\''+scriptUrl+'\'';
-			});
-			if(0 < includeScripts.length){
-				_importScripts = 'importScripts('+_importScripts+'); ';
-			}
-			text = _importScripts + postBack + text;
+			let _importScripts = 'importScripts(\''+includeScripts.join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.init(); ';
+			let useStrict = text.toLowerCase().startsWith('use strict', 1);
+			text = (useStrict ? '\'use strict\'; ' : '') + 'let __url = \''+url+'\'; ' + _importScripts + text;
 			let blob;
 			try{
 				blob = new Blob([text], {type: 'application/javascript'});
@@ -408,9 +363,9 @@ class ArenaHelper{
 				blob.append(text);
 				blob = blob.getBlob();
 			}
-			let worker = new Worker(createObjectURL(blob));
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
+			let worker = new Worker(createObjectURL(blob));
 			worker.onmessage = () => resolve(worker);
 			return promise;
 		});
