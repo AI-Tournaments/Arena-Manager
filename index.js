@@ -317,9 +317,12 @@ function a(){
 	function begin(settings, bracket=[]){
 		let json = {
 			arena: _json.full_name+'/'+_json.default_branch,
-			ArenaHelper_url: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
-			ParticipantHelper_url: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
-			raw_url: _json.raw_url,
+			urls: {
+				arena: _json.raw_url,
+				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
+				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
+				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js'
+			},
 			participants: bracket,
 			settings: settings
 		};
@@ -348,7 +351,7 @@ function a(){
 		div.appendChild(iframe);
 		let output = document.createElement('div');
 		if(!isDebugMode){
-		output.style.display = 'none';
+			output.style.display = 'none';
 		}
 		output.classList.add('log');
 		div.appendChild(output);
