@@ -48,11 +48,20 @@ class ArenaHelper{
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
 		}
 	}
-	static init(){
+	static init = null;
+	static #init = null;
+	static preInit(){
 		function fatal(message){
 			console.error(message);
 			ArenaHelper.postAbort('Fatal-Abort', message);
 			throw new Error(message);
+		}
+		ArenaHelper.#init = ()=>{
+			if(typeof ArenaHelper.init !== 'function'){
+				fatal('ArenaHelper.init is not a function.');
+			}else{
+				ArenaHelper.init(ArenaHelper.#participants);
+			}
 		}
 		let onmessage_preInit = messageEvent => {
 			new ArenaHelper.Participants(messageEvent.data);
@@ -84,7 +93,7 @@ class ArenaHelper{
 			}
 		}
 		onMessageWatcher();
-		ArenaHelper.init = new Promise(resolve => ArenaHelper.#arenaReady = resolve);
+		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
 		ArenaHelper.#postMessage(null);
 	}
 	static Participants = class{
@@ -351,7 +360,7 @@ class ArenaHelper{
 		return fetch(url)
 		.then(response => response.text())
 		.then(text => {
-			let _importScripts = 'importScripts(\''+includeScripts.join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.init(); ';
+			let _importScripts = 'importScripts(\''+includeScripts.join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
 			let useStrict = text.toLowerCase().startsWith('use strict', 1);
 			text = (useStrict ? '\'use strict\'; ' : '') + 'let __url = \''+url+'\'; ' + _importScripts + text;
 			let blob;

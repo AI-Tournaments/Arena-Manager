@@ -21,7 +21,7 @@ class ParticipantHelper{
 		ParticipantHelper.onmessageerror(messageEvent);
 	}
 	static random;
-	static init(){
+	static preInit(){
 		if(ParticipantHelper.#instance !== null){
 			throw new Error('ParticipantHelper is already constructed.');
 		}
