@@ -164,6 +164,9 @@ class ArenaHelper{
 				workerWrapper.promiseWorkerReady();
 			}
 			this.addWorker = (participant, name='') => {
+				if(name !== ''){
+					console.log('// TODO: Add a wrapping sandbox outside of iframe.sandbox.arena.html, because the current blocks network and prevent more Workers to be created.');
+				}
 				let team = _teams[participant.team];
 				let participantWrapper = team.members[participant.member];
 				let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);

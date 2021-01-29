@@ -90,7 +90,13 @@
 							}
 						}
 						scriptLoaded_promise.then(() => {
-							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, [...[/* Import from config */], messageEvent.data.ParticipantHelper_url]).then(worker=>{
+							console.log('// TODO: Get imports from config');
+							let includeScripts = [/* Get imports from config */];
+						//	if(json.header.randomness){
+						//		console.log('// TODO: Include random');
+						//		includeScripts = [...includeScripts, /* Include random */];
+						//	}
+							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, [...includeScripts, messageEvent.data.ParticipantHelper_url]).then(worker=>{
 								_worker = worker;
 								if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 									blockNetwork();

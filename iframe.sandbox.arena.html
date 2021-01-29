@@ -108,9 +108,11 @@
 									output.classList.add('log');
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
-										let includeScripts = [/* Import from config */];
+										console.log('// TODO: Get imports from config');
+										let includeScripts = [/* Get imports from config */];
 										if(json.header.randomness){
-											includeScripts = [...includeScripts, ];
+											console.log('// TODO: Include random');
+											includeScripts = [...includeScripts, /* Include random */];
 										}
 										ArenaHelper.CreateWorkerFromRemoteURL(_data.urls.arena+'arena.js', [...includeScripts, _data.urls.ArenaHelper]).then(arena => {
 											_arenaWorker = arena;
