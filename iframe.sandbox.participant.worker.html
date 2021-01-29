@@ -109,6 +109,7 @@
 						//	}
 							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, [...includeScripts, messageEvent.data.ParticipantHelper_url]).then(worker=>{
 								_worker = worker;
+								callbacks.update = _worker.postMessage;
 								if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 									blockNetwork();
 								}
