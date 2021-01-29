@@ -150,7 +150,7 @@
 												}
 											};
 											arena.onerror = errorEvent => {
-												console.log(errorEvent);
+												console.log('// TEMP: errorEvent: '+errorEvent);
 											};
 											if(location.href.includes('?debug')){debugger;}
 											arena.postMessage(_data);
