@@ -37,7 +37,7 @@
 						if(iframe === null){
 							iframe = document.createElement('iframe');
 							iframe.id = data.iframeId;
-							iframe.src = 'iframe.sandbox.participant.worker.html#'+_data.urls.ArenaHelper;
+							iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
 							iframe.sandbox = 'allow-scripts';
 							document.body.appendChild(iframe);
 							setTimeout(()=>{
@@ -55,6 +55,9 @@
 					}
 					function messageWorker(message){
 						document.getElementById(message.receiver).contentWindow.postMessage(message.body, '*');
+					}
+					function killWorker(iframeId){
+						document.getElementById(iframeId).contentWindow.postMessage({type: 'kill', iframeId: iframeId}, '*');
 					}
 					function getOutput(){
 						let output = {
@@ -85,6 +88,9 @@
 							}
 							if(messageEvent.source === _parent){
 								messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
+							}else if(messageEvent.data.type === 'Dead'){
+								let iframe = document.getElementById(messageEvent.data.iframeId);
+								iframe.parentNode.removeChild(iframe);
 							}else{
 								_arenaWorker.postMessage(messageEvent.data);
 							}
@@ -116,9 +122,18 @@
 										}
 										ArenaHelper.CreateWorkerFromRemoteURL(_data.urls.arena+'arena.js', [...includeScripts, _data.urls.ArenaHelper]).then(arena => {
 											_arenaWorker = arena;
+											let callbacks = {
+												'Add-Worker': addWorker,
+												'Message-Worker': messageWorker,
+												'Kill-Worker': killWorker
+											};
 											arena.onmessage = messageEvent => {
 												output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
+												let callback = callbacks[messageEvent.data.type];
+												if(callback === undefined){
 												switch(messageEvent.data.type){
+														default:
+															throw new Error('Callback "'+callback+'" not found.');
 													case 'Ready-To-Start':
 														if(!_data.settings.general.allowRemoteExecution){
 															blockNetwork();
@@ -129,12 +144,9 @@
 													case 'Aborted':
 														arena.terminate();
 														break;
-													case 'Add-Worker':
-														addWorker(messageEvent.data.message);
-														break;
-													case 'Message-Worker':
-														messageWorker(messageEvent.data.message);
-														break;
+													}
+												}else{
+													callback(messageEvent.data.message);
 												}
 											};
 											arena.onerror = errorEvent => {

@@ -224,7 +224,7 @@ class ArenaHelper{
 				let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
 				let index = workers.findIndex(w => w === workerWrapper);
 				workers.splice(index, 1);
-				workerWrapper.worker.terminate();
+				ArenaHelper.#postMessage({type: 'Kill-Worker', message: workerWrapper.iframeId});
 			}
 			this.postToAll = (message='') => {
 				let promises = [];

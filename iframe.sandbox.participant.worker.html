@@ -48,6 +48,7 @@
 						if(!terminated){
 							setTimeout(executionWatcher, executionLimit, executionLimit);
 						}
+						kill();
 					}
 					*/
 					function post(data){
@@ -57,6 +58,10 @@
 						}else{
 							_messageQueue.push(data);
 						}
+					}
+					function kill(data){
+						_worker.terminate();
+						_parent.postMessage({type: 'Dead', iframeId: data.iframeId}, '*');
 					}
 					function blockNetwork(){
 						window.stop();
@@ -79,14 +84,20 @@
 						if(_parent === null){
 							_parent = messageEvent.source;
 						}
+						let callbacks = {
+							kill: kill,
+							post: post,
+							update: null
+						};
 						window.onmessage = messageEvent => {
 							if(_parent === null){
 								_parent = messageEvent.source;
 							}
-							switch(messageEvent.data.type){
-								default: debugger; break;
-								case 'post': post(messageEvent.data); break;
-								case 'update': _worker.postMessage(messageEvent.data); break;
+							let callback = callbacks[messageEvent.data.type];
+							if(callback === undefined){
+								throw new Error('Callback "'+callback+'" not found.');
+							}else{
+								callback(messageEvent.data);
 							}
 						}
 						scriptLoaded_promise.then(() => {
