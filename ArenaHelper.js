@@ -310,25 +310,29 @@ class ArenaHelper{
 					});
 				});
 			}
+			class Participant{
+				constructor(name, teamIndex, participantIndex, participantWrapper){
+					this.name = name;
+					this.team = teamIndex,
+					this.member = participantIndex,
+					this.payload = {};
+					this.addWorker = name => {
+						ArenaHelper.#participants.addWorker(this, name);
+					}
+					this.postMessage = async (data, workerName) => {
+						return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
+					}
+					this.sendUpdate = (data, workerName) => {
+						ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'update', message: data});
+					}
+				}
+			}
 			data.participants.forEach((team, teamIndex) => {
 				let members = [];
 				_teams.push({score: 0, members: members, precomputedWorkerData: null});
 				team.forEach((participant, participantIndex) => {
 					let participantWrapper = {
-						participant: {
-							name: participant.name,
-							team: teamIndex,
-							member: participantIndex,
-							payload: {},
-							onmessage: null,
-							onerror: null,
-							postMessage: async (data, workerName) => {
-								return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
-							},
-							sendUpdate: (data, workerName) => {
-								ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'update', message: data});
-							}
-						},
+						participant: null,
 						team: team,
 						private: {
 							url: participant.url,
@@ -336,6 +340,7 @@ class ArenaHelper{
 							workers: []
 						}
 					};
+					participantWrapper.participant = new Participant(participant.name, teamIndex, participantIndex, participantWrapper);
 					members.push(participantWrapper);
 					wrappers.push(participantWrapper);
 				});
