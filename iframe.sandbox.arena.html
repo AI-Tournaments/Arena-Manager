@@ -10,7 +10,11 @@
 			'use strict'
 			let _parent = null;
 			let _arenaWorker = null;
+			let _properties = null;
 			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
+			if(_data.settings.general.seed === ''){
+				_data.settings.general.seed += Math.random();
+			}
 			let script = document.createElement('script');
 			let scriptLoaded;
 			let scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
@@ -44,9 +48,9 @@
 								iframe.contentWindow.postMessage({
 									url: data.url,
 									name: data.name,
-									ParticipantHelper_url: _data.urls.ParticipantHelper,
 									participant: data.participant,
-									workerData: data.workerData
+									workerData: data.workerData,
+									includeScripts: [..._properties.header.includeScripts.participants, _data.urls.randomseed, _data.urls.ParticipantHelper]
 								}, '*');
 							}, 1000);
 						}else{
@@ -102,7 +106,8 @@
 						fetch(_data.urls.arena+'properties.json')
 						.then(response => response.json())
 						.then(json => {
-							let limits = json.header.limits;
+							_properties = json;
+							let limits = _properties.header.limits;
 							if(limits.teams.min === undefined ? true : limits.teams.min <= _data.participants.length
 							&& limits.teams.max === undefined ? true : _data.participants.length <= limits.teams.max
 							&& limits.participants.min === undefined ? true : limits.participants.min <= _data.participants.flat().length
@@ -114,13 +119,7 @@
 									output.classList.add('log');
 									document.body.appendChild(output);
 									scriptLoaded_promise.then(() => {
-										console.log('// TODO: Get imports from config');
-										let includeScripts = [/* Get imports from config */];
-										if(json.header.randomness){
-											console.log('// TODO: Include random');
-											includeScripts = [...includeScripts, /* Include random */];
-										}
-										ArenaHelper.CreateWorkerFromRemoteURL(_data.urls.arena+'arena.js', [...includeScripts, _data.urls.ArenaHelper]).then(arena => {
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.urls.arena+'arena.js', [..._properties.header.includeScripts.arena, _data.urls.randomseed, _data.urls.ArenaHelper]).then(arena => {
 											_arenaWorker = arena;
 											let callbacks = {
 												'Add-Worker': addWorker,

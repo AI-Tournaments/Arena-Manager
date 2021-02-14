@@ -6,13 +6,27 @@ class ParticipantHelper{
 	static #postMessage_native = ()=>{}
 	static onmessage = ()=>{}
 	static onmessageerror = ()=>{}
-	static respond = data => {
+	static respond = (data=null) => {
 		ParticipantHelper.#postMessage_native.call(globalThis, data);
 	}
 	static #onmessage = messageEvent=>{
 		if(ParticipantHelper.#initiated){
 			ParticipantHelper.onmessage(messageEvent.data);
 		}else{
+			if(messageEvent.data.settings.general.seed === ''){
+				throw new Error('No seed given!');
+			}
+			ParticipantHelper.random = new Math.seedrandom(messageEvent.data.settings.general.seed);
+			// Disable features that could be used to generate unpredictable random numbers.
+			let random_error = () => {
+				throw new Error(ParticipantHelper.#name +': '+ 'Use ParticipantHelper.random.');
+			}
+			Math.random = random_error;
+			Math.seedrandom = random_error;
+			Date = null;
+			performance = null;
+
+			// Initiate participant.
 			ParticipantHelper.init(messageEvent.data);
 			ParticipantHelper.#initiated = true;
 		}
@@ -50,21 +64,6 @@ class ParticipantHelper{
 			}
 		}
 		onMessageWatcher();
-		if(Math.seedrandom !== undefined){
-			console.log('// TODO: seed');
-			ParticipantHelper.random = Math.seedrandom('// TODO: seed');
-		}
-		let random_error = () => {
-			throw new Error(ParticipantHelper.#name +': '+ 'Use ParticipantHelper.random if random is allowed by the arena.');
-		}
-
-		// Disable features that could be used to generate unpredictable random numbers.
-		Math.random = random_error;
-		Math.seedrandom = random_error;
-		Date = null;
-		performance = null;
-
-		// Report ready.
 		ParticipantHelper.respond(null);
 	}
 }

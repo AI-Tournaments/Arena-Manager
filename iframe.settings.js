@@ -1,6 +1,7 @@
 'use strict'
 function a(){
 	let generalSettings = {
+		seed: '',
 		averageOf: 1,
 		displayOpponents: ['Hide', 'AccountOnly', 'Yes'],
 		timelimit_ms: 1000,
