@@ -16,13 +16,10 @@ class ParticipantHelper{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
 			}
+			Math.seedrandom(messageEvent.data.settings.general.seed);
 			ParticipantHelper.random = new Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.
-			let random_error = () => {
-				throw new Error(ParticipantHelper.#name +': '+ 'Use ParticipantHelper.random.');
-			}
-			Math.random = random_error;
-			Math.seedrandom = random_error;
+			delete Math.seedrandom;
 			Date = null;
 			performance = null;
 
