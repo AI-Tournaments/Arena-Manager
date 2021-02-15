@@ -22,7 +22,6 @@ class ParticipantHelper{
 			delete Math.seedrandom;
 			Date = null;
 			performance = null;
-
 			// Initiate participant.
 			ParticipantHelper.init(messageEvent.data);
 			ParticipantHelper.#initiated = true;
