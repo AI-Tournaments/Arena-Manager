@@ -46,7 +46,7 @@ function a(){
 				});
 				document.title = _json.name + ' Arena';
 				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url});
-				getParticipants(_json.name);
+				getParticipants(_json.full_name);
 				fetch(_json.raw_url+'README.md').then(response => response.text()).then(readme => {
 					fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
 					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
@@ -239,7 +239,7 @@ function a(){
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
 			}).then(response => response.json()).then(response => {
 				response.items.forEach(repo => {
-					if(!repo.topics.includes('retired')){
+					if(!repo.topics.includes('ai-tournaments-retired')){
 						promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
 						.then(response => response.json())
 						.then(data => {
