@@ -4,6 +4,7 @@ class ArenaHelper{
 	static #participants = null;
 	static #participants_onError = null;
 	static #participants_onMessage = null;
+	static #participants_onMessageTimeout = null;
 	static #participants_workerCreated = null;
 	static #arenaReady = null;
 	static #participants_getParticipantWrapper = null;
@@ -44,6 +45,7 @@ class ArenaHelper{
 		switch(event){
 			default: throw new Error('Event "'+event+'" not found.');
 			case 'Message': ArenaHelper.#participants_onMessage(source, payload); break;
+			case 'Message-Timeout': ArenaHelper.#participants_onMessageTimeout(source, payload); break;
 			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
 		}
@@ -157,15 +159,20 @@ class ArenaHelper{
 			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
 			ArenaHelper.#participants_onError = (source, messageIndex) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				console.error('// TODO: Write error message!');
+				console.error('// TODO: Write error message! (or maybe not?)');
 				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex);
 				console.log("// TODO: Kill participant.");
-				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'Participant dropped.'});
+				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'ParticipantError'});
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
 				pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
+			}
+			ArenaHelper.#participants_onMessageTimeout = (source, payload) => {
+				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
+				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'MessageTimeout'});
 			}
 			ArenaHelper.#participants_workerCreated = source => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);

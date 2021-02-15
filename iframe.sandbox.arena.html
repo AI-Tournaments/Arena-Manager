@@ -61,7 +61,7 @@
 						document.getElementById(message.receiver).contentWindow.postMessage(message.body, '*');
 					}
 					function killWorker(iframeId){
-						document.getElementById(iframeId).contentWindow.postMessage({type: 'kill', iframeId: iframeId}, '*');
+						document.getElementById(iframeId).contentWindow.postMessage({type: 'kill'}, '*');
 					}
 					function getOutput(){
 						let output = {

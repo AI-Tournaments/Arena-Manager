@@ -9,16 +9,23 @@
 			'use strict'
 			let _parent = null;
 			let _worker = null;
+			let _source = null;
+			let _iframeId = window.location.search.substring(1);
 			let _nextMessage = 0;
 			let _messageQueue = [];
-			let script = document.createElement('script');
-			let scriptLoaded;
-			let scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
-			script.onload = function(){
-				scriptLoaded();
-			}
-			script.src = decodeURI(location.hash.substring(1));
-			document.head.appendChild(script);
+			let _executionLimit = null;
+			let _executionWatcher = null;
+			let _scriptLoaded_promise = null;
+			(()=>{
+				let script = document.createElement('script');
+				let scriptLoaded;
+				_scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
+				script.onload = function(){
+					scriptLoaded();
+				}
+				script.src = decodeURI(location.hash.substring(1));
+				document.head.appendChild(script);
+			})();
 			function a(){
 				function isIframe(){
 					try{
@@ -28,40 +35,21 @@
 					}
 				}
 				if(isIframe()){
-					/*
-					Promise.all(promises).then(() => {
-						executionWatcher(data.settings.general.timelimit_ms);
-					}).catch(error => _onError(error));
-					function executionWatcher(executionLimit=1000){
-						wrappers.forEach(participantWrapper => {
-							participantWrapper.private.workers.forEach(workerWrapper => {
-								let executionTimeViolation = workerWrapper.lastCalled === undefined ? false : executionLimit < new Date().getTime() - workerWrapper.lastCalled;
-								if(workerWrapper.lastCalled === null || executionTimeViolation){
-									participantWrapper.team.splice(participantWrapper.team.indexOf(participantWrapper), 1);
-									if(executionTimeViolation){
-										workerWrapper.worker.terminate();
-										participantDropped(participantWrapper.participant, 'Execution time violation.', workerWrapper.name);
-									}
-								}
-							});
-						});
-						if(!terminated){
-							setTimeout(executionWatcher, executionLimit, executionLimit);
-						}
-						kill();
-					}
-					*/
 					function post(data){
-						console.log("// TODO: Add executionWatcher.");
+						_executionWatcher = setTimeout(messageTimeout, _executionLimit);
 						if(_nextMessage === data.index){
 							_worker.postMessage(data)
 						}else{
 							_messageQueue.push(data);
 						}
 					}
-					function kill(data){
+					function messageTimeout(){
+						_parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source, payload: {index: _nextMessage}}}, '*');
+						updateQueue();
+					}
+					function kill(){
 						_worker.terminate();
-						_parent.postMessage({type: 'Dead', iframeId: data.iframeId}, '*');
+						_parent.postMessage({type: 'Dead', iframeId: _iframeId}, '*');
 					}
 					function blockNetwork(){
 						window.stop();
@@ -84,15 +72,13 @@
 						if(_parent === null){
 							_parent = messageEvent.source;
 						}
+						_executionLimit = messageEvent.data.workerData.settings.general.timelimit_ms;
 						let callbacks = {
 							kill: kill,
 							post: post,
 							update: null
 						};
 						window.onmessage = messageEvent => {
-							if(_parent === null){
-								_parent = messageEvent.source;
-							}
 							let callback = callbacks[messageEvent.data.type];
 							if(callback === undefined){
 								throw new Error('Callback "'+callback+'" not found.');
@@ -100,23 +86,24 @@
 								callback(messageEvent.data);
 							}
 						}
-						scriptLoaded_promise.then(() => {
+						_scriptLoaded_promise.then(() => {
 							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
 								_worker = worker;
 								callbacks.update = _worker.postMessage;
 								if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
 									blockNetwork();
 								}
-								let source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
+								_source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
 								_worker.onerror = messageEvent => {
-									_parent.postMessage({type: 'Event', data: {event: 'Error', source: source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
+									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 								}
 								_worker.onmessage = messageEvent => {
-									_parent.postMessage({type: 'Event', data: {event: 'Message', source: source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
+									clearTimeout(_executionWatcher);
+									_parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
 									updateQueue();
 								}
 								_worker.postMessage(messageEvent.data.workerData);
-								_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: source}}, '*');
+								_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: _source}}, '*');
 							});
 						});
 					}
