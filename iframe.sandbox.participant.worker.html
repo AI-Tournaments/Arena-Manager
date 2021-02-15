@@ -14,7 +14,7 @@
 			let _nextMessage = 0;
 			let _messageQueue = [];
 			let _executionLimit = null;
-			let _executionWatcher = null;
+			let _executionWatcher = undefined;
 			let _scriptLoaded_promise = null;
 			(()=>{
 				let script = document.createElement('script');
@@ -98,8 +98,10 @@
 									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 								}
 								_worker.onmessage = messageEvent => {
-									clearTimeout(_executionWatcher);
-									_parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
+									if(_executionWatcher !== undefined){
+										_executionWatcher = clearTimeout(_executionWatcher);
+										_parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
+									}
 									updateQueue();
 								}
 								_worker.postMessage(messageEvent.data.workerData);
