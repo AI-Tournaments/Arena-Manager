@@ -33,7 +33,7 @@ class ArenaHelper{
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
 			default: throw new Error('Message type "'+messageEvent.data.type+'" not found.');
-			case 'Start': ArenaHelper.#arenaReady(this.#participants); break;
+			case 'Start': ArenaHelper.#arenaReady(); break;
 			case 'Event': ArenaHelper.#event(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}
 	}
