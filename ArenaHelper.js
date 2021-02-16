@@ -24,7 +24,7 @@ class ArenaHelper{
 		scores.forEach((team, index) => {
 			colors.push(this.#participants.getTeamColor(index));
 		});
-		ArenaHelper.#postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: participants.getSettings(), log: this.#log}});
+		ArenaHelper.#postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: ArenaHelper.#settings, log: this.#log}});
 	}
 	static postAbort = (participant='', error='')=>{
 		this.#participants.terminateAllWorkers();
