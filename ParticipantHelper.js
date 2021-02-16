@@ -13,7 +13,7 @@ class ParticipantHelper{
 	static #onmessage = messageEvent=>{
 		if(ParticipantHelper.#initiated){
 			if(typeof ParticipantHelper.onmessage === 'function'){
-				ParticipantHelper.onmessage(messageEvent.data.message, messageEvent.data.type, messageEvent.data.index);
+				ParticipantHelper.onmessage(messageEvent.data.message, messageEvent.data.type);
 			}else{
 				fatal('ParticipantHelper.onmessage is not a function.');
 			}
