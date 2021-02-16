@@ -61,6 +61,7 @@ class ArenaHelper{
 		}
 		ArenaHelper.#init = ()=>{
 			if(typeof ArenaHelper.init === 'function'){
+				console.log('// TODO: Move ?debug debugger here.');
 				ArenaHelper.init(ArenaHelper.#settings, ArenaHelper.#participants);
 			}else{
 				fatal('ArenaHelper.init is not a function.');
