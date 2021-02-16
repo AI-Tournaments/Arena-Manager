@@ -62,7 +62,7 @@ class ArenaHelper{
 			if(typeof ArenaHelper.init !== 'function'){
 				fatal('ArenaHelper.init is not a function.');
 			}else{
-				ArenaHelper.init(ArenaHelper.#participants);
+				ArenaHelper.init(data.settings, ArenaHelper.#participants);
 			}
 		}
 		let onmessage_preInit = messageEvent => {
@@ -259,9 +259,6 @@ class ArenaHelper{
 			}
 			this.get = (team=-1, participant=-1) => {
 				return _teams[team].members[participant].participant;
-			}
-			this.getSettings = ()=>{
-				return data.settings;
 			}
 			this.addScore = (team, score) => {
 				_teams[team].score += score;
