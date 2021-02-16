@@ -227,7 +227,9 @@ function a(){
 		btnStart.disabled = !validateStart();
 		sortOptions(selectElement_moveTo);
 	}
-	function getParticipants(arena=''){
+	function getParticipants(arenaFullName=''){
+		let arena = arenaFullName.replace('/','--');
+		let arenaReplace = 'AI-Tournaments-Participant-'+arena.replace('AI-Tournaments--','')+'-';
 		Array.from(document.getElementsByClassName('participants')).forEach(selectElement => {
 			while(0 < selectElement.length){
 				selectElement.remove(0);
@@ -246,7 +248,7 @@ function a(){
 							data.tree.forEach(file =>{
 								if(file.type === 'blob' && file.path === 'participant.js'){
 									let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
-									let name = repo.full_name.replace('AI-Tournaments-Participant-'+arena+'-','');
+									let name = repo.full_name.replace(arenaReplace,'');
 									addParticipantOption(url, name);
 								}
 							});
