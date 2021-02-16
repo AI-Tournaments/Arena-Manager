@@ -59,10 +59,10 @@ class ArenaHelper{
 			throw new Error(message);
 		}
 		ArenaHelper.#init = ()=>{
-			if(typeof ArenaHelper.init !== 'function'){
-				fatal('ArenaHelper.init is not a function.');
+			if(typeof ArenaHelper.init === 'function'){
+				ArenaHelper.init(ArenaHelper.#settings, ArenaHelper.#participants);
 			}else{
-				ArenaHelper.init(data.settings, ArenaHelper.#participants);
+				fatal('ArenaHelper.init is not a function.');
 			}
 		}
 		let onmessage_preInit = messageEvent => {

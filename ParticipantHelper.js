@@ -12,7 +12,11 @@ class ParticipantHelper{
 	}
 	static #onmessage = messageEvent=>{
 		if(ParticipantHelper.#initiated){
-			ParticipantHelper.onmessage(messageEvent.data);
+			if(typeof ParticipantHelper.onmessage === 'function'){
+				ParticipantHelper.onmessage(messageEvent.data);
+			}else{
+				fatal('ParticipantHelper.onmessage is not a function.');
+			}
 		}else{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
