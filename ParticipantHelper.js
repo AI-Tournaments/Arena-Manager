@@ -4,6 +4,7 @@ class ParticipantHelper{
 	static #initiated = false;
 	static #name = __url;
 	static #postMessage_native = ()=>{}
+	static init = ()=>{};
 	static onmessage = ()=>{}
 	static onmessageerror = ()=>{}
 	static respond = (data=null) => {
