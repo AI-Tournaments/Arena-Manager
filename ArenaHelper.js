@@ -1,6 +1,7 @@
 'use strict'
 class ArenaHelper{
 	static #log = [];
+	static #settings = null;
 	static #participants = null;
 	static #participants_onError = null;
 	static #participants_onMessage = null;
@@ -150,6 +151,7 @@ class ArenaHelper{
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
+			ArenaHelper.#settings = data.settings;
 			ArenaHelper.#participants = this;
 			let terminated = false;
 			let promises = [];
