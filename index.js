@@ -241,7 +241,7 @@ function a(){
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
 			}).then(response => response.json()).then(response => {
 				response.items.forEach(repo => {
-					if(!repo.topics.includes('ai-tournaments-retired')){
+					if(!repo.topics.includes('AI-Tournaments-Retired')){
 						promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
 						.then(response => response.json())
 						.then(data => {
