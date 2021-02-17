@@ -152,7 +152,16 @@ class ArenaHelper{
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
-			ArenaHelper.#settings = data.settings;
+			class Settings{
+				constructor(settings={}){
+					for(const key in settings){
+						if(Object.hasOwnProperty.call(settings, key)){
+							this[key] = settings[key];
+						}
+					}
+				}
+			}
+			ArenaHelper.#settings = new Settings(data.settings);
 			ArenaHelper.#participants = this;
 			let terminated = false;
 			let promises = [];

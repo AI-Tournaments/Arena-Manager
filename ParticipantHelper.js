@@ -28,7 +28,21 @@ class ParticipantHelper{
 			Date = null;
 			performance = null;
 			// Initiate participant.
-			ParticipantHelper.init(messageEvent.data.settings, messageEvent.data.opponents);
+			class Settings{
+				constructor(settings={}){
+					for(const key in settings){
+						if(Object.hasOwnProperty.call(settings, key)){
+							this[key] = settings[key];
+						}
+					}
+				}
+			}
+			class Opponents extends Array{
+				constructor(opponents=[]){
+					super(opponents);
+				}
+			}
+			ParticipantHelper.init(new Settings(messageEvent.data.settings), new Opponents(messageEvent.data.opponents));
 			ParticipantHelper.#initiated = true;
 		}
 	}
