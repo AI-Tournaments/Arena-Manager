@@ -59,9 +59,10 @@ class ArenaHelper{
 			ArenaHelper.postAbort('Fatal-Abort', message);
 			throw new Error(message);
 		}
+		let debug = false;
 		ArenaHelper.#init = ()=>{
 			if(typeof ArenaHelper.init === 'function'){
-				console.log('// TODO: Move ?debug debugger here.');
+				if(debug){debugger;} // Use the browser debugger to step in to the ArenaHelper.init function below.
 				ArenaHelper.init(ArenaHelper.#participants, ArenaHelper.#settings);
 			}else{
 				fatal('ArenaHelper.init is not a function.');
@@ -71,6 +72,7 @@ class ArenaHelper{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
 			}
+			debug = messageEvent.data.debug;
 			Math.seedrandom(messageEvent.data.settings.general.seed);
 			ArenaHelper.random = new Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.

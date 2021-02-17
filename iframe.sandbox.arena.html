@@ -151,7 +151,9 @@
 											arena.onerror = errorEvent => {
 												console.log('// TEMP: errorEvent: '+errorEvent);
 											};
-											if(location.href.includes('?debug')){debugger;}
+											if(location.href.includes('?debug')){
+												_data.debug = true;
+											}
 											arena.postMessage(_data);
 										});
 									});
