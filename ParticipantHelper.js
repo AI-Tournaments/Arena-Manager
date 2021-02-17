@@ -28,7 +28,7 @@ class ParticipantHelper{
 			Date = null;
 			performance = null;
 			// Initiate participant.
-			ParticipantHelper.init(messageEvent.data);
+			ParticipantHelper.init(messageEvent.data.settings, messageEvent.data.opponents);
 			ParticipantHelper.#initiated = true;
 		}
 	}
