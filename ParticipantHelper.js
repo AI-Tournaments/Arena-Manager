@@ -39,7 +39,7 @@ class ParticipantHelper{
 			}
 			class Opponents extends Array{
 				constructor(opponents=[]){
-					super(opponents);
+					super(...opponents);
 				}
 			}
 			ParticipantHelper.init(new Settings(messageEvent.data.settings), new Opponents(messageEvent.data.opponents));
