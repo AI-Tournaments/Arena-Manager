@@ -74,7 +74,6 @@ class ArenaHelper{
 			}
 			debug = messageEvent.data.debug;
 			Math.seedrandom(messageEvent.data.settings.general.seed);
-			ArenaHelper.random = new Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.
 			delete Math.seedrandom;
 			Date = null;

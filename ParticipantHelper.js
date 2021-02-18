@@ -34,7 +34,6 @@ class ParticipantHelper{
 				throw new Error('No seed given!');
 			}
 			Math.seedrandom(messageEvent.data.settings.general.seed);
-			ParticipantHelper.random = new Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.
 			delete Math.seedrandom;
 			Date = null;
