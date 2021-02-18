@@ -1,18 +1,30 @@
 'use strict'
 class ParticipantHelper{
+	static #executionWatcher = undefined;
+	static #executionLimit = undefined;
 	static #instance = null;
 	static #initiated = false;
 	static #name = __url;
+	static #messageIndex;
 	static #postMessage_native = ()=>{}
 	static init = ()=>{};
 	static onmessage = ()=>{}
 	static onmessageerror = ()=>{}
 	static respond = (data=null) => {
-		ParticipantHelper.#postMessage_native.call(globalThis, data);
+		if(ParticipantHelper.#executionWatcher !== undefined){
+			ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
+			ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: data});
+		}
+	}
+	static #messageTimeout = ()=>{
+		ParticipantHelper.onmessage(ParticipantHelper.#messageIndex, 'Message-Timeout');
+		ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Message-Timeout'});
 	}
 	static #onmessage = messageEvent=>{
 		if(ParticipantHelper.#initiated){
 			if(typeof ParticipantHelper.onmessage === 'function'){
+				ParticipantHelper.#messageIndex = messageEvent.data.index;
+				ParticipantHelper.#executionWatcher = setTimeout(ParticipantHelper.#messageTimeout, ParticipantHelper.#executionLimit);
 				ParticipantHelper.onmessage(messageEvent.data.message, messageEvent.data.type);
 			}else{
 				fatal('ParticipantHelper.onmessage is not a function.');
@@ -28,6 +40,7 @@ class ParticipantHelper{
 			Date = null;
 			performance = null;
 			// Initiate participant.
+			ParticipantHelper.#executionLimit = messageEvent.data.settings.general.executionLimit;
 			class Settings{
 				constructor(settings={}){
 					for(const key in settings){
@@ -80,6 +93,6 @@ class ParticipantHelper{
 			}
 		}
 		onMessageWatcher();
-		ParticipantHelper.respond(null);
+		ParticipantHelper.#postMessage_native.call(globalThis, null);
 	}
 }

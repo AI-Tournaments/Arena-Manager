@@ -14,7 +14,6 @@
 			let _nextMessage = 0;
 			let _messageQueue = [];
 			let _executionLimit = null;
-			let _executionWatcher = undefined;
 			let _scriptLoaded_promise = null;
 			(()=>{
 				let script = document.createElement('script');
@@ -36,16 +35,11 @@
 				}
 				if(isIframe()){
 					function post(data){
-						_executionWatcher = setTimeout(messageTimeout, _executionLimit);
 						if(_nextMessage === data.index){
 							_worker.postMessage(data)
 						}else{
 							_messageQueue.push(data);
 						}
-					}
-					function messageTimeout(){
-						_parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source, payload: {index: _nextMessage}}}, '*');
-						updateQueue();
 					}
 					function kill(){
 						_worker.terminate();
@@ -72,7 +66,6 @@
 						if(_parent === null){
 							_parent = messageEvent.source;
 						}
-						_executionLimit = messageEvent.data.workerData.settings.general.timelimit_ms;
 						let callbacks = {
 							kill: kill,
 							post: post,
@@ -98,9 +91,9 @@
 									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 								}
 								_worker.onmessage = messageEvent => {
-									if(_executionWatcher !== undefined){
-										_executionWatcher = clearTimeout(_executionWatcher);
-										_parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data, index: _nextMessage}}}, '*');
+									switch(messageEvent.data.type){
+										case 'Response': _parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data.response, index: _nextMessage}}}, '*'); break;
+										case 'Message-Timeout': _parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source, payload: {index: _nextMessage}}}, '*'); break;
 									}
 									updateQueue();
 								}
