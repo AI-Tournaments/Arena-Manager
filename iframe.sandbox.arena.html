@@ -91,6 +91,8 @@
 								_parent = messageEvent.source;
 							}
 							if(messageEvent.source === _parent){
+								// TODO: Fix: Uncaught DOMException: Failed to execute 'postMessage' on 'Window': Invalid target origin 'null' in a call to 'postMessage'.
+								// Try with '*'.
 								messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
 							}else if(messageEvent.data.type === 'Dead'){
 								let iframe = document.getElementById(messageEvent.data.iframeId);
