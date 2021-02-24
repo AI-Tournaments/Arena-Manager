@@ -9,25 +9,41 @@ function a(){
 	let localParticipants = null
 	let arenaProperties;
 	let selectArena = document.getElementById('selectArena');
-	let participantList = document.getElementById('participants-selectable');
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
 	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
 	let arenaDescription = document.getElementById('arena-description');
+	let participantGroups = document.getElementById('participant-groups');
 	arenaDescription.parentElement.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaDescription.parentElement.classList.toggle('hidden');
 	});
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
-	let btnTransfer = document.getElementById('transfer');
-	btnTransfer.onclick = transferToTeam;
 	let contentWindows = {
 		iFrameLog: []
 	};
 	let arenaListReady;
 	let arenaListReadyPromise = new Promise(resolve => arenaListReady = resolve);
+	let availableParticipantsWrapper = document.createElement('div');
+	let availableParticipants_btn = document.createElement('input');
+	availableParticipants_btn.type = 'button';
+	availableParticipants_btn.id = 'transfer';
+	availableParticipants_btn.onclick = transferToTeam;
+	availableParticipants_btn.dataset.select = 'participants-selectable';
+	availableParticipants_btn.value = 'Transfer here';
+	availableParticipantsWrapper.appendChild(availableParticipants_btn);
+	let availableParticipants_label = document.createElement('label');
+	availableParticipants_label.for = 'participants-selectable';
+	availableParticipants_label.innerHTML = 'Available participants';
+	availableParticipantsWrapper.appendChild(availableParticipants_label);
+	let availableParticipants_select = document.createElement('select');
+	availableParticipants_select.id = 'participants-selectable';
+	availableParticipants_select.classList.add('participants');
+	availableParticipants_select.multiple = true;
+	availableParticipantsWrapper.appendChild(availableParticipants_select);
+	participantGroups.appendChild(availableParticipantsWrapper);
 	window.onhashchange = ()=>selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)});
 	window.onhashchange();
 	window.onmessage = messageEvent => {
@@ -83,13 +99,13 @@ function a(){
 		localArenas[url] = replayURL;
 		arenaListReadyPromise.then(()=>{
 			localParticipants = participants;
-		selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
+			selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
 		});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
-		sortOptions(participantList);
+		sortOptions(availableParticipants_select);
 	}
 	function sendLog(messageEvent){
 		if(outputSum.dataset.done){
@@ -263,7 +279,7 @@ function a(){
 					}
 				});
 				Promise.all(promises).then(() => {
-					sortOptions(participantList);
+					sortOptions(availableParticipants_select);
 					arenaListReady();
 				})
 			});
@@ -283,7 +299,7 @@ function a(){
 		option.dataset.raw_url = url;
 		option.dataset.name = name;
 		option.innerHTML = option.dataset.name;
-		participantList.appendChild(option);
+		availableParticipants_select.appendChild(option);
 		return option;
 	}
 	function createTeam(){
@@ -300,7 +316,7 @@ function a(){
 		participantTeam.appendChild(select);
 		input.type = 'button';
 		input.dataset.select = teamID;
-		input.value = btnTransfer.value;
+		input.value = availableParticipants_btn.value;
 		input.onclick = transferToTeam;
 		label.htmlFor = teamID;
 		label.innerHTML = 'Team ' + teamIndex;
@@ -308,7 +324,7 @@ function a(){
 		select.classList.add('participants');
 		select.classList.add('participant-team');
 		select.multiple = true;
-		document.getElementById('participant-groups').appendChild(participantTeam);
+		participantGroups.appendChild(participantTeam);
 	}
 	function start(){
 		while(0 < logContainer.childElementCount){
