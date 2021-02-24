@@ -31,7 +31,9 @@ function a(){
 	window.onhashchange = ()=>selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)});
 	window.onhashchange();
 	window.onmessage = messageEvent => {
-		if(messageEvent.data.type === 'auto-run'){
+		if(messageEvent.data.type === 'Replay-Height'){
+			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
+		}else if(messageEvent.data.type === 'auto-run'){
 			_json = messageEvent.data.arena;
 			document.title = messageEvent.data.type;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
@@ -169,6 +171,7 @@ function a(){
 					_replayContainer.classList.add('replay-container');
 					_replayContainer.src = '../Replay/#'+JSON.stringify(replayData);
 					document.body.appendChild(_replayContainer);
+					setTimeout(()=>{_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');}, 1000);
 				}
 			}else{
 				getIFrameLog(iframe);
