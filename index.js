@@ -4,6 +4,7 @@ let addParticipant;
 function a(){
 	let _sortByStars = false;
 	let _json;
+	let _replayContainer;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -164,10 +165,10 @@ function a(){
 					element.parentNode.removeChild(element);
 				});
 				if(!document.title.startsWith('auto-run')){
-					let replayContainer = document.createElement('iframe');
-					replayContainer.classList.add('replay-container');
-					replayContainer.src = '../Replay/#'+JSON.stringify(replayData);
-					document.body.appendChild(replayContainer);
+					_replayContainer = document.createElement('iframe');
+					_replayContainer.classList.add('replay-container');
+					_replayContainer.src = '../Replay/#'+JSON.stringify(replayData);
+					document.body.appendChild(_replayContainer);
 				}
 			}else{
 				getIFrameLog(iframe);
