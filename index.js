@@ -93,13 +93,27 @@ function a(){
 		}
 	}
 	addArena = (url='', name='', replayURL='', ...participants) => {
-		if(name === ''){
-			name = url;
+		if(typeof url === 'string'){
+			url = {arena: url, includeScripts: {arena: [], participants: []}};
 		}
-		localArenas[url] = replayURL;
+		if(name === ''){
+			name = url.arena;
+		}
+		localArenas[url.arena] = replayURL;
+		let json = {
+			name: name,
+			raw_url: url.arena,
+			html_url: url.arena,
+			full_name: name,
+			default_branch: null,
+			stars: -1,
+			commit: null,
+			version: null,
+			includeScripts: url.includeScripts
+		};
 		arenaListReadyPromise.then(()=>{
 			localParticipants = participants;
-			selectArena.contentWindow.postMessage({type: 'add-arena', value: [url, name]});
+			selectArena.contentWindow.postMessage({type: 'add-arena', value: json});
 		});
 	}
 	addParticipant = (url='', name='Manually added participant') => {
@@ -338,9 +352,8 @@ function a(){
 	}
 	function begin(settings, bracket=[]){
 		let json = {
-			arena: _json.full_name+'/'+_json.default_branch,
+			arena: _json,
 			urls: {
-				arena: _json.raw_url,
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
 				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
 				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js'

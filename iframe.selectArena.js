@@ -22,20 +22,12 @@ function a(){
 				}
 				break;
 			case 'add-arena':
-				addArena(messageEvent.data.value[0], messageEvent.data.value[1]);
+				addArena_local(messageEvent.data.value);
 				break;
 		}
 	}
-	function addArena(url, name){
+	function addArena_local(json){
 		let option = document.createElement('option');
-		let json = {
-			name: name,
-			raw_url: url,
-			html_url: url,
-			full_name: name,
-			default_branch: null,
-			stars: -1
-		};
 		option.innerHTML = json.name;
 		option.dataset.json = JSON.stringify(json);
 		arenaList.appendChild(option);
@@ -51,29 +43,19 @@ function a(){
 		while(0 < arenaList.length){
 			arenaList.remove(0);
 		}
-		GitHubApi.fetchArenas().then(repos => {
+		GitHubApi.fetchArenas().then(arenas => {
 			let preSelected = undefined;
 			let options = [...arenaFilter.selectedOptions].flatMap(selectedOption => selectedOption.value);
-			repos.forEach(repo => {
-				let official = repo.owner.login === 'AI-Tournaments';
-				if(options.includes('all') || (official && options.includes('official')) || (!official && options.includes('community'))){
+			arenas.forEach(arena => {
+				if(options.includes('all') || (arena.official && options.includes('official')) || (!arena.official && options.includes('community'))){
 					let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 					cssStar = cssStar.substring(1,cssStar.length-1);
 					let option = document.createElement('option');
-					if(preSelectedArena === repo.full_name){
+					if(preSelectedArena === arena.full_name){
 						preSelected = option;
 					}
-					let json = {
-						official: official,
-						name: repo.full_name.replace(/.*\/|-Arena/g, ''),
-						raw_url: 'https://raw.githubusercontent.com/'+repo.full_name+'/'+repo.default_branch+'/',
-						html_url: repo.html_url,
-						full_name: repo.full_name,
-						default_branch: repo.default_branch,
-						stars: repo.stargazers_count
-					};
-					option.innerHTML = json.name + ' ' + cssStar + repo.stargazers_count;
-					option.dataset.json = JSON.stringify(json);
+					option.innerHTML = arena.name + ' ' + cssStar + arena.stargazers_count;
+					option.dataset.json = JSON.stringify(arena);
 					arenaList.appendChild(option);
 				}
 			});

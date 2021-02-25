@@ -10,7 +10,7 @@ function a(){
 			timelimit_ms: {min: 1, max: null}
 		}
 	};
-	let advanceSettings = {
+	let advancedSettings = {
 		allowRemoteExecution: false
 	};
 	let arenaProperties;
@@ -116,9 +116,7 @@ function a(){
 		});
 	}
 	function postSettings(messageEvent){
-		let json = {
-			general: JSON.parse(JSON.stringify(advanceSettings))
-		};
+		let json = {};
 		for(const input of settings.getElementsByTagName('input')){
 			let info = input.name.split('.');
 			if(json[info[0]] === undefined){
@@ -133,6 +131,7 @@ function a(){
 			}
 			json[info[0]][info[1]] = value;
 		}
+		json.general.advanced = JSON.parse(JSON.stringify(advancedSettings));
 		messageEvent.source.postMessage({type: 'settings', value: json}, messageEvent.origin);
 	}
 }
