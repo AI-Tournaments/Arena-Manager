@@ -54,7 +54,7 @@ function a(){
 					if(preSelectedArena === arena.full_name){
 						preSelected = option;
 					}
-					option.innerHTML = arena.name + ' ' + cssStar + arena.stargazers_count;
+					option.innerHTML = arena.name + ' ' + cssStar + arena.stars;
 					option.dataset.json = JSON.stringify(arena);
 					arenaList.appendChild(option);
 				}
