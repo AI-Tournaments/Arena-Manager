@@ -33,7 +33,7 @@ class ParticipantHelper{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
 			}
-			Math.seedrandom(messageEvent.data.settings.general.seed);
+			Math.seedrandom(messageEvent.data.settings.general.seed+'@'+messageEvent.data.iframeId);
 			// Disable features that could be used to generate unpredictable random numbers.
 			delete Math.seedrandom;
 			Date = null;

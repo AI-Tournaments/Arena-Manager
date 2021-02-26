@@ -243,7 +243,10 @@ class ArenaHelper{
 						participant: [participant.team, participant.member],
 						name: name,
 						url: participantWrapper.private.url,
-						workerData: team.precomputedWorkerData
+						workerData: {
+							...team.precomputedWorkerData,
+							iframeId: workerWrapper.iframeId
+						}
 					}
 				});
 				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
