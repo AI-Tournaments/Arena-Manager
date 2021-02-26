@@ -104,7 +104,7 @@ function a(){
 			name: name,
 			raw_url: url.arena,
 			html_url: url.arena,
-			full_name: name,
+			full_name: 'local/'+name,
 			default_branch: null,
 			stars: -1,
 			commit: null,
