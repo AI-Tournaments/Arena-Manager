@@ -15,6 +15,12 @@ function a(){
 	let btnAddTeam = document.getElementById('add-team');
 	let arenaDescription = document.getElementById('arena-description');
 	let participantGroups = document.getElementById('participant-groups');
+	requestAnimationFrame(()=>{
+		let item = localStorage.getItem('Local arena development');
+		if(item !== null){
+			addArena(...JSON.parse(item));
+		}
+	});
 	arenaDescription.parentElement.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaDescription.parentElement.classList.toggle('hidden');
 	});
@@ -93,6 +99,7 @@ function a(){
 		}
 	}
 	addArena = (url='', name='', replayURL='', ...participants) => {
+		if(url === ''){return;}
 		if(typeof url === 'string'){
 			url = {arena: url, includeScripts: {arena: [], participants: []}};
 		}
