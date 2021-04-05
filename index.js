@@ -8,10 +8,10 @@ function a(){
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
+	let arenaMatches = null;
 	let selectArena = document.getElementById('selectArena');
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
-	let outputSum = document.getElementById('outputSum');
 	let btnAddTeam = document.getElementById('add-team');
 	let arenaDescription = document.getElementById('arena-description');
 	let participantGroups = document.getElementById('participant-groups');
@@ -129,89 +129,45 @@ function a(){
 		sortOptions(availableParticipants_select);
 	}
 	function sendLog(messageEvent){
+		debugger; // This should be removed.
 		if(outputSum.dataset.done){
+			console.log('// TODO: Is sendLog used?');
 			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: JSON.parse(outputSum.dataset.array)}}, messageEvent.origin);
 		}else{
 			setTimeout(()=>{sendLog(messageEvent)}, 1000);
 		}
 	}
 	function writeArenaLog(messageEvent){
-		let iframe = document.getElementById(messageEvent.data.id);
-		let output = iframe.parentElement.getElementsByClassName('log')[0];
+		let iframe = document.getElementById(messageEvent.data.iframeID);
+		let arenaMatch = arenaMatches[iframe];
+		if(arenaMatch === undefined){
+			arenaMatch = [];
+			arenaMatches[iframe] = arenaMatch;
+		}
 		if(messageEvent.origin === 'null'){
-			while(0 < output.childElementCount){
-				output.removeChild(output.firstChild);
-			}
-			let isDone = true;
-			let aborted = []; // TODO: Use.
-			messageEvent.data.value.data.forEach(posts => {
-				let container = document.createElement('div');
-				output.appendChild(container);
-				let isDone_local = false;
-				let score = undefined;
-				posts.forEach(post => {
-					isDone_local |= post.type === 'Done' || post.type === 'Aborted';
-					if(post.type === 'Done'){
-						score = post.value.score;
-					}else if(post.type === 'Aborted'){
-						score = null;
-						aborted.push(post.value);
-					}
-					let label = document.createElement('label');
-					label.htmlFor = iframe.src + ':' + post.id;
-					label.classList.add(post.type);
-					label.innerHTML = post.type;
-					container.appendChild(label);
-					let pre = document.createElement('pre');
-					pre.id = iframe.src + ':' + post.id;
-					pre.classList.add(post.type);
-					pre.innerHTML = JSON.stringify(post.value,null,'\t');
-					container.appendChild(pre);
-				});
-				isDone &= isDone_local;
-				if(isDone_local){
-					if(score === null){
-						outputSum.dataset.aborted = JSON.stringify(aborted);
-					}else{
-						let array = outputSum.dataset.array === undefined ? [] : JSON.parse(outputSum.dataset.array);
-						score.forEach(s => {
-							let entry = array.find(entry => entry.name === s.name);
-							if(entry === undefined){
-								entry = {type: 'score', name: s.name, score: 0, scores: []};
-								array.push(entry);
-							}
-							entry.scores.push(s.score);
-							entry.score = entry.scores.reduce(function(a,b){return a+b;})/entry.scores.length;
-						});
-						outputSum.dataset.array = JSON.stringify(array);
-						outputSum.innerHTML = JSON.stringify(array,null,'\t');
-					}
-				}
+			iframe.parentElement.removeChild(iframe);
+			let defaultReplay = localArenas[_json.raw_url];
+			let replayData = {
+				header: {
+					defaultReplay: defaultReplay
+				},
+				body: messageEvent.data.value
+			};
+			contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
+			Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
+				element.parentNode.removeChild(element);
 			});
-			if(isDone){
-				let defaultReplay = localArenas[_json.raw_url];
-				let replayData = {
-					header: {
-						defaultReplay: defaultReplay
-					},
-					body: messageEvent.data.value
-				};
-				outputSum.dataset.array = JSON.stringify(messageEvent.data.value);
-				outputSum.dataset.done = true;
-				outputSum.innerHTML = JSON.stringify(messageEvent.data.value,null,'\t');
-				contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
-				Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
-					element.parentNode.removeChild(element);
-				});
-				if(!document.title.startsWith('auto-run')){
-					_replayContainer = document.createElement('iframe');
-					_replayContainer.classList.add('replay-container');
-					_replayContainer.src = '../Replay/#'+JSON.stringify(replayData);
-					document.body.appendChild(_replayContainer);
-					setTimeout(()=>{_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');}, 1000);
-				}
-			}else{
-				getIFrameLog(iframe);
+			if(!document.title.startsWith('auto-run')){
+				console.log('// TODO: Confirm that replay sort matches according to index, and that indexes get the same result every time with the same seed.');
+				_replayContainer = document.createElement('iframe');
+				_replayContainer.classList.add('replay-container');
+				_replayContainer.src = '../Replay/';
+				console.log(_replayContainer.src.length);
+				document.body.appendChild(_replayContainer);
+				setTimeout(()=>{
+					_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
+					_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
+				}, 1000);
 			}
 		}
 	}
@@ -351,10 +307,7 @@ function a(){
 		while(0 < logContainer.childElementCount){
 			logContainer.removeChild(logContainer.firstChild);
 		}
-		outputSum.innerHTML = '';
-		for(var key in outputSum.dataset){
-			delete outputSum.dataset[key];
-		}
+		arenaMatches = {};
 		settingsIframe.contentWindow.postMessage({type: 'GetSettings'});
 	}
 	function begin(settings, bracket=[]){
@@ -365,6 +318,7 @@ function a(){
 				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
 				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js'
 			},
+			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
 			settings: settings
 		};
@@ -386,10 +340,10 @@ function a(){
 		let div = document.createElement('div');
 		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
-		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'')+'#' + JSON.stringify(json);
+		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
 		iframe.sandbox = 'allow-scripts';
 		iframe.style.display = 'none';
-		iframe.id = Date() + '_' + Math.random();
+		iframe.id = json.iframeID;
 		div.appendChild(iframe);
 		let output = document.createElement('div');
 		if(!isDebugMode){
@@ -397,10 +351,7 @@ function a(){
 		}
 		output.classList.add('log');
 		div.appendChild(output);
-		setTimeout(()=>{getIFrameLog(iframe, output)}, 1000);
-	}
-	function getIFrameLog(iframe){
 		contentWindows.iFrameLog.push(iframe.contentWindow);
-		iframe.contentWindow.postMessage(iframe.id, '*');
+		setTimeout(()=>iframe.contentWindow.postMessage(json, '*'), 1000);
 	}
 }

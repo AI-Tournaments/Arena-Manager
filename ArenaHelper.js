@@ -30,21 +30,22 @@ class ArenaHelper{
 		this.#participants.terminateAllWorkers();
 		let participantName = participant.name === undefined ? participant : participant.name;
 		ArenaHelper.#postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
+		throw new Error('Test');
 	}
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
 			default: throw new Error('Message type "'+messageEvent.data.type+'" not found.');
 			case 'Start': ArenaHelper.#arenaReady(); break;
-			case 'Event': ArenaHelper.#event(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
+			case 'Response': ArenaHelper.#response(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}
 	}
 	static #onmessageerror = messageEvent=>{
 		console.error(messageEvent);
 		ArenaHelper.postAbort('Message-Error', error.data);
 	}
-	static #event = (event, source, payload) => {
+	static #response = (event, source, payload) => {
 		switch(event){
-			default: throw new Error('Event "'+event+'" not found.');
+			default: throw new Error('Response-Event "'+event+'" not found.');
 			case 'Message': ArenaHelper.#participants_onMessage(source, payload); break;
 			case 'Message-Timeout': ArenaHelper.#participants_onMessageTimeout(source, payload); break;
 			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
@@ -164,7 +165,6 @@ class ArenaHelper{
 			}
 			ArenaHelper.#settings = new Settings(data.settings);
 			ArenaHelper.#participants = this;
-			let terminated = false;
 			let promises = [];
 			let _teams = [];
 			let wrappers = [];
@@ -207,7 +207,7 @@ class ArenaHelper{
 					name: name,
 					promiseWorkerReady: null,
 					ready: false,
-					iframeId: 'team-'+participant.team+'_'+'member-'+participant.member+'_'+name,
+					iframeId: 'matchIndex-'+data.matchIndex+'_team-'+participant.team+'_'+'member-'+participant.member+'_'+name,
 					messageIndex: 0,
 					pendingMessages: []
 				};
@@ -252,12 +252,13 @@ class ArenaHelper{
 				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
 			}
 			this.killWorker = (participant, name)=>{
-				let participantWrapper = _teams[participant.team].members[participant.member];
-				let workers = participantWrapper.private.workers;
-				let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
-				let index = workers.findIndex(w => w === workerWrapper);
-				workers.splice(index, 1);
-				ArenaHelper.#postMessage({type: 'Kill-Worker', message: workerWrapper.iframeId});
+				participant.postMessage('Kill', name, true).then(()=>{
+					let participantWrapper = _teams[participant.team].members[participant.member];
+					let workers = participantWrapper.private.workers;
+					let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
+					let index = workers.findIndex(w => w === workerWrapper);
+					workers.splice(index, 1);
+				});
 			}
 			this.postToAll = (message='') => {
 				let promises = [];
@@ -333,7 +334,6 @@ class ArenaHelper{
 				};
 			}
 			this.terminateAllWorkers = () => {
-				terminated = true;
 				wrappers.forEach(participantWrapper => {
 					participantWrapper.private.workers.forEach(workerWrapper => {
 						this.killWorker(participantWrapper.participant, workerWrapper.name);
@@ -349,11 +349,8 @@ class ArenaHelper{
 					this.addWorker = name => {
 						ArenaHelper.#participants.addWorker(this, name);
 					}
-					this.postMessage = async (data, workerName) => {
-						return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data});
-					}
-					this.sendUpdate = (data, workerName) => {
-						ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'update', message: data});
+					this.postMessage = async (data, workerName, systemMessage=false) => {
+						return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data, systemMessage});
 					}
 				}
 			}

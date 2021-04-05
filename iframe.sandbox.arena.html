@@ -8,20 +8,6 @@
 		<link rel="stylesheet" href="log.css">
 		<script>
 			'use strict'
-			let _parent = null;
-			let _arenaWorker = null;
-			let _data = JSON.parse(decodeURI(location.hash.substring(1)));
-			if(_data.settings.general.seed === ''){
-				_data.settings.general.seed += Math.random();
-			}
-			let script = document.createElement('script');
-			let scriptLoaded;
-			let scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
-			script.onload = function(){
-				scriptLoaded();
-			}
-			script.src = _data.urls.ArenaHelper;
-			document.head.appendChild(script);
 			function a(){
 				function isIframe(){
 					try{
@@ -31,142 +17,190 @@
 					}
 				}
 				if(isIframe()){
-					function blockNetwork(){
-						window.stop();
-						window.requestAnimationFrame(blockNetwork);
-					}
-					function addWorker(data){
-						let iframe = document.getElementById(data.iframeId);
-						if(iframe === null){
-							iframe = document.createElement('iframe');
-							iframe.id = data.iframeId;
-							iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
-							iframe.sandbox = 'allow-scripts';
-							document.body.appendChild(iframe);
-							setTimeout(()=>{
-								iframe.contentWindow.postMessage({
-									url: data.url,
-									name: data.name,
-									participant: data.participant,
-									workerData: data.workerData,
-									includeScripts: [..._data.arena.includeScripts.participants, _data.urls.randomseed, _data.urls.ParticipantHelper]
-								}, '*');
-							}, 1000);
-						}else{
-							_arenaWorker.postMessage('Participant-worker "'+data.iframeId+'" already exist!');
-						}
-					}
-					function messageWorker(message){
-						document.getElementById(message.receiver).contentWindow.postMessage(message.body, '*');
-					}
-					function killWorker(iframeId){
-						document.getElementById(iframeId).contentWindow.postMessage({type: 'kill'}, '*');
-					}
-					function getOutput(){
-						let output = {
-							arena: {
-								full_name: _data.arena.full_name,
-								commit: _data.arena.commit,
-								version: _data.arena.version
-							},
-							data: []
+					let _parent = null;
+					let _arenaWorkers = [];
+					let _arenaResponses = [];
+					let _arenaPromises = [];
+					let _arenaReadyToStart = [];
+					let _scriptLoaded_promises = [];
+					let _messageQueue = [];
+					let _messagePending = [];
+					window.onmessage = messageEvent => {
+						_parent = {
+							source: messageEvent.source,
+							origin: messageEvent.origin
 						};
-						let outputList = document.getElementsByClassName('log');
-						for(const outputKey in outputList){
-							if(outputList.hasOwnProperty(outputKey)){
-								let outputElement = outputList[outputKey];
-								let segment = [];
-								output.data.push(segment);
-								let list = outputElement.getElementsByTagName('pre');
-								for(const key in list){
-									if(list.hasOwnProperty(key)){
-										let element = list[key];
-										segment.push({type: element.className, id: element.id, value: JSON.parse(element.innerHTML)});
+						let _data = messageEvent.data;
+						if(_data.settings.general.seed === ''){
+							_data.settings.general.seed += Math.random();
+						}
+						let _freeMessageChannels = Math.max(1, navigator.hardwareConcurrency-(1+_data.settings.general.averageOf));
+						function nextMessage(){
+							let message = _messageQueue.pop();
+							let iframe = document.getElementById(message.receiver);
+							if(iframe === null){
+								console.error('Receiver missing: '+message.receiver+'\n'+JSON.stringify(message.body));
+								nextMessage();
+							}else{
+								_messagePending.push(message);
+								iframe.contentWindow.postMessage(message.body, '*');
+							}
+						}
+						if(location.href.includes('?debug')){
+							_data.debug = true;
+						}
+						[_data.urls.ArenaHelper, _data.urls.randomseed].forEach(url => {
+							let script = document.createElement('script');
+							let scriptLoaded;
+							_scriptLoaded_promises.push(new Promise(resolve => scriptLoaded = resolve));
+							script.onload = function(){
+								scriptLoaded();
+							}
+							script.src = url;
+							document.head.appendChild(script);
+						});
+						function blockNetwork(){
+							window.stop();
+							window.requestAnimationFrame(blockNetwork);
+						}
+						function addWorker(data){
+							let iframe = document.getElementById(data.iframeId);
+							if(iframe === null){
+								iframe = document.createElement('iframe');
+								iframe.id = data.iframeId;
+								iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
+								iframe.sandbox = 'allow-scripts';
+								document.body.appendChild(iframe);
+								setTimeout(()=>{
+									iframe.contentWindow.postMessage({
+										url: data.url,
+										name: data.name,
+										participant: data.participant,
+										workerData: data.workerData,
+										includeScripts: [..._data.arena.includeScripts.participants, _data.urls.randomseed, _data.urls.ParticipantHelper]
+									}, '*');
+								}, 1000);
+							}else{
+								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
+							}
+						}
+						function messageWorker(message){
+							_messageQueue.push(message);
+							if(_messagePending.length < _freeMessageChannels){
+								nextMessage();
+							}
+						}
+						if(_data.arena !== undefined){
+							window.onmessage = messageEvent => {
+								if(messageEvent.data.data.payload.systemMessage){
+									switch(messageEvent.data.data.payload.message){
+										default: throw new Error('SystemMessage "'+messageEvent.data.data.payload.message+'" not found.');
+										case 'Dead':
+											let iframe = document.getElementById(messageEvent.data.data.source.iframeId);
+											iframe.parentNode.removeChild(iframe);
+											break;
+									}
+								}
+								_arenaWorkers[messageEvent.data.data.source.matchIndex].postMessage(messageEvent.data);
+								if(messageEvent.data.data.event.startsWith('Message')){
+									let index = _messagePending.findIndex(m => m.receiver === messageEvent.data.data.source.iframeId);
+									if(index !== -1){
+										_messagePending.splice(index, 1);
+									}
+									if(0 < _messageQueue.length){
+										nextMessage();
 									}
 								}
 							}
-						}
-						return output;
-					}
-					if(_data.arena !== undefined){
-						window.onmessage = messageEvent => {
-							if(_parent === null){
-								_parent = messageEvent.source;
-							}
-							if(messageEvent.source === _parent){
-								// TODO: Fix: Uncaught DOMException: Failed to execute 'postMessage' on 'Window': Invalid target origin 'null' in a call to 'postMessage'.
-								// Try with '*'.
-								messageEvent.source.postMessage({id: messageEvent.data, value: getOutput()}, messageEvent.origin);
-							}else if(messageEvent.data.type === 'Dead'){
-								let iframe = document.getElementById(messageEvent.data.iframeId);
-								iframe.parentNode.removeChild(iframe);
-							}else{
-								_arenaWorker.postMessage(messageEvent.data);
-							}
-						}
-						document.title = document.title.replace('X', _data.arena.full_name);
-						fetch(_data.arena.raw_url+'properties.json')
-						.then(response => response.json())
-						.then(json => {
-							let limits = json.header.limits;
-							if(limits.teams.min === undefined ? true : limits.teams.min <= _data.participants.length
-							&& limits.teams.max === undefined ? true : _data.participants.length <= limits.teams.max
-							&& limits.participants.min === undefined ? true : limits.participants.min <= _data.participants.flat().length
-							&& limits.participants.max === undefined ? true : _data.participants.flat().length <= limits.participants.max
-							&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= _data.participants.sort((x,y)=>y.length-x.length)[0].length
-							&& limits.participantsPerTeam.max === undefined ? true : _data.participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max){
-								for(let index = 0; index < _data.settings.general.averageOf; index++){
-									let output = document.createElement('div');
-									output.classList.add('log');
-									document.body.appendChild(output);
-									scriptLoaded_promise.then(() => {
-										ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', [..._data.arena.includeScripts.arena, _data.urls.randomseed, _data.urls.ArenaHelper]).then(arena => {
-											_arenaWorker = arena;
-											let callbacks = {
-												'Add-Worker': addWorker,
-												'Message-Worker': messageWorker,
-												'Kill-Worker': killWorker
-											};
-											arena.onmessage = messageEvent => {
-												output.innerHTML += '<label for="message_'+JSON.stringify(messageEvent.data.message)+'" class="'+messageEvent.data.type+'">'+messageEvent.data.type+'</label><pre id="message_' + JSON.stringify(messageEvent.data.message) + '" class="' + messageEvent.data.type + '">' + JSON.stringify(messageEvent.data.message,null,'\t') + '</pre>';
-												let callback = callbacks[messageEvent.data.type];
-												if(callback === undefined){
-													switch(messageEvent.data.type){
-														default:
-															throw new Error('Callback "'+callback+'" not found.');
-														case 'Ready-To-Start':
-															if(!_data.settings.general.allowRemoteExecution){
-																blockNetwork();
-															}
-															arena.postMessage({type: 'Start'});
-															break;
-														case 'Done':
-														case 'Aborted':
-															arena.terminate();
-															break;
+							document.title = document.title.replace('X', _data.arena.full_name);
+							fetch(_data.arena.raw_url+'properties.json')
+							.then(response => response.json())
+							.then(json => {
+								let limits = json.header.limits;
+								if(limits.teams.min === undefined ? true : limits.teams.min <= _data.participants.length
+								&& limits.teams.max === undefined ? true : _data.participants.length <= limits.teams.max
+								&& limits.participants.min === undefined ? true : limits.participants.min <= _data.participants.flat().length
+								&& limits.participants.max === undefined ? true : _data.participants.flat().length <= limits.participants.max
+								&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= _data.participants.sort((x,y)=>y.length-x.length)[0].length
+								&& limits.participantsPerTeam.max === undefined ? true : _data.participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max){
+									Promise.all(_scriptLoaded_promises).then(() => {
+										Math.seedrandom(_data.settings.general.seed);
+										let arenaSetup_promises = [];
+										let arenas = [];
+										for(let index = 0; index < _data.settings.general.averageOf; index++){
+											let arenaSetup;
+											arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
+											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', [..._data.arena.includeScripts.arena, _data.urls.randomseed, _data.urls.ArenaHelper]).then(arena => {
+												arenas.push(arena);
+												let readyToStart;
+												_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
+												let resolve;
+												_arenaPromises.push(new Promise(r=>resolve=r));
+												arenaSetup();
+												_arenaWorkers[index] = arena;
+												let callbacks = {
+													'Add-Worker': addWorker,
+													'Message-Worker': messageWorker,
+													'Ready-To-Start': readyToStart
+												};
+												let messageIndex = 0;
+												arena.onmessage = messageEvent => {
+													messageIndex++;
+													let callback = callbacks[messageEvent.data.type];
+													if(callback === undefined){
+														switch(messageEvent.data.type){
+															default:
+																throw new Error('Callback "'+callback+'" not found.');
+															case 'Done':
+															case 'Aborted':
+																arena.terminate();
+																_arenaResponses[index] = {...messageEvent.data.message, status: messageEvent.data.type};
+																resolve();
+																break;
+														}
+													}else{
+														callback(messageEvent.data.message);
 													}
-												}else{
-													callback(messageEvent.data.message);
+												};
+												arena.onerror = errorEvent => {
+													console.log('// TEMP: errorEvent: '+errorEvent.message);
+													debugger;
+												//	{type: 'Aborted', message: {participantName: '', error: errorEvent}}
+												};
+												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
+												arenaInput.settings.general.seed += '#'+Math.random(); // Get salt from Math.seedrandom.
+												arena.postMessage(arenaInput);
+											});
+										}
+										Promise.all(arenaSetup_promises).then(()=>{
+											Promise.all(_arenaReadyToStart).then(()=>{
+												if(!_data.settings.general.advanced.allowRemoteExecution){
+													blockNetwork();
 												}
-											};
-											arena.onerror = errorEvent => {
-												console.log('// TEMP: errorEvent: '+errorEvent);
-											};
-											if(location.href.includes('?debug')){
-												_data.debug = true;
-											}
-											arena.postMessage(_data);
-										});
+												arenas.forEach(arena=>arena.postMessage({type: 'Start'}));
+											});
+											Promise.all(_arenaPromises).then(()=>{
+												_parent.source.postMessage({
+													iframeID: _data.iframeID,
+													value: {
+														arena: {
+															full_name: _data.arena.full_name,
+															commit: _data.arena.commit,
+															version: _data.arena.version
+														},
+														data: _arenaResponses
+													}
+												}, _parent.origin)
+											});
+										})
 									});
+								}else{
+									let message = 'Participants does not meet the arena limitations.';
+									document.body.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
+									console.error(message);
 								}
-							}else{
-								let message = 'Participants does not meet the arena limitations.';
-								document.body.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
-								console.error(message);
-							}
-						});
-					}else{
-						output.innerHTML = 'No arena defined.';
+							});
+						}
 					}
 				}else{
 					window.location.replace(window.location.href.replace('\/(?:.(?!\/))+$', '/'));

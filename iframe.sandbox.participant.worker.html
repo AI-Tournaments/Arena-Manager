@@ -11,10 +11,9 @@
 			let _worker = null;
 			let _source = null;
 			let _iframeId = window.location.search.substring(1);
-			let _nextMessage = 0;
-			let _messageQueue = [];
 			let _executionLimit = null;
 			let _scriptLoaded_promise = null;
+			let _messageIndex = null;
 			(()=>{
 				let script = document.createElement('script');
 				let scriptLoaded;
@@ -34,71 +33,51 @@
 					}
 				}
 				if(isIframe()){
-					function post(data){
-						if(_nextMessage === data.index){
-							_worker.postMessage(data)
-						}else{
-							_messageQueue.push(data);
-						}
+					function respond(event, message=null, systemMessage=false){
+						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, index: _messageIndex}}}, '*');
 					}
 					function kill(){
 						_worker.terminate();
-						_parent.postMessage({type: 'Dead', iframeId: _iframeId}, '*');
+						respond('Message', 'Dead', true);
 					}
 					function blockNetwork(){
 						window.stop();
 						window.requestAnimationFrame(blockNetwork);
 					}
-					function updateQueue(){
-						_nextMessage++;
-						let message = _messageQueue.find(message => message.index === _nextMessage);
-						if(message !== undefined){
-							for(let index = 0; index < _messageQueue.length; index++){
-								if(_messageQueue[index] === message){
-									_messageQueue.splice(index, 1);
-									break;
-								}
-							}
-							post(message);
-						}
-					}
 					window.onmessage = messageEvent => {
 						if(_parent === null){
 							_parent = messageEvent.source;
 						}
-						let callbacks = {
-							kill: kill,
-							post: post,
-							update: null
+						let systemMessages = {
+							'Kill': kill
 						};
 						window.onmessage = messageEvent => {
-							let callback = callbacks[messageEvent.data.type];
-							if(callback === undefined){
-								throw new Error('Callback "'+callback+'" not found.');
+							_messageIndex = messageEvent.data.index;
+							if(messageEvent.data.systemMessage){
+								systemMessages[messageEvent.data.message]();
 							}else{
-								callback(messageEvent.data);
+								_worker.postMessage(messageEvent.data);
 							}
 						}
 						_scriptLoaded_promise.then(() => {
 							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
 								_worker = worker;
-								callbacks.update = _worker.postMessage;
-								if(!messageEvent.data.workerData.settings.general.allowRemoteExecution){
+								if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
 									blockNetwork();
 								}
-								_source = {participant: messageEvent.data.participant, name: messageEvent.data.name}
+								console.log('// TODO: Prepared for measuring memory usage.');
+								_source = {participant: messageEvent.data.participant, name: messageEvent.data.name, iframeId: _iframeId, matchIndex: parseInt(_iframeId.match(/(\d+)/g)[0])}
 								_worker.onerror = messageEvent => {
-									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {nextMessage: _nextMessage, error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
+									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 								}
 								_worker.onmessage = messageEvent => {
 									switch(messageEvent.data.type){
-										case 'Response': _parent.postMessage({type: 'Event', data: {event: 'Message', source: _source, payload: {message: messageEvent.data.response, index: _nextMessage}}}, '*'); break;
-										case 'Message-Timeout': _parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source, payload: {index: _nextMessage}}}, '*'); break;
+										case 'Response': respond('Message', messageEvent.data.response); break;
+										case 'Message-Timeout': _parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source}}, '*'); break;
 									}
-									updateQueue();
 								}
 								_worker.postMessage(messageEvent.data.workerData);
-								_parent.postMessage({type: 'Event', data: {event: 'Worker-Created', source: _source}}, '*');
+								respond('Worker-Created');
 							});
 						});
 					}
