@@ -166,7 +166,6 @@ function a(){
 				_replayContainer = document.createElement('iframe');
 				_replayContainer.classList.add('replay-container');
 				_replayContainer.src = '../Replay/';
-				console.log(_replayContainer.src.length);
 				document.body.appendChild(_replayContainer);
 				setTimeout(()=>{
 					_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
