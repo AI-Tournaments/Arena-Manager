@@ -162,7 +162,6 @@ function a(){
 				element.parentNode.removeChild(element);
 			});
 			if(!document.title.startsWith('auto-run')){
-				console.log('// TODO: Confirm that replay sort matches according to index, and that indexes get the same result every time with the same seed.');
 				_replayContainer = document.createElement('iframe');
 				_replayContainer.classList.add('replay-container');
 				_replayContainer.src = '../Replay/';
