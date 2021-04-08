@@ -27,9 +27,7 @@ function a(){
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
-	let contentWindows = {
-		iFrameLog: []
-	};
+	let pendingArenaSandboxes = [];
 	let arenaListReady;
 	let arenaListReadyPromise = new Promise(resolve => arenaListReady = resolve);
 	let availableParticipantsWrapper = document.createElement('div');
@@ -59,7 +57,7 @@ function a(){
 			_json = messageEvent.data.arena;
 			document.title = messageEvent.data.type;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
-			sendLog(messageEvent);
+			getTournamentLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
 			if(document.title !== 'auto-run'){
 				_sortByStars = messageEvent.data.value.settings.sortByStars;
@@ -80,7 +78,7 @@ function a(){
 					});
 				});
 			}
-		}else if(contentWindows.iFrameLog.includes(messageEvent.source)){
+		}else if(pendingArenaSandboxes.includes(messageEvent.source)){
 			writeArenaLog(messageEvent);
 		}else if(settingsIframe.contentWindow === messageEvent.source){
 			switch(messageEvent.data.type){
@@ -128,13 +126,19 @@ function a(){
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
 	}
-	function sendLog(messageEvent){
-		debugger; // This should be removed.
-		if(outputSum.dataset.done){
-			console.log('// TODO: Is sendLog used?');
-			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: JSON.parse(outputSum.dataset.array)}}, messageEvent.origin);
+	function getTournamentLog(messageEvent){
+		if(pendingArenaSandboxes.length === 0){
+			let dataset = [];
+			for(const key in arenaMatches){
+				if(Object.hasOwnProperty.call(arenaMatches, key)){
+					const arenaMatch = arenaMatches[key];
+					debugger;
+					console.log(arenaMatch);
+				}
+			}
+			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: dataset}}, messageEvent.origin);
 		}else{
-			setTimeout(()=>{sendLog(messageEvent)}, 1000);
+			setTimeout(()=>{getTournamentLog(messageEvent)}, 1000);
 		}
 	}
 	function writeArenaLog(messageEvent){
@@ -153,7 +157,7 @@ function a(){
 				},
 				body: messageEvent.data.value
 			};
-			contentWindows.iFrameLog.splice(contentWindows.iFrameLog.indexOf(messageEvent.source), 1);
+			pendingArenaSandboxes.splice(pendingArenaSandboxes.indexOf(messageEvent.source), 1);
 			Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
 				element.parentNode.removeChild(element);
 			});
@@ -351,7 +355,7 @@ function a(){
 		}
 		output.classList.add('log');
 		div.appendChild(output);
-		contentWindows.iFrameLog.push(iframe.contentWindow);
+		pendingArenaSandboxes.push(iframe.contentWindow);
 		setTimeout(()=>iframe.contentWindow.postMessage(json, '*'), 1000);
 	}
 }
