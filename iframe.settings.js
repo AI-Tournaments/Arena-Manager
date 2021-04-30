@@ -87,7 +87,7 @@ function a(){
 				settings.removeChild(settings.firstChild);
 			}
 			arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
-			console.log('// TODO: Add support for JSON input. Possibly by header.allowCustomInput==true');
+			console.log('// TODO: Add support for JSON input. Possibly by header.allowCustomInput==true. Could possibly be "None", "Forced", "Optional", "Syntaxed". Syntaxed (always?) would be that you can\'t change the root objects, but edit them to enter values. More investigation is needed.');
 			Object.keys(arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
 				if(arenaProperties.settings.hasOwnProperty(key)){
 					const setting = arenaProperties.settings[key];
