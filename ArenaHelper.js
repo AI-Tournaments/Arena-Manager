@@ -314,7 +314,7 @@ class ArenaHelper{
 			}
 			this.getTeamColor = indexOrParticipant => {
 				let index = typeof indexOrParticipant === 'object' ? indexOrParticipant.team : indexOrParticipant;
-				let hue = index/_teams.length;
+				let hue = ((index/_teams.length)+.5)%1;
 				let saturation = 0.5;
 				let lightness = 0.5;
 				let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
