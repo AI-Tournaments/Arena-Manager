@@ -24,10 +24,31 @@ function a(){
 	function setArena(messageEvent){
 		arenaProperties = undefined;
 		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(json => {
+			function addComment(label, comment){
+				let wrapper = document.createElement('span');
+				wrapper.classList.add('comment');
+				label.appendChild(wrapper);
+				let icon = document.createElement('span');
+				icon.classList.add('icon');
+				wrapper.appendChild(icon);
+				let iframedMessage = document.createElement('iframe');
+				iframedMessage.sandbox = '';
+				iframedMessage.classList.add('message');
+				iframedMessage.srcdoc = '<html><head><link rel="stylesheet" href="../defaults.css"><script></script></head><body>'+comment.message+'</body></html>';
+				if(comment.height !== undefined){
+					iframedMessage.height = comment.height;
+				}
+				if(comment.width !== undefined){
+					iframedMessage.width = comment.width;
+				}
+				console.log('// TODO: Make iframe lower and right border resizable by mouse drag.');
+				wrapper.appendChild(iframedMessage);
+			}
 			function addInput(fieldset, name, value, meta={}, arrayIndex){
 				let wrapper;
 				if(arrayIndex === undefined || arrayIndex === 0){
 					wrapper = document.createElement('div');
+					wrapper.classList.add('setting-wrapper');
 					fieldset.appendChild(wrapper);
 				}
 				let label = document.createElement('label');
@@ -36,6 +57,9 @@ function a(){
 					label.htmlFor = fieldset.name+'.'+name;
 					wrapper.id = label.htmlFor;
 					wrapper.appendChild(label);
+					if(meta.comment !== undefined){
+						addComment(label, meta.comment);
+					}
 					let innerWrapper = document.createElement('div');
 					innerWrapper.classList.add('radio-set');
 					wrapper.appendChild(innerWrapper);
@@ -47,6 +71,9 @@ function a(){
 				label.innerHTML = typeof value === 'object' ? value[arrayIndex] : name;
 				label.htmlFor = fieldset.name+'.'+name + (arrayIndex===undefined?'':'_'+value[arrayIndex]);
 				wrapper.appendChild(label);
+				if(arrayIndex === undefined && meta.comment !== undefined){
+					addComment(label, meta.comment);
+				}
 				let input = document.createElement('input');
 				input.id = label.htmlFor;
 				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
@@ -66,8 +93,8 @@ function a(){
 				}else{
 					input.value = value;
 				}
-				for(const key in meta) {
-					if(meta.hasOwnProperty(key)){
+				for(let key in meta){
+					if(key !== 'comment' && meta.hasOwnProperty(key)){
 						let value = meta[key];
 						if(value !== null){
 							input[key] = value;

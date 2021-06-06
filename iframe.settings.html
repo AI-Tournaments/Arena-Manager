@@ -8,6 +8,9 @@
 		<meta content="yes" name="mobile-web-app-capable">
 		<link rel="stylesheet" href="../defaults.css">
 		<style>
+			:root {
+				--margin-length: 8px;
+			}
 			body {
 				margin: 0;
 			}
@@ -15,7 +18,26 @@
 				border-color: var(--main-color);
 			}
 			fieldset>div>label:first-child {
-				margin-right: 8px;
+				margin-right: var(--margin-length);
+			}
+			.setting-wrapper {
+				display: flex;
+			}
+			.comment {
+				margin-left: var(--margin-length);
+			}
+			.comment>.icon::after {
+				content: '🛈';
+			}
+			.comment>.message {
+				display: none;
+				position: absolute;
+				background-color: var(--transparency);
+				border: var(--window-border);
+				padding: var(--window-padding);
+			}
+			.comment:hover>.message {
+				display: unset;
 			}
 			.radio-set>label {
 				text-align: left;
