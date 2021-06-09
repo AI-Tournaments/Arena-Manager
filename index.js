@@ -71,8 +71,9 @@ function a(){
 				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url});
 				getParticipants(_json.full_name);
 				fetch(_json.raw_url+'README.md').then(response => response.text()).then(readme => {
+					console.log('// TODO: Use GitHub\'s markdown API. https://docs.github.com/en/rest/reference/markdown');
 					fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
-					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'}
+					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'} // TODO: https://docs.github.com/en/rest/reference/markdown
 				}).then(response => response.json()).then(response => {
 					arenaDescription.innerHTML = response.html;
 					});
