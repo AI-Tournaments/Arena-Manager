@@ -13,16 +13,12 @@ function a(){
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
 	let btnAddTeam = document.getElementById('add-team');
-	let arenaDescription = document.getElementById('arena-description');
 	let participantGroups = document.getElementById('participant-groups');
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local arena development');
 		if(item !== null){
 			addArena(...JSON.parse(item));
 		}
-	});
-	arenaDescription.parentElement.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
-		arenaDescription.parentElement.classList.toggle('hidden');
 	});
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -60,6 +56,7 @@ function a(){
 			getTournamentLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
 			if(document.title !== 'auto-run'){
+				document.getElementById('wrapper').classList.remove('hidden');
 				_sortByStars = messageEvent.data.value.settings.sortByStars;
 				selectArena.style.height = messageEvent.data.value.settings.height + 'px';
 				_json = messageEvent.data.value.option;
