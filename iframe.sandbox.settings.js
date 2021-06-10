@@ -167,6 +167,7 @@ function a(){
 						}
 					}
 					if(key === 'general'){
+						console.log('// TODO: Implement Json Editor.');
 						let jsonEditor = document.createElement('div');
 						jsonEditor.id = 'customInput';
 						jsonEditor.innerHTML = 'Editor';
