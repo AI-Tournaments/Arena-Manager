@@ -12,11 +12,11 @@
 				margin: 0;
 				padding: 0;
 			}
-			.link {
+			.readme-link {
 				text-decoration: none;
 			}
-			.link::after {
-				content: var(--link);
+			.readme-link::after {
+				content: var(--open-book);
 			}
 		</style>
 		<script src="iframe.selectArena.js"></script>
@@ -25,7 +25,7 @@
 	<body onload="a()">
 		<label for="arena">Arena:</label>
 		<select name="arena" id="arena"></select>
-		<a id="link-arena" class="link" target="_blank"></a>
+		<a id="link-arena" class="readme-link" target="_blank"></a>
 		<select id="arena-filter">
 			<option value="official">Official only</option>
 			<option value="all">Include community arenas</option>
