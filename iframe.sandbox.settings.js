@@ -13,7 +13,6 @@ function a(){
 	let advancedSettings = {
 		allowRemoteExecution: false
 	};
-	let arenaProperties;
 	let settings = document.getElementById('settings');
 	window.onmessage = messageEvent => {
 		switch(messageEvent.data.type){
@@ -21,9 +20,36 @@ function a(){
 			case 'GetSettings': postSettings(messageEvent); break;
 		}
 	}
+	function strip(html=''){
+		let output;
+		let tempString;
+		do{
+			tempString = output;
+			let element = document.createElement('div');
+			element.innerHTML = html;
+			output = element.textContent || element.innerText || '';
+		}
+		while(tempString !== output && output !== '');
+		return output;
+	}
+	function secureJson(json){
+		let secure = json.length === undefined ? {} : [];
+		Object.keys(json).forEach(key => {
+			let k = strip(key);
+			let value = json[key];
+			if(value !== null){
+				switch(typeof value){
+					case 'string': value = strip(value); break;
+					case 'object': value = secureJson(value); break;
+				}
+			}
+			secure[k] = value;
+		});
+		return secure;
+	}
 	function setArena(messageEvent){
-		arenaProperties = undefined;
-		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(json => {
+		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(insecureJson => {
+			let arenaProperties = secureJson(insecureJson);
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
@@ -109,7 +135,6 @@ function a(){
 				}
 				return setting['_meta'][key];
 			}
-			arenaProperties = json;
 			while(0 < settings.childElementCount){
 				settings.removeChild(settings.firstChild);
 			}
@@ -138,9 +163,18 @@ function a(){
 							}
 						}
 					}
+					if(key === 'general'){
+						let jsonEditor = document.createElement('div');
+						jsonEditor.id = 'customInput';
+						jsonEditor.innerHTML = 'Editor';
+						if(!arenaProperties.header.allowCustomInput){
+							jsonEditor.classList.add('hidden');
+						}
+						fieldset.appendChild(jsonEditor);
+					}
 				}
 			});
-			messageEvent.source.postMessage({type: 'properties', value: {properties: json, height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
+			messageEvent.source.postMessage({type: 'properties', value: {properties: arenaProperties, height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
 		});
 	}
 	function postSettings(messageEvent){
