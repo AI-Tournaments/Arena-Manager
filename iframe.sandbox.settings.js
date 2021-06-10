@@ -20,7 +20,10 @@ function a(){
 			case 'GetSettings': postSettings(messageEvent); break;
 		}
 	}
-	function strip(html=''){
+	function strip(html='', hierarchy=[]){
+		if(4 < hierarchy.length && hierarchy[0] === 'settings' && hierarchy[2] === '_meta' && hierarchy[4] === 'comment'){
+			return html;
+		}
 		let output;
 		let tempString;
 		do{
@@ -32,15 +35,15 @@ function a(){
 		while(tempString !== output && output !== '');
 		return output;
 	}
-	function secureJson(json){
+	function secureJson(json, hierarchy=[]){
 		let secure = json.length === undefined ? {} : [];
 		Object.keys(json).forEach(key => {
 			let k = strip(key);
 			let value = json[key];
 			if(value !== null){
 				switch(typeof value){
-					case 'string': value = strip(value); break;
-					case 'object': value = secureJson(value); break;
+					case 'string': value = strip(value, hierarchy); break;
+					case 'object': value = secureJson(value, [...hierarchy, key]); break;
 				}
 			}
 			secure[k] = value;
