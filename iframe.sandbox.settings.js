@@ -1,5 +1,6 @@
 'use strict'
 function a(){
+	let jsonEditor;
 	let generalSettings = {
 		seed: '',
 		averageOf: 1,
@@ -14,7 +15,15 @@ function a(){
 		allowRemoteExecution: false
 	};
 	let settings = document.getElementById('settings');
+	let postSize;
 	window.onmessage = messageEvent => {
+		if(postSize === undefined){
+			postSize = function(){
+				messageEvent.source.postMessage({type: 'size-changed', value: {height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
+			}
+			console.log('// TODO: Fix iframe height update on setting height change.');
+			document.body.onresize = postSize;
+		}
 		switch(messageEvent.data.type){
 			case 'SetArena': setArena(messageEvent); break;
 			case 'GetSettings': postSettings(messageEvent); break;
@@ -50,9 +59,15 @@ function a(){
 		});
 		return secure;
 	}
+	function isObject(obj){
+		return obj !== undefined && obj !== null && obj.constructor == Object;
+	}
 	function setArena(messageEvent){
+		jsonEditor = null;
 		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(insecureJson => {
 			let arenaProperties = secureJson(insecureJson);
+			let jsonEditor_element;
+			let customInput = isObject(arenaProperties.header.customInput) && (isObject(arenaProperties.header.customInput.schema) || isObject(arenaProperties.header.customInput.schemaRefs) || isObject(arenaProperties.header.customInput.default));
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
@@ -142,7 +157,6 @@ function a(){
 				settings.removeChild(settings.firstChild);
 			}
 			arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
-			console.log('// TODO: Add support for JSON input. Possibly by header.allowCustomInput==true. Could possibly be "None", "Forced", "Optional", "Syntaxed". Syntaxed (always?) would be that you can\'t change the root objects, but edit them to enter values. More investigation is needed.');
 			Object.keys(arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
 				if(arenaProperties.settings.hasOwnProperty(key)){
 					const setting = arenaProperties.settings[key];
@@ -167,18 +181,22 @@ function a(){
 						}
 					}
 					if(key === 'general'){
-						console.log('// TODO: Implement Json Editor.');
-						let jsonEditor = document.createElement('div');
-						jsonEditor.id = 'customInput';
-						jsonEditor.innerHTML = 'Editor';
-						if(!arenaProperties.header.allowCustomInput){
-							jsonEditor.classList.add('hidden');
+						let wrapper = document.createElement('div');
+						jsonEditor_element = document.createElement('div');
+						jsonEditor_element.id = 'customInput';
+						jsonEditor_element.innerHTML = 'Custom input';
+						if(!customInput){
+							wrapper.classList.add('hidden');
 						}
-						fieldset.appendChild(jsonEditor);
+						wrapper.appendChild(jsonEditor_element);
+						fieldset.appendChild(wrapper);
 					}
 				}
 			});
-			messageEvent.source.postMessage({type: 'properties', value: {properties: arenaProperties, height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
+			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? arenaProperties.header.customInput.default : undefined);
+			jsonEditor.setSchema(customInput ? arenaProperties.header.customInput.schema : undefined, customInput ? arenaProperties.header.customInput.schemaRefs : undefined);
+			postSize();
+			messageEvent.source.postMessage({type: 'properties', value: {properties: arenaProperties}}, messageEvent.origin);
 		});
 	}
 	function postSettings(messageEvent){
@@ -198,6 +216,7 @@ function a(){
 			json[info[0]][info[1]] = value;
 		}
 		json.general.advanced = JSON.parse(JSON.stringify(advancedSettings));
+		json.general.customInput = jsonEditor === null ? {} : jsonEditor.get();
 		messageEvent.source.postMessage({type: 'settings', value: json}, messageEvent.origin);
 	}
 }

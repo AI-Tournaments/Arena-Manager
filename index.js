@@ -74,12 +74,12 @@ function a(){
 			switch(messageEvent.data.type){
 				case 'properties':
 					arenaProperties = messageEvent.data.value.properties;
-					settingsIframe.style.height = messageEvent.data.value.height + 'px';
 					for(let i = 0; i < Math.max(1, arenaProperties.header.limits.teams.min); i++){
 						createTeam();
 					}
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
+				case 'size-changed': settingsIframe.style.height = messageEvent.data.value.height + 'px'; break;
 			}
 		}else{
 			console.error('Source element not defined!');
