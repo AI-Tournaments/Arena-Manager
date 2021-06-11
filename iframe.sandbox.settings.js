@@ -16,13 +16,21 @@ function a(){
 	};
 	let settings = document.getElementById('settings');
 	let postSize;
+	let lastHeight = null;
 	window.onmessage = messageEvent => {
 		if(postSize === undefined){
 			postSize = function(){
-				messageEvent.source.postMessage({type: 'size-changed', value: {height: document.body.parentElement.offsetHeight}}, messageEvent.origin);
+				lastHeight = document.body.parentElement.offsetHeight;
+				messageEvent.source.postMessage({type: 'size-changed', value: {height: lastHeight}}, messageEvent.origin);
+
 			}
-			console.log('// TODO: Fix iframe height update on setting height change.');
-			document.body.onresize = postSize;
+			function syncSize(){
+				if(document.body.parentElement.offsetHeight !== lastHeight){
+					postSize();
+				}
+				window.requestAnimationFrame(syncSize);
+			}
+			syncSize();
 		}
 		switch(messageEvent.data.type){
 			case 'SetArena': setArena(messageEvent); break;
@@ -195,7 +203,6 @@ function a(){
 			});
 			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? arenaProperties.header.customInput.default : undefined);
 			jsonEditor.setSchema(customInput ? arenaProperties.header.customInput.schema : undefined, customInput ? arenaProperties.header.customInput.schemaRefs : undefined);
-			postSize();
 			messageEvent.source.postMessage({type: 'properties', value: {properties: arenaProperties}}, messageEvent.origin);
 		});
 	}
