@@ -20,12 +20,12 @@ function a(){
 	window.onmessage = messageEvent => {
 		if(postSize === undefined){
 			postSize = function(){
-				lastHeight = document.body.parentElement.offsetHeight;
+				lastHeight = document.body.parentElement.scrollHeight;
 				messageEvent.source.postMessage({type: 'size-changed', value: {height: lastHeight}}, messageEvent.origin);
 
 			}
 			function syncSize(){
-				if(document.body.parentElement.offsetHeight !== lastHeight){
+				if(document.body.parentElement.scrollHeight !== lastHeight){
 					postSize();
 				}
 				window.requestAnimationFrame(syncSize);
