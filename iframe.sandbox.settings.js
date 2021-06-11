@@ -67,7 +67,7 @@ function a(){
 		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(insecureJson => {
 			let arenaProperties = secureJson(insecureJson);
 			let jsonEditor_element;
-			let customInput = isObject(arenaProperties.header.customInput) && (isObject(arenaProperties.header.customInput.schema) || isObject(arenaProperties.header.customInput.schemaRefs) || isObject(arenaProperties.header.customInput.default));
+			let customInput = isObject(arenaProperties.header.customInput) && (isObject(arenaProperties.header.customInput.schema) || isObject(arenaProperties.header.customInput.schemaRefs) || (arenaProperties.header.customInput.default !== undefined && arenaProperties.header.customInput.default !== null));
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
