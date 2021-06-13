@@ -16,7 +16,7 @@ function a(){
 	};
 	let settings = document.getElementById('settings');
 	let postSize;
-	let lastHeight = null;
+	let lastHeight;
 	window.onmessage = messageEvent => {
 		if(postSize === undefined){
 			postSize = function(){
