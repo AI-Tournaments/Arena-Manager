@@ -77,6 +77,20 @@ function a(){
 					for(let i = 0; i < Math.max(1, arenaProperties.header.limits.teams.min); i++){
 						createTeam();
 					}
+					if(localParticipants !== null){
+						localParticipants.reverse().forEach((participant, index) => {
+							if(typeof participant === 'object'){
+								let option = addParticipant(participant[0], participant[1]);
+								let select = document.getElementById('participant-team-' + participant[2]);
+								if(select){
+									select.add(option);
+								}
+							}else{
+								addParticipant(participant, 'Manually added participant '+(index+1));
+							}
+						});
+						localParticipants = null;
+					}
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
 				case 'size-changed': settingsIframe.style.height = messageEvent.data.value.height + 'px'; break;
@@ -115,6 +129,7 @@ function a(){
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
+		return option;
 	}
 	function getTournamentLog(messageEvent){
 		if(pendingArenaSandboxes.length === 0){
@@ -252,15 +267,6 @@ function a(){
 					arenaListReady();
 				})
 			});
-		}else{
-			localParticipants.reverse().forEach((participant, index) => {
-				if(typeof participant === 'object'){
-					addParticipant(participant[0], participant[1]);
-				}else{
-					addParticipant(participant, 'Manually added participant '+(index+1));
-				}
-			});
-			localParticipants = null;
 		}
 	}
 	function addParticipantOption(url, name){
