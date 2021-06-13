@@ -90,6 +90,7 @@ function a(){
 							}
 						});
 						localParticipants = null;
+						btnStart.disabled = !validateStart();
 					}
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
