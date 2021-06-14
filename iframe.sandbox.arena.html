@@ -37,13 +37,15 @@
 						let _freeMessageChannels = Math.max(1, navigator.hardwareConcurrency-(1+_data.settings.general.averageOf));
 						function nextMessage(){
 							let message = _messageQueue.pop();
-							let iframe = document.getElementById(message.receiver);
-							if(iframe === null){
-								console.error('Receiver missing: '+message.receiver+'\n'+JSON.stringify(message.body));
-								nextMessage();
-							}else{
-								_messagePending.push(message);
-								iframe.contentWindow.postMessage(message.body, '*');
+							if(message !== undefined){
+								let iframe = document.getElementById(message.receiver);
+								if(iframe === null){
+									console.error('Receiver missing: '+message.receiver+'\n'+JSON.stringify(message.body));
+									nextMessage();
+								}else{
+									_messagePending.push(message);
+									iframe.contentWindow.postMessage(message.body, '*');
+								}
 							}
 						}
 						if(location.href.includes('?debug')){
