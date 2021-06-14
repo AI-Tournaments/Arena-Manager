@@ -5,6 +5,7 @@ function a(){
 	let _sortByStars = false;
 	let _json;
 	let _replayContainer;
+	let _parentWindow = null;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -67,9 +68,14 @@ function a(){
 				document.title = _json.name + ' Arena';
 				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url}, '*');
 				getParticipants(_json.full_name);
+				if(_parentWindow !== null){
+					_parentWindow.postMessage({type: 'arena-changed', value: _json.full_name}, '*');
+				}
 			}
 		}else if(pendingArenaSandboxes.includes(messageEvent.source)){
 			writeArenaLog(messageEvent);
+		}else if(messageEvent.data.type === 'SetParent'){
+			_parentWindow = messageEvent.source;
 		}else if(settingsIframe.contentWindow === messageEvent.source){
 			switch(messageEvent.data.type){
 				case 'properties':
