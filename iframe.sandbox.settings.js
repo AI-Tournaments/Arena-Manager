@@ -35,15 +35,8 @@ function a(){
 		switch(messageEvent.data.type){
 			case 'SetArena': setArena(messageEvent); break;
 			case 'GetSettings': postSettings(messageEvent); break;
-			case 'RemoveStyle':
-				Array.from(document.getElementsByTagName('link')).forEach(element => {
-					if(element.href.endsWith('/defaults.css')){
-						let style = document.createElement('style');
-						style.innerHTML = '.hidden {display: none;}';
-						document.head.appendChild(style);
-						element.parentNode.removeChild(element);
-					}
-				});
+			case 'MatchParentStyle':
+				document.documentElement.classList.add(messageEvent.data.value);
 				break;
 		}
 	}
