@@ -6,6 +6,7 @@ function a(){
 	let _json;
 	let _replayContainer;
 	let _parentWindow = null;
+	let _isNotIFrame = window.top === window.self;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -21,6 +22,17 @@ function a(){
 			addArena(...JSON.parse(item));
 		}
 	});
+	if(_isNotIFrame){
+		Array.from(document.getElementsByTagName('link')).forEach(element => {
+			if(element.href.endsWith('/defaults.css')){
+				let style = document.createElement('style');
+				style.innerHTML = '.hidden {display: none;}';
+				document.head.appendChild(style);
+				element.parentNode.removeChild(element);
+			}
+		});
+		setTimeout(()=>{settingsIframe.contentWindow.postMessage({type: 'RemoveStyle'}, '*')}, 1000);
+	}
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
