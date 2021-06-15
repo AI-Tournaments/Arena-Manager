@@ -15,7 +15,10 @@ function a(){
 		if(option !== undefined){
 			let json = JSON.parse(option.dataset.json);
 			document.getElementById('link-arena').href = json.html_url;
+			let github_logo = document.getElementById('GitHub-logo');
+			github_logo.style.height = 0;
 			sourceWindow.postMessage({type: 'arena-changed', value: {option: json, settings: {sortByStars: inputSortByStars.checked, height: document.documentElement.offsetHeight}}});
+			github_logo.style.height = document.documentElement.offsetHeight+'px';
 		}
 	}
 	window.onmessage = messageEvent => {
