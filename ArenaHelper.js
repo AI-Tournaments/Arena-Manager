@@ -2,6 +2,7 @@
 class ArenaHelper{
 	static #log = [];
 	static #settings = null;
+	static #responseQueue = [];
 	static #participants = null;
 	static #participants_onError = null;
 	static #participants_onMessage = null;
@@ -50,6 +51,11 @@ class ArenaHelper{
 			case 'Message-Timeout': ArenaHelper.#participants_onMessageTimeout(source, payload); break;
 			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
+		}
+		while(ArenaHelper.#responseQueue.length && ArenaHelper.#responseQueue[0].done !== null){
+			let queueItem = ArenaHelper.#responseQueue[0];
+			queueItem.done({responseReceived: queueItem.responseReceived, responseRejected: queueItem.responseRejected});
+			ArenaHelper.#responseQueue.splice(0, 1);
 		}
 	}
 	static init = null;
@@ -127,23 +133,25 @@ class ArenaHelper{
 				let responseReceived;
 				let responseRejected;
 				promise = new Promise((resolve, reject) => {responseReceived = resolve; responseRejected = reject;});
-				workerWrapper.pendingMessages.push({index: body.index, responseReceived: responseReceived, responseRejected: responseRejected});
+				let queueItem = {done: null, responseReceived: responseReceived, responseRejected: responseRejected};
+				ArenaHelper.#responseQueue.push(queueItem);
+				workerWrapper.pendingMessages.push({index: body.index, queueItem: queueItem});
 			}
 			ArenaHelper.#postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
 			return promise;
 		}
 		static #getPendingMessage = (participantWrapper, workerName, messageIndex) => {
 			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, workerName);
-			let message;
+			let queueItem;
 			for(let index = 0; index < workerWrapper.pendingMessages.length; index++){
 				if(workerWrapper.pendingMessages[index].index === messageIndex){
-					message = workerWrapper.pendingMessages[index];
+					queueItem = workerWrapper.pendingMessages[index].queueItem;
 					workerWrapper.pendingMessages.splice(index, 1);
-					return message;
+					return new Promise(resolve => queueItem.done = resolve);
 				}
 			}
-			if(message === undefined){
-				throw new Error('Message not found.');
+			if(queueItem === undefined){
+				throw new Error('queueItem not found.');
 			}
 		}
 		/** INPUT
@@ -173,19 +181,23 @@ class ArenaHelper{
 			ArenaHelper.#participants_onError = (source, messageIndex) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				console.error('// TODO: Write error message! (or maybe not?)');
-				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex);
-				console.log("// TODO: Kill participant.");
-				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'ParticipantError'});
+				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex).then(pendingMessage => {
+					console.log("// TODO: Kill participant.");
+					pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'ParticipantError'});
+				});
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
-				pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
+				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
+					console.log("// TODO: Kill participant.");
+					pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
+				});
 			}
 			ArenaHelper.#participants_onMessageTimeout = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				let pendingMessage = ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index);
-				pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'MessageTimeout'});
+				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
+					pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'MessageTimeout'});
+				});
 			}
 			ArenaHelper.#participants_workerCreated = source => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
@@ -349,9 +361,7 @@ class ArenaHelper{
 					this.addWorker = name => {
 						ArenaHelper.#participants.addWorker(this, name);
 					}
-					this.postMessage = async (data, workerName, systemMessage=false) => {
-						return ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data, systemMessage});
-					}
+					this.postMessage = async (data, workerName, systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data, systemMessage});
 				}
 			}
 			data.participants.forEach((team, teamIndex) => {
