@@ -48,7 +48,12 @@ function a(){
 	availableParticipants_select.multiple = true;
 	availableParticipantsWrapper.appendChild(availableParticipants_select);
 	participantGroups.appendChild(availableParticipantsWrapper);
-	window.onhashchange = ()=>selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)});
+	window.onhashchange = ()=>{
+		while(1 < window.location.hash.length && window.location.hash[1] === '#'){
+			window.location.hash = window.location.hash.substr(2);
+		}
+		selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)})
+	};
 	window.onhashchange();
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'Replay-Height'){
