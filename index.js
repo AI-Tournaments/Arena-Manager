@@ -351,6 +351,7 @@ function a(){
 		}
 		let isDebugMode = location.href.includes('?debug');
 		let div = document.createElement('div');
+		console.log('// TODO: Check if logContainer[].div is needed. Maybe it is enough with just a single "iframeWrapper".');
 		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
 		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
