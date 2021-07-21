@@ -84,6 +84,9 @@ function a(){
 			writeArenaLog(messageEvent);
 		}else if(messageEvent.data.type === 'SetParent'){
 			_parentWindow = messageEvent.source;
+			window.onresize = ()=>{
+				_parentWindow.postMessage({type: 'resize', value: {height: document.body.clientHeight}}, '*');
+			}
 		}else if(settingsIframe.contentWindow === messageEvent.source){
 			switch(messageEvent.data.type){
 				case 'properties':
@@ -113,6 +116,9 @@ function a(){
 		}else{
 			console.error('Source element not defined!');
 			console.error(messageEvent.source.frameElement);
+		}
+		if(window.onresize){
+			window.onresize();
 		}
 	}
 	addArena = (url='', name='', replayURL='', ...participants) => {
