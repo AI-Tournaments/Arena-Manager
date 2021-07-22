@@ -85,7 +85,7 @@ function a(){
 		}else if(messageEvent.data.type === 'SetParent'){
 			_parentWindow = messageEvent.source;
 			window.onresize = ()=>{
-				_parentWindow.postMessage({type: 'resize', value: {height: document.body.clientHeight}}, '*');
+				_parentWindow.postMessage({type: 'resize', value: {height: document.documentElement.clientHeight}}, '*');
 			}
 		}else if(settingsIframe.contentWindow === messageEvent.source){
 			switch(messageEvent.data.type){
