@@ -82,13 +82,17 @@ function a(){
 				document.title = _json.name + ' Arena';
 				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url}, '*');
 				getParticipants(_json.full_name);
-				fetch(_json.raw_url+'README.md').then(response => response.text()).then(readme => {
+				arenaReadme.srcdoc = '';
+				arenaReadmeFieldset.classList.add('hidden');
+				fetch(_json.raw_url+'README.md').then(response => response.ok?response.text():null).then(readme => {
 					console.log('// TODO: Use GitHub\'s markdown API. https://docs.github.com/en/rest/reference/markdown');
-					fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
-					headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'} // TODO: https://docs.github.com/en/rest/reference/markdown
-					}).then(response => response.json()).then(response => {
-						arenaReadme.srcdoc = '<!DOCTYPE html><html><head><style>html,body{padding:0;margin:0;}body>*:first-child{margin-top:0}</style><link rel="stylesheet" href="../defaults.css"></head><body>'+response.html+'</body></html>';
-					});
+					if(readme){
+						fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
+						headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'} // TODO: https://docs.github.com/en/rest/reference/markdown
+						}).then(response => response.json()).then(response => {
+							arenaReadme.srcdoc = '<!DOCTYPE html><html><head><style>html,body{padding:0;margin:0;}body>*:first-child{margin-top:0}</style><link rel="stylesheet" href="../defaults.css"></head><body>'+response.html+'</body></html>';
+						});
+					}
 				});
 				if(_parentWindow !== null){
 					_parentWindow.postMessage({type: 'arena-changed', value: _json.full_name}, '*');

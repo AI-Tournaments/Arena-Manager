@@ -54,16 +54,17 @@
 				border-color: var(--main-color);
 				margin-bottom: 8px;
 			}
-			fieldset>legend {
+			#fieldset-arena-readme>legend {
 				cursor: pointer;
 				user-select: none;
-			}fieldset>legend::after {
+			}
+			#fieldset-arena-readme>legend::after {
 				content: ' ' var(--arrow-down);
 			}
-			fieldset.hidden>legend::after {
+			#fieldset-arena-readme.hidden>legend::after {
 				content: ' ' var(--arrow-up);
 			}
-			fieldset.hidden>:not(legend) {
+			#fieldset-arena-readme.hidden>:not(legend) {
 				display: none;
 			}
 		</style>
