@@ -49,6 +49,23 @@
 				border-color: var(--main-color);
 				padding-top: 4px;
 			}
+			#fieldset-arena-readme {
+				display: block !important;
+				border-color: var(--main-color);
+				margin-bottom: 8px;
+			}
+			fieldset>legend {
+				cursor: pointer;
+				user-select: none;
+			}fieldset>legend::after {
+				content: ' ' var(--arrow-down);
+			}
+			fieldset.hidden>legend::after {
+				content: ' ' var(--arrow-up);
+			}
+			fieldset.hidden>:not(legend) {
+				display: none;
+			}
 		</style>
 		<script src="ArenaHelper.js"></script>
 		<script src="index.js"></script>
@@ -58,6 +75,10 @@
 		<div id="padding-wrapper">
 			<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
 			<div id="wrapper" class="hidden">
+				<fieldset id="fieldset-arena-readme" class="hidden">
+					<legend>Readme</legend>
+					<iframe id="arena-readme" sandbox="allow-same-origin"></iframe>
+				</fieldset>
 				<input type="button" id="add-team" value="Add team" disabled>
 				<div id="participant-groups"></div>
 				<iframe id="settings" style="height: 0;" src="iframe.sandbox.settings.html" sandbox="allow-scripts"></iframe>
