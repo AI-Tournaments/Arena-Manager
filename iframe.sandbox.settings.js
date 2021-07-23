@@ -89,7 +89,7 @@ function a(){
 				let iframedMessage = document.createElement('iframe');
 				iframedMessage.sandbox = '';
 				iframedMessage.classList.add('message');
-				iframedMessage.srcdoc = '<!DOCTYPE html><html><head><link rel="stylesheet" href="../defaults.css"><script></script></head><body>'+comment.message+'</body></html>';
+				iframedMessage.srcdoc = '<!DOCTYPE html><html><head><link rel="stylesheet" href="../defaults.css"></head><body>'+comment.message+'</body></html>';
 				if(comment.height !== undefined){
 					iframedMessage.height = comment.height;
 				}
