@@ -87,11 +87,7 @@ function a(){
 				fetch(_json.raw_url+'README.md').then(response => response.ok?response.text():null).then(readme => {
 					console.log('// TODO: Use GitHub\'s markdown API. https://docs.github.com/en/rest/reference/markdown');
 					if(readme){
-						fetch('https://gitlab.com/api/v4/markdown',{method: 'POST', body: JSON.stringify({text: readme}),
-						headers: {Accept: 'application/vnd.github.v3+json', 'Content-Type':'application/json'} // TODO: https://docs.github.com/en/rest/reference/markdown
-						}).then(response => response.json()).then(response => {
-							arenaReadme.srcdoc = '<!DOCTYPE html><html><head><style>html,body{padding:0;margin:0;}body>*:first-child{margin-top:0}</style><link rel="stylesheet" href="../defaults.css"></head><body>'+response.html+'</body></html>';
-						});
+						GitHubApi.formatMarkdown(readme, {async: true, removeBodyMargin: true}).then(iframe => arenaReadme.srcdoc = iframe.srcdoc);
 					}
 				});
 				if(_parentWindow !== null){
