@@ -85,7 +85,6 @@ function a(){
 				arenaReadme.srcdoc = '';
 				arenaReadmeFieldset.classList.add('hidden');
 				fetch(_json.raw_url+'README.md').then(response => response.ok?response.text():null).then(readme => {
-					console.log('// TODO: Use GitHub\'s markdown API. https://docs.github.com/en/rest/reference/markdown');
 					if(readme){
 						GitHubApi.formatMarkdown(readme, {async: true, removeBodyMargin: true}).then(iframe => arenaReadme.srcdoc = iframe.srcdoc);
 					}
