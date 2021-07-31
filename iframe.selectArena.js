@@ -37,6 +37,7 @@ function a(){
 	}
 	function addArena_local(json){
 		let option = document.createElement('option');
+		option.classList.add('local');
 		option.innerHTML = json.name;
 		option.dataset.json = JSON.stringify(json);
 		arenaList.appendChild(option);
@@ -49,18 +50,13 @@ function a(){
 		arenaList.onchange({target: option});
 	}
 	function getArenas(){
-		while(0 < arenaList.length){
-			arenaList.remove(0);
-		}
+		[...arenaList.getElementsByTagName('option')].filter(o => !o.classList.contains('local')).forEach(o => arenaList.removeChild(o));
 		GitHubApi.fetchArenas().then(arenas => {
 			_arenas = arenas;
 			filterPreviews();
 		});
 	}
 	function filterPreviews(){
-		while(0 < arenaList.length){
-			arenaList.remove(0);
-		}
 		let preSelected = undefined;
 		let options = [...arenaFilter.selectedOptions].flatMap(selectedOption => selectedOption.value);
 		_arenas.filter(arena => _includePreviews ? true : arena.version !== null).forEach(arena => {
