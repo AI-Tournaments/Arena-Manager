@@ -124,6 +124,9 @@ function a(){
 					}
 					if(localParticipants !== null){
 						localParticipants.reverse().forEach((participant, index) => {
+							while(document.getElementsByClassName('participant-team-container').length < participant[2]){
+								createTeam();
+							}
 							if(typeof participant === 'object'){
 								let option = addParticipant(participant[0], participant[1]);
 								let select = document.getElementById('participant-team-' + participant[2]);
