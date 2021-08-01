@@ -137,16 +137,7 @@
 				<div id="advance-options-wrapper">
 					<div>
 						<input type="checkbox" id="include-previews">
-						<label for="include-previews">Include previews (unranked)</label>
-					</div>
-					<img src="" onerror="console.log('// TODO: Remove `style=&quot;display: none;&quot;`. Prepared for `filter-following` and `filter-followers`.')"></img>
-					<div style="display: none;">
-						<input type="checkbox" id="filter-following">
-						<label for="filter-following">filter-following</label>
-					</div>
-					<div style="display: none;">
-						<input type="checkbox" id="filter-followers">
-						<label for="filter-followers">filter-followers</label>
+						<label for="include-previews">Fetch latest (unreleased) version of arenas.</label>
 					</div>
 					<div>
 						<input type="button" id="add-interface" value="Add interface">
@@ -159,6 +150,15 @@
 					<iframe id="arena-readme" sandbox="allow-same-origin"></iframe>
 				</fieldset>
 				<input type="button" id="add-team" value="Add team" disabled>
+				<img src="" onerror="console.log('// TODO: Remove `style=&quot;display: none;&quot;`. Prepared for `filter-following` and `filter-followers`, place them right side of the `Available participants` select.')"></img>
+				<div style="display: none;">
+					<input type="checkbox" id="filter-following">
+					<label for="filter-following">filter-following</label>
+				</div>
+				<div style="display: none;">
+					<input type="checkbox" id="filter-followers">
+					<label for="filter-followers">filter-followers</label>
+				</div>
 				<div id="participant-groups"></div>
 				<iframe id="settings" style="height: 0;" src="iframe.sandbox.settings.html" sandbox="allow-scripts"></iframe>
 				<input type="button" id="btnStart" value="Start" disabled>
