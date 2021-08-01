@@ -9,6 +9,15 @@
 		<link rel="stylesheet" href="../defaults.css">
 		<link rel="stylesheet" href="log.css">
 		<style>
+			:root {
+				--advance-options-width: 286px;
+			}
+
+			legend.clickable {
+				cursor: pointer;
+				user-select: none;
+			}
+
 			html {
 				width: -webkit-fill-available;
 				height: -webkit-fill-available;
@@ -54,10 +63,6 @@
 				border-color: var(--main-color);
 				margin-bottom: 8px;
 			}
-			#fieldset-arena-readme>legend {
-				cursor: pointer;
-				user-select: none;
-			}
 			#fieldset-arena-readme>legend::after {
 				content: ' ' var(--arrow-down);
 			}
@@ -67,6 +72,58 @@
 			#fieldset-arena-readme.hidden>:not(legend) {
 				display: none;
 			}
+
+			@keyframes open-advance-options {
+				from {
+					width: 0;
+				}
+				to {
+					width: var(--advance-options-width);
+				}
+			}
+			@keyframes close-advance-options {
+				from {
+					width: var(--advance-options-width);
+				}
+				to {
+					width: 0;
+				}
+			}
+			#advance-options {
+				position: fixed;
+				background-color: var(--main-background-color);
+				border-right: 0;
+				height: 512px;
+				right: 0;
+				width: 0;
+				top: 49px;
+				padding-bottom: 4px;
+			}
+			#advance-options-wrapper {
+				width: var(--advance-options-width);
+				height: -webkit-fill-available;
+				border: var(--main-color) 1px solid;
+				border-right-width: 0;
+				padding: 4px;
+			}
+			#advance-options.open {
+				animation: 2s open-advance-options ease-in-out;
+				width: var(--advance-options-width);
+			}
+			#advance-options:not(.open):not(.closed) {
+				animation: 2s close-advance-options ease-in-out;
+				width: 0;
+			}
+			#advance-options legend {
+				position: absolute;
+				transform: rotate(270deg);
+				background-color: var(--main-background-color);
+				border: var(--main-color) 1px solid;
+				top: 38px;
+				left: -53px;
+				border-bottom: 0;
+				padding: 2px 10px 1px 10px;
+			}
 		</style>
 		<script src="ArenaHelper.js"></script>
 		<script src="index.js"></script>
@@ -75,9 +132,30 @@
 	<body onload="a()">
 		<div id="padding-wrapper">
 			<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
+			<div id="advance-options" class="closed">
+				<legend class="clickable">Advance</legend>
+				<div id="advance-options-wrapper">
+					<div>
+						<input type="checkbox" id="include-previews">
+						<label for="include-previews">Include previews (unranked)</label>
+					</div>
+					<img src="" onerror="console.log('// TODO: Remove `style=&quot;display: none;&quot;`. Prepared for `filter-following` and `filter-followers`.')"></img>
+					<div style="display: none;">
+						<input type="checkbox" id="filter-following">
+						<label for="filter-following">filter-following</label>
+					</div>
+					<div style="display: none;">
+						<input type="checkbox" id="filter-followers">
+						<label for="filter-followers">filter-followers</label>
+					</div>
+					<div>
+						<input type="button" id="add-interface" value="Add interface">
+					</div>
+				</div>
+			</div>
 			<div id="wrapper" class="hidden">
 				<fieldset id="fieldset-arena-readme" class="hidden">
-					<legend>Readme</legend>
+					<legend class="clickable">Readme</legend>
 					<iframe id="arena-readme" sandbox="allow-same-origin"></iframe>
 				</fieldset>
 				<input type="button" id="add-team" value="Add team" disabled>

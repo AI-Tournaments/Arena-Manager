@@ -19,9 +19,16 @@ function a(){
 	let participantGroups = document.getElementById('participant-groups');
 	let arenaReadme = document.getElementById('arena-readme');
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
+	let advanceOptions = document.getElementById('advance-options');
+	let includePreviews = document.getElementById('include-previews');
+	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
 		arenaReadme.style.height = arenaReadme.contentWindow.window.document.documentElement.scrollHeight + 'px';
+	});
+	advanceOptions.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
+		advanceOptions.classList.toggle('open');
+		advanceOptions.classList.remove('closed');
 	});
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local arena development');
@@ -55,10 +62,17 @@ function a(){
 	availableParticipantsWrapper.appendChild(availableParticipants_select);
 	participantGroups.appendChild(availableParticipantsWrapper);
 	window.onhashchange = ()=>{
-		while(1 < window.location.hash.length && window.location.hash[1] === '#'){
-			window.location.hash = window.location.hash.substr(2);
+		let hash = location.hash;
+		while(1 < hash.length && hash[1] === '#'){
+			hash = hash.substr(2);
 		}
-		selectArena.contentWindow.postMessage({type: 'get-arenas', value: location.hash.substring(1)})
+		selectArena.contentWindow.postMessage({
+			type: 'get-arenas',
+			value: {
+				preSelectedArena: hash.substring(1),
+				includePreviews: includePreviews.checked
+			}
+		});
 	};
 	window.onhashchange();
 	window.onmessage = messageEvent => {
