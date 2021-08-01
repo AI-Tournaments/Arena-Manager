@@ -78,6 +78,7 @@ function a(){
 	window.onmessage = messageEvent => {
 		if(messageEvent.data.type === 'Replay-Height'){
 			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
+			document.documentElement.scrollTop = document.documentElement.scrollHeight;
 		}else if(messageEvent.data.type === 'auto-run'){
 			_json = messageEvent.data.arena;
 			document.title = messageEvent.data.type;
