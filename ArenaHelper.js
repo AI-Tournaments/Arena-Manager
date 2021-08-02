@@ -312,7 +312,8 @@ class ArenaHelper{
 				_teams.forEach(team => {
 					let result = {
 						score: team.score,
-						members: []
+						members: [],
+						team: team.number
 					};
 					scores.push(result);
 					team.members.forEach(participantWrapper => {
@@ -339,11 +340,25 @@ class ArenaHelper{
 					if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
 					return _p;
 				}
-				return {
+				let returnObject = {
 					R: hue2rgb(_p, _q, hue + 1/3.0),
 					G: hue2rgb(_p, _q, hue),
 					B: hue2rgb(_p, _q, hue - 1/3.0)
-				};
+				}
+				let red = Math.round(256*returnObject.R).toString(16);
+				if(red.length === 1){
+					red = '0'+red;
+				}
+				let green = Math.round(256*returnObject.G).toString(16);
+				if(green.length === 1){
+					green = '0'+green;
+				}
+				let blue = Math.round(256*returnObject.B).toString(16);
+				if(blue.length === 1){
+					blue = '0'+blue;
+				}
+				returnObject.RGB = '#'+red+green+blue
+				return returnObject;
 			}
 			this.terminateAllWorkers = () => {
 				wrappers.forEach(participantWrapper => {
@@ -366,7 +381,7 @@ class ArenaHelper{
 			}
 			data.participants.forEach((team, teamIndex) => {
 				let members = [];
-				_teams.push({score: 0, members: members, precomputedWorkerData: null});
+				_teams.push({score: 0, members: members, number: teamIndex, precomputedWorkerData: null});
 				team.forEach((participant, participantIndex) => {
 					let participantWrapper = {
 						participant: null,
