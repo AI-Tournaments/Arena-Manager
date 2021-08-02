@@ -141,7 +141,7 @@ function a(){
 				if(typeof value === 'boolean'){
 					input.checked = value;
 				}else if(typeof value === 'object'){
-					if(arrayIndex===0){
+					if(meta.default === undefined && arrayIndex===0 || meta.default === value[arrayIndex]){
 						input.checked = true;
 					}
 					input.value = value[arrayIndex];
