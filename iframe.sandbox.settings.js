@@ -4,11 +4,12 @@ function a(){
 	let generalSettings = {
 		seed: '',
 		averageOf: 1,
-		displayOpponents: ['Hide', 'AccountOnly', 'Yes'],
+		displayOpponentsName: ['Yes', 'AccountOnly', 'No'],
 		timelimit_ms: 1000,
 		_meta: {
 			averageOf: {min: 1, max: null},
-			timelimit_ms: {min: 1, max: null}
+			timelimit_ms: {min: 1, max: null},
+			displayOpponentsName: {default: 'No'}
 		}
 	};
 	let advancedSettings = {
