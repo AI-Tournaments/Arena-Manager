@@ -36,6 +36,7 @@ function a(){
 			addArena(...JSON.parse(item));
 		}
 	});
+	console.log('// TODO: Change from setTimeout to `Settings-Initiated`, like ReplayHelper.');
 	setTimeout(()=>{settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*')}, 1000);
 	btnAddTeam.onclick = createTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -184,6 +185,7 @@ function a(){
 		return option;
 	}
 	function getTournamentLog(messageEvent){
+		console.log('// TODO: Is getTournamentLog() still used? Can it be removed or modified?');
 		if(pendingArenaSandboxes.length === 0){
 			let dataset = [];
 			for(const key in arenaMatches){
@@ -224,6 +226,7 @@ function a(){
 				_replayContainer.src = '../Replay/';
 				document.body.appendChild(_replayContainer);
 				setTimeout(()=>{
+					console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
 					_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
 					_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
 				}, 1000);
@@ -403,6 +406,7 @@ function a(){
 		output.classList.add('log');
 		div.appendChild(output);
 		pendingArenaSandboxes.push(iframe.contentWindow);
+		console.log('// TODO: Change from setTimeout to `Sandbox-Arena-Initiated`, like ReplayHelper.');
 		setTimeout(()=>iframe.contentWindow.postMessage(json, '*'), 1000);
 	}
 }

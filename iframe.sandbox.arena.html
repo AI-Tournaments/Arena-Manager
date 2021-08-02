@@ -74,6 +74,7 @@
 								iframe.sandbox = 'allow-scripts';
 								document.body.appendChild(iframe);
 								setTimeout(()=>{
+									console.log('// TODO: Change from setTimeout to `Sandbox-Participant-Worker-Initiated`, like ReplayHelper.');
 									iframe.contentWindow.postMessage({
 										url: data.url,
 										name: data.name,
