@@ -4,12 +4,12 @@ function a(){
 	let generalSettings = {
 		seed: '',
 		averageOf: 1,
-		displayOpponentsName: ['Yes', 'AccountOnly', 'No'],
+		discloseOpponents: ['Yes', 'AccountOnly', 'No'],
 		timelimit_ms: 1000,
 		_meta: {
 			averageOf: {min: 1, max: null},
 			timelimit_ms: {min: 1, max: null},
-			displayOpponentsName: {default: 'No'}
+			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants, or keep them secret."}}
 		}
 	};
 	let advancedSettings = {

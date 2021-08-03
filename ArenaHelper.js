@@ -233,9 +233,9 @@ class ArenaHelper{
 							opponents.push(names);
 							team.members.forEach(participantWrapper => {
 								let name = null;
-								if(data.settings.general.displayOpponentsName === 'Yes'){
+								if(data.settings.general.discloseOpponents === 'Yes'){
 									name = participantWrapper.participant.name;
-								}else if(data.settings.general.displayOpponentsName === 'AccountOnly'){
+								}else if(data.settings.general.discloseOpponents === 'AccountOnly'){
 									name = participantWrapper.participant.name.split('/')[0];
 								}
 								names.push(name);
