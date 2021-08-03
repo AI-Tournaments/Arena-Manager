@@ -18,19 +18,25 @@ class ArenaHelper{
 	static log = (type='', value, raw=false)=>{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
-	static postDone = ()=>{
-		this.#participants.terminateAllWorkers();
-		let scores = this.#participants.getScores();
+	static #getBaseReturn = ()=>{
 		let colors = [];
-		scores.forEach((team, index) => {
+		this.#participants.getScores().forEach((team, index) => {
 			colors.push(this.#participants.getTeamColor(index));
 		});
-		ArenaHelper.#postMessage({type: 'Done', message: {score: scores, teamColors: colors, settings: ArenaHelper.#settings, log: this.#log}});
+		return {teamColors: colors, settings: ArenaHelper.#settings, log: this.#log};
+	}
+	static postDone = ()=>{
+		this.#participants.terminateAllWorkers();
+		let returnObject = this.#getBaseReturn();
+		returnObject.scores = this.#participants.getScores();
+		ArenaHelper.#postMessage({type: 'Done', message: returnObject});
 	}
 	static postAbort = (participant='', error='')=>{
 		this.#participants.terminateAllWorkers();
-		let participantName = participant.name === undefined ? participant : participant.name;
-		ArenaHelper.#postMessage({type: 'Aborted', message: {participantName: participantName, error: error}});
+		let returnObject = this.#getBaseReturn();
+		returnObject.participantName = participant.name === undefined ? participant : participant.name;
+		returnObject.error = error;
+		ArenaHelper.#postMessage({type: 'Aborted', message: returnObject});
 		throw new Error('Test');
 	}
 	static #onmessage = messageEvent=>{
