@@ -34,7 +34,7 @@
 						if(_data.settings.general.seed === ''){
 							_data.settings.general.seed += Math.random();
 						}
-						let _freeMessageChannels = Math.max(1, navigator.hardwareConcurrency-(1+_data.settings.general.averageOf));
+						let _freeMessageChannels = Math.max(1, navigator.hardwareConcurrency-(1+_data.settings.general.bestOf));
 						function nextMessage(){
 							let message = _messageQueue.pop();
 							if(message !== undefined){
@@ -130,7 +130,7 @@
 										Math.seedrandom(_data.settings.general.seed);
 										let arenaSetup_promises = [];
 										let arenas = [];
-										for(let index = 0; index < _data.settings.general.averageOf; index++){
+										for(let index = 0; index < _data.settings.general.bestOf; index++){
 											let arenaSetup;
 											arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
 											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', [..._data.arena.includeScripts.arena, _data.urls.randomseed, _data.urls.ArenaHelper]).then(arena => {

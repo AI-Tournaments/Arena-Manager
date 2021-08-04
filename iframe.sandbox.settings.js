@@ -3,11 +3,11 @@ function a(){
 	let jsonEditor;
 	let generalSettings = {
 		seed: '',
-		averageOf: 1,
+		bestOf: 1,
 		discloseOpponents: ['Yes', 'AccountOnly', 'No'],
 		timelimit_ms: 1000,
 		_meta: {
-			averageOf: {min: 1, max: null},
+			bestOf: {min: 1, max: null},
 			timelimit_ms: {min: 1, max: null},
 			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants, or keep them secret."}}
 		}
