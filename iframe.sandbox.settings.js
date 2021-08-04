@@ -132,6 +132,7 @@ function a(){
 				}
 				let input = document.createElement('input');
 				input.id = label.htmlFor;
+				input.classList.add('arena-setting');
 				input.name = arrayIndex===undefined ? label.htmlFor : fieldset.name+'.'+name;
 				switch(typeof value){
 					default: input.type = 'text'; break;
@@ -212,7 +213,7 @@ function a(){
 	}
 	function postSettings(messageEvent){
 		let json = {};
-		for(const input of settings.getElementsByTagName('input')){
+		for(const input of settings.getElementsByClassName('arena-setting')){
 			let info = input.name.split('.');
 			if(json[info[0]] === undefined){
 				json[info[0]] = {};
