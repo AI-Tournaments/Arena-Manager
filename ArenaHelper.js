@@ -195,7 +195,6 @@ class ArenaHelper{
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
-					console.log("// TODO: Kill participant.");
 					pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
 				});
 			}
