@@ -19,11 +19,7 @@ class ArenaHelper{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
 	static #getBaseReturn = ()=>{
-		let colors = [];
-		this.#participants.getScores().forEach((team, index) => {
-			colors.push(this.#participants.getTeamColor(index));
-		});
-		return {teamColors: colors, settings: ArenaHelper.#settings, log: this.#log};
+		return {settings: ArenaHelper.#settings, log: this.#log};
 	}
 	static postDone = ()=>{
 		this.#participants.terminateAllWorkers();
@@ -329,41 +325,6 @@ class ArenaHelper{
 					});
 				});
 				return scores;
-			}
-			this.getTeamColor = indexOrParticipant => {
-				let index = typeof indexOrParticipant === 'object' ? indexOrParticipant.team : indexOrParticipant;
-				let hue = ((index/_teams.length)+.5)%1;
-				let saturation = 0.5;
-				let lightness = 0.5;
-				let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
-				let _p = 2 * lightness - _q;
-				function hue2rgb(_p, _q, _t){
-					if(_t < 0){_t += 1;}
-					if(_t > 1){_t -= 1;}
-					if(_t < 1/6.0){return _p + (_q - _p) * 6 * _t;}
-					if(_t < 1/2.0){return _q;}
-					if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
-					return _p;
-				}
-				let returnObject = {
-					R: hue2rgb(_p, _q, hue + 1/3.0),
-					G: hue2rgb(_p, _q, hue),
-					B: hue2rgb(_p, _q, hue - 1/3.0)
-				}
-				let red = Math.round(256*returnObject.R).toString(16);
-				if(red.length === 1){
-					red = '0'+red;
-				}
-				let green = Math.round(256*returnObject.G).toString(16);
-				if(green.length === 1){
-					green = '0'+green;
-				}
-				let blue = Math.round(256*returnObject.B).toString(16);
-				if(blue.length === 1){
-					blue = '0'+blue;
-				}
-				returnObject.RGB = '#'+red+green+blue
-				return returnObject;
 			}
 			this.terminateAllWorkers = () => {
 				wrappers.forEach(participantWrapper => {
