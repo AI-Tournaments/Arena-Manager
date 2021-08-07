@@ -15,6 +15,9 @@ function a(){
 	let advancedSettings = {
 		allowRemoteExecution: false
 	};
+	if(generalSettings.seed !== ''){
+		console.error('Seed has value. Fine during debugging, but do not commit. `generalSettings.seed` should be empty string (\'\').');
+	}
 	let settings = document.getElementById('settings');
 	let postSize;
 	let lastHeight;
