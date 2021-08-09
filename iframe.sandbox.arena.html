@@ -218,14 +218,7 @@
 													return returnObject;
 												}
 												let result = {
-													averageScore: {
-														team: [],
-														bonusPoints: []
-													},
-													totalScore: {
-														team: [],
-														bonusPoints: []
-													},
+													team: [],
 													partialResult: false
 												};
 												_arenaResponses.forEach(responses => {
@@ -233,20 +226,29 @@
 													delete responses.settings;
 													if(responses.scores){
 														responses.scores.forEach(score => {
-															if(!result.totalScore.team[score.team]){
-																result.totalScore.team[score.team] = 0;
+															if(!result.team[score.team]){
+																result.team[score.team] = {
+																	average: {
+																		score: 0,
+																		bonusPoints: []
+																	},
+																	total: {
+																		score: 0,
+																		bonusPoints: []
+																	}
+																};
 															}
-															result.totalScore.team[score.team] += score.score;
+															result.team[score.team].total.score += score.score;
 															score.members.forEach(member => {
-																let individualBonus = result.totalScore.bonusPoints.find(b => b.participant === member.name && b.team === score.team);
+																let individualBonus = result.team[score.team].total.bonusPoints.find(b => b.participant === member.name && b.team === score.team);
 																if(!individualBonus){
 																	individualBonus = {
 																		participant: member.name,
 																		team: score.team,
 																		bonus: 0
 																	}
-																	result.totalScore.bonusPoints.push(individualBonus);
-																	result.averageScore.bonusPoints.push(JSON.parse(JSON.stringify(individualBonus)));
+																	result.team[score.team].average.bonusPoints.push(individualBonus);
+																	result.team[score.team].total.bonusPoints.push(JSON.parse(JSON.stringify(individualBonus)));
 																}
 																individualBonus.bonus += member.bonus;
 															});
@@ -256,11 +258,11 @@
 													}
 												});
 												let dominator = _arenaResponses.filter(r => r.scores).length;
-												result.totalScore.team.forEach((teamScore, index) => {
-													result.averageScore.team[index] = teamScore/dominator;
-												});
-												result.totalScore.bonusPoints.forEach((individualBonus, index) => {
-													result.averageScore.bonusPoints[index].bonus = individualBonus.bonus/dominator;
+												result.team.forEach(teamScore => {
+													teamScore.average.score = teamScore.total.score/dominator;
+													teamScore.average.bonusPoints.forEach(individualBonus => {
+														individualBonus.bonus = individualBonus.bonus/dominator;
+													});
 												});
 												let teams = [];
 												_data.participants.forEach((t, index) => {
