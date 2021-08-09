@@ -262,6 +262,13 @@
 												result.totalScore.bonusPoints.forEach((individualBonus, index) => {
 													result.averageScore.bonusPoints[index].bonus = individualBonus.bonus/dominator;
 												});
+												let teams = [];
+												_data.participants.forEach((t, index) => {
+													let team = {};
+													teams.push(team);
+													team.color = getTeamColor(index);
+													team.members = JSON.parse(JSON.stringify(t.map(m => m.name)));
+												});
 												_parent.source.postMessage({
 													iframeID: _data.iframeID,
 													value: {
@@ -273,11 +280,11 @@
 														settings: _data.settings,
 														matchLogs: _arenaResponses,
 														result: result,
-														teamColors: _data.participants.map((a,index) => getTeamColor(index))
+														teams: teams
 													}
-												}, _parent.origin)
+												}, _parent.origin);
 											});
-										})
+										});
 									});
 								}else{
 									let message = 'Participants does not meet the arena limitations.';
