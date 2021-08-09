@@ -110,7 +110,7 @@ function a(){
 				}
 			}
 		}else if(pendingArenaSandboxes.includes(messageEvent.source)){
-			writeArenaLog(messageEvent);
+			openReplay(messageEvent);
 		}else if(messageEvent.data.type === 'SetParent'){
 			_parentWindow = messageEvent.source;
 			window.onresize = ()=>{
@@ -200,7 +200,7 @@ function a(){
 			setTimeout(()=>{getTournamentLog(messageEvent)}, 1000);
 		}
 	}
-	function writeArenaLog(messageEvent){
+	function openReplay(messageEvent){
 		let iframe = document.getElementById(messageEvent.data.iframeID);
 		let arenaMatch = arenaMatches[iframe];
 		if(arenaMatch === undefined){
