@@ -32,7 +32,7 @@
 						};
 						let _data = messageEvent.data;
 						if(_data.settings.general.seed === ''){
-							_data.settings.general.seed += Math.random();
+							_data.settings.general.seed += (''+Math.random()).replace(/^.*\./,'');
 						}
 						let _freeMessageChannels = Math.max(1, navigator.hardwareConcurrency-(1+_data.settings.general.bestOf));
 						function nextMessage(){
@@ -171,7 +171,7 @@
 												//	{type: 'Aborted', message: {participantName: '', error: errorEvent}}
 												};
 												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
-												arenaInput.settings.general.seed += '#'+Math.random(); // Get salt from Math.seedrandom.
+												arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.
 												arena.postMessage(arenaInput);
 											});
 										}
