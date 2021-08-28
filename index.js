@@ -33,7 +33,7 @@ function a(){
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local arena development');
 		if(item !== null){
-			addArena(...JSON.parse(item));
+			addArena(JSON.parse(item));
 		}
 	});
 	console.log('// TODO: Change from setTimeout to `Settings-Initiated`, like ReplayHelper.');
@@ -124,13 +124,13 @@ function a(){
 						createTeam();
 					}
 					if(localParticipants !== null){
+						while(document.getElementsByClassName('participant-team-container').length < localParticipants.filter(p => p.team).length){
+							createTeam();
+						}
 						localParticipants.reverse().forEach((participant, index) => {
-							while(document.getElementsByClassName('participant-team-container').length < participant[2]){
-								createTeam();
-							}
 							if(typeof participant === 'object'){
-								let option = addParticipant(participant[0], participant[1]);
-								let select = document.getElementById('participant-team-' + participant[2]);
+								let option = addParticipant(participant.url, participant.name);
+								let select = document.getElementById('participant-team-' + participant.team);
 								if(select){
 									select.add(option);
 								}
@@ -153,28 +153,34 @@ function a(){
 			window.onresize();
 		}
 	}
-	addArena = (url='', name='', replayURL='', ...participants) => {
-		if(url === ''){return;}
-		if(typeof url === 'string'){
-			url = {arena: url, includeScripts: {arena: [], participants: []}};
+	addArena = localArena => {
+		if(!localArena.includeScripts){
+			localArena.includeScripts = {arena: [], participants: []}
+		}else{
+			if(!localArena.arena){
+				localArena.arena = [];
+			}
+			if(!localArena.participants){
+				localArena.participants = [];
+			}
 		}
-		if(name === ''){
-			name = url.arena;
+		if(!localArena.name){
+			localArena.name = localArena.arena;
 		}
-		localArenas[url.arena] = replayURL;
+		localArenas[localArena.arena] = localArena.replay;
 		let json = {
-			name: name,
-			raw_url: url.arena,
-			html_url: url.arena,
-			full_name: 'local/'+name,
+			name: localArena.name,
+			raw_url: localArena.arena,
+			html_url: localArena.arena,
+			full_name: 'local/'+localArena.name,
 			default_branch: null,
 			stars: -1,
 			commit: null,
 			version: null,
-			includeScripts: url.includeScripts
+			includeScripts: localArena.includeScripts
 		};
 		arenaListReadyPromise.then(()=>{
-			localParticipants = participants;
+			localParticipants = localArena.participants;
 			selectArena.contentWindow.postMessage({type: 'add-arena', value: json});
 		});
 	}
