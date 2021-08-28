@@ -15,6 +15,7 @@ function a(){
 	let advancedSettings = {
 		allowRemoteExecution: false
 	};
+	let _arenaProperties;
 	if(generalSettings.seed !== ''){
 		console.error('Seed has value. Fine during debugging, but do not commit. `generalSettings.seed` should be empty string (\'\').');
 	}
@@ -80,9 +81,9 @@ function a(){
 	function setArena(messageEvent){
 		jsonEditor = null;
 		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(insecureJson => {
-			let arenaProperties = secureJson(insecureJson);
+			_arenaProperties = secureJson(insecureJson);
 			let jsonEditor_element;
-			let customInput = isObject(arenaProperties.header.customInput) && (isObject(arenaProperties.header.customInput.schema) || isObject(arenaProperties.header.customInput.schemaRefs) || (arenaProperties.header.customInput.default !== undefined && arenaProperties.header.customInput.default !== null));
+			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaRefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
@@ -172,10 +173,10 @@ function a(){
 			while(0 < settings.childElementCount){
 				settings.removeChild(settings.firstChild);
 			}
-			arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
-			Object.keys(arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
-				if(arenaProperties.settings.hasOwnProperty(key)){
-					const setting = arenaProperties.settings[key];
+			_arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
+			Object.keys(_arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
+				if(_arenaProperties.settings.hasOwnProperty(key)){
+					const setting = _arenaProperties.settings[key];
 					let fieldset = document.createElement('fieldset');
 					fieldset.name = key;
 					settings.appendChild(fieldset);
@@ -209,9 +210,9 @@ function a(){
 					}
 				}
 			});
-			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? arenaProperties.header.customInput.default : undefined);
-			jsonEditor.setSchema(customInput ? arenaProperties.header.customInput.schema : undefined, customInput ? arenaProperties.header.customInput.schemaRefs : undefined);
-			messageEvent.source.postMessage({type: 'properties', value: {properties: arenaProperties}}, messageEvent.origin);
+			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? _arenaProperties.header.customInput.default : undefined);
+			jsonEditor.setSchema(customInput ? _arenaProperties.header.customInput.schema : undefined, customInput ? _arenaProperties.header.customInput.schemaRefs : undefined);
+			messageEvent.source.postMessage({type: 'properties', value: {properties: _arenaProperties}}, messageEvent.origin);
 		});
 	}
 	function postSettings(messageEvent){
@@ -232,6 +233,6 @@ function a(){
 		}
 		json.general.advanced = JSON.parse(JSON.stringify(advancedSettings));
 		json.general.customInput = jsonEditor === null ? {} : jsonEditor.get();
-		messageEvent.source.postMessage({type: 'settings', value: json}, messageEvent.origin);
+		messageEvent.source.postMessage({type: 'settings', value: {header: {replay: _arenaProperties.header.replay}, settings: json}}, messageEvent.origin);
 	}
 }

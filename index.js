@@ -215,10 +215,9 @@ function a(){
 		}
 		if(messageEvent.origin === 'null'){
 			iframe.parentElement.removeChild(iframe);
-			let defaultReplay = localArenas[_json.raw_url];
 			let replayData = {
 				header: {
-					defaultReplay: defaultReplay
+					defaultReplay: localArenas[_json.raw_url] ? localArenas[_json.raw_url] : messageEvent.data.defaultReplay
 				},
 				body: messageEvent.data.value
 			};
@@ -369,17 +368,18 @@ function a(){
 		arenaMatches = {};
 		settingsIframe.contentWindow.postMessage({type: 'GetSettings'}, '*');
 	}
-	function begin(settings, bracket=[]){
+	function begin(data, bracket=[]){
 		let json = {
 			arena: _json,
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
 				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
-				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js'
+				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
+				replay: data.header.replay
 			},
 			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
-			settings: settings
+			settings: data.settings
 		};
 		if(0 === json.participants.length){
 			for(const select of document.getElementsByClassName('participants')){
