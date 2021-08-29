@@ -10,12 +10,6 @@ class ParticipantHelper{
 	static init = ()=>{};
 	static onmessage = ()=>{}
 	static onmessageerror = ()=>{}
-	static respond = (data=null) => {
-		if(ParticipantHelper.#executionWatcher !== undefined){
-			ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
-			ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: data});
-		}
-	}
 	static #messageTimeout = ()=>{
 		ParticipantHelper.onmessage(ParticipantHelper.#messageIndex, 'Message-Timeout');
 		ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Message-Timeout'});
@@ -23,9 +17,21 @@ class ParticipantHelper{
 	static #onmessage = messageEvent=>{
 		if(ParticipantHelper.#initiated){
 			if(typeof ParticipantHelper.onmessage === 'function'){
+				class Message{
+					constructor(data, type){
+						this.data = data;
+						this.type = type;
+						this.respond = (data=null) => {
+							if(ParticipantHelper.#executionWatcher !== undefined){
+								ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
+								ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: data});
+							}
+						}
+					}
+				}
 				ParticipantHelper.#messageIndex = messageEvent.data.index;
 				ParticipantHelper.#executionWatcher = setTimeout(ParticipantHelper.#messageTimeout, ParticipantHelper.#executionLimit);
-				ParticipantHelper.onmessage(messageEvent.data.message, messageEvent.data.type);
+				ParticipantHelper.onmessage(new Message(messageEvent.data.message, messageEvent.data.type));
 			}else{
 				fatal('ParticipantHelper.onmessage is not a function.');
 			}
