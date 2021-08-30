@@ -124,7 +124,9 @@ function a(){
 						createTeam();
 					}
 					if(localParticipants !== null){
-						while(document.getElementsByClassName('participant-team-container').length < localParticipants.filter(p => 0 <= p.team).length){
+						let teams = localParticipants.filter(p => 0 <= p.team);
+						teams = 0 < teams.length ? teams.sort(p => -p.team)[0].team : 0;
+						while(document.getElementsByClassName('participant-team-container').length < teams){
 							createTeam();
 						}
 						localParticipants.reverse().forEach((participant, index) => {
