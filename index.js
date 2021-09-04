@@ -16,6 +16,7 @@ function a(){
 	let settingsIframe = document.getElementById('settings');
 	let logContainer = document.getElementById('logContainer');
 	let btnAddTeam = document.getElementById('add-team');
+	let btnRemoveTeam = document.getElementById('remove-team');
 	let participantGroups = document.getElementById('participant-groups');
 	let arenaReadme = document.getElementById('arena-readme');
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
@@ -39,6 +40,7 @@ function a(){
 	console.log('// TODO: Change from setTimeout to `Settings-Initiated`, like ReplayHelper.');
 	setTimeout(()=>{settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*')}, 1000);
 	btnAddTeam.onclick = createTeam;
+	btnRemoveTeam.onclick = removeTeam;
 	let btnStart = document.getElementById('btnStart');
 	btnStart.onclick = start;
 	let pendingArenaSandboxes = [];
@@ -261,11 +263,15 @@ function a(){
 	}
 	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		return selectElements.length <= arenaProperties.header.limits.teams.max;
+		let valid = selectElements.length < arenaProperties.header.limits.teams.max;
+		btnAddTeam.disabled = !valid;
+		return valid;
 	}
 	function validateTeamsMin(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		return arenaProperties.header.limits.teams.min <= selectElements.length;
+		let valid = arenaProperties.header.limits.teams.min < selectElements.length;
+		btnRemoveTeam.disabled = !valid;
+		return valid;
 	}
 	function validateTeams(){
 		return validateTeamsMin() && validateTeamsMax();
@@ -341,7 +347,6 @@ function a(){
 	}
 	function createTeam(){
 		let teamIndex = document.getElementsByClassName('participant-team-container').length + 1;
-		btnAddTeam.disabled = !validateTeamsMax();
 		let teamID = 'participant-team-' + teamIndex;
 		let participantTeam = document.createElement('div');
 		participantTeam.classList.add('participant-team-container');
@@ -362,6 +367,18 @@ function a(){
 		select.classList.add('participant-team');
 		select.multiple = true;
 		participantGroups.appendChild(participantTeam);
+		validateTeams();
+	}
+	function removeTeam(){
+		let teams = document.getElementsByClassName('participant-team-container');
+		let team = teams[teams.length-1];
+		for(let option of [...team.getElementsByClassName('participant-team')[0].options]){
+			availableParticipants_select.add(option);
+			option.selected = false;
+		}
+		team.parentNode.removeChild(team);
+		sortOptions(availableParticipants_select);
+		validateTeams();
 	}
 	function start(){
 		while(0 < logContainer.childElementCount){
