@@ -8,6 +8,7 @@ function a(){
 	let _json;
 	let _replayContainer;
 	let _parentWindow = null;
+	let _settingsOverride = null;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -32,7 +33,7 @@ function a(){
 		advanceOptions.classList.remove('closed');
 	});
 	requestAnimationFrame(()=>{
-		let item = localStorage.getItem('Local arena development');
+		let item = localStorage.getItem('Local development');
 		if(item !== null){
 			addArena(JSON.parse(item));
 		}
@@ -98,7 +99,7 @@ function a(){
 					element.parentNode.removeChild(element);
 				});
 				document.title = _json.name + ' Arena';
-				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url}, '*');
+				settingsIframe.contentWindow.postMessage({type: 'SetArena', value: _json.raw_url, settingsOverride: _settingsOverride}, '*');
 				getParticipants(_json.full_name);
 				arenaReadme.srcdoc = '';
 				arenaReadmeFieldset.classList.add('hidden');
@@ -183,6 +184,7 @@ function a(){
 			version: null,
 			includeScripts: localArena.includeScripts
 		};
+		_settingsOverride = {arena: json.raw_url, settings: localArena.settings};
 		arenaListReadyPromise.then(()=>{
 			localParticipants = localArena.participants;
 			selectArena.contentWindow.postMessage({type: 'add-arena', value: json});

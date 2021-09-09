@@ -174,6 +174,19 @@ function a(){
 				settings.removeChild(settings.firstChild);
 			}
 			_arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
+			if(messageEvent.data.settingsOverride.arena === messageEvent.data.value && messageEvent.data.settingsOverride.settings){
+				for(const groupKey in messageEvent.data.settingsOverride.settings){
+					if(Object.hasOwnProperty.call(messageEvent.data.settingsOverride.settings, groupKey)){
+						const group = messageEvent.data.settingsOverride.settings[groupKey];
+						for(const setting in group){
+							if(Object.hasOwnProperty.call(group, setting)){
+								const value = group[setting];
+								_arenaProperties.settings[groupKey][setting] = value;
+							}
+						}
+					}
+				}
+			}
 			Object.keys(_arenaProperties.settings).sort(a => 'general' === a ? -1 : 0).forEach(key => {
 				if(_arenaProperties.settings.hasOwnProperty(key)){
 					const setting = _arenaProperties.settings[key];
