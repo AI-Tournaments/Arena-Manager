@@ -181,7 +181,21 @@ function a(){
 						for(const setting in group){
 							if(Object.hasOwnProperty.call(group, setting)){
 								const value = group[setting];
-								_arenaProperties.settings[groupKey][setting] = value;
+								if(setting === '_meta'){
+									for(const meta in value){
+										if(Object.hasOwnProperty.call(value, meta)){
+											const metaGroup = value[meta];
+											for(const metaKey in metaGroup){
+												if(Object.hasOwnProperty.call(metaGroup, metaKey)){
+													const metaValue = metaGroup[metaKey];
+													_arenaProperties.settings[groupKey][setting][meta][metaKey] = metaValue;
+												}
+											}
+										}
+									}
+								}else{
+									_arenaProperties.settings[groupKey][setting] = value;
+								}
 							}
 						}
 					}
