@@ -174,7 +174,7 @@ function a(){
 				settings.removeChild(settings.firstChild);
 			}
 			_arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
-			if(messageEvent.data.settingsOverride.arena === messageEvent.data.value && messageEvent.data.settingsOverride.settings){
+			if(messageEvent.data.settingsOverride && messageEvent.data.settingsOverride.arena === messageEvent.data.value && messageEvent.data.settingsOverride.settings){
 				for(const groupKey in messageEvent.data.settingsOverride.settings){
 					if(Object.hasOwnProperty.call(messageEvent.data.settingsOverride.settings, groupKey)){
 						const group = messageEvent.data.settingsOverride.settings[groupKey];
