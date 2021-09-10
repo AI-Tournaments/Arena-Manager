@@ -152,7 +152,7 @@ class ArenaHelper{
 				}
 			}
 			if(queueItem === undefined){
-				throw new Error('queueItem not found.');
+				throw new Error('queueItem not found. '+JSON.stringify({participant: participantWrapper.participant.name, worker: workerName, messageIndex: messageIndex}));
 			}
 		}
 		/** INPUT
