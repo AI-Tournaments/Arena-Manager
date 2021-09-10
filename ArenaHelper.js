@@ -341,7 +341,7 @@ class ArenaHelper{
 					this.addWorker = name => {
 						ArenaHelper.#participants.addWorker(this, name);
 					}
-					this.postMessage = async (data, workerName, systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data, systemMessage});
+					this.postMessage = async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'post', message: data, systemMessage: systemMessage});
 				}
 			}
 			data.participants.forEach((team, teamIndex) => {
