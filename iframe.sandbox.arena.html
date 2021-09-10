@@ -146,9 +146,7 @@
 													'Message-Worker': messageWorker,
 													'Ready-To-Start': readyToStart
 												};
-												let messageIndex = 0;
 												arena.onmessage = messageEvent => {
-													messageIndex++;
 													let callback = callbacks[messageEvent.data.type];
 													if(callback === undefined){
 														switch(messageEvent.data.type){
@@ -166,9 +164,10 @@
 													}
 												};
 												arena.onerror = errorEvent => {
-													console.log('// TEMP: errorEvent: '+errorEvent.message);
-													debugger;
-												//	{type: 'Aborted', message: {participantName: '', error: errorEvent}}
+													console.error(errorEvent.message);
+													arena.terminate();
+													_arenaResponses[index] = {...messageEvent.data.message, settings: {general: {seed: _data.settings.general.seed}}, status: 'Fatal'};
+													resolve();
 												};
 												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
 												arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.

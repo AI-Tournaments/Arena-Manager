@@ -33,7 +33,6 @@ class ArenaHelper{
 		returnObject.participantName = participant.name === undefined ? participant : participant.name;
 		returnObject.error = error;
 		ArenaHelper.#postMessage({type: 'Aborted', message: returnObject});
-		throw new Error('Test');
 	}
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
