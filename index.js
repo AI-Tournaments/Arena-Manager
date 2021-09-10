@@ -265,15 +265,13 @@ function a(){
 	}
 	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		let valid = selectElements.length < arenaProperties.header.limits.teams.max;
-		btnAddTeam.disabled = !valid;
-		return valid;
+		btnAddTeam.disabled = arenaProperties.header.limits.teams.max <= selectElements.length;
+		return selectElements.length <= arenaProperties.header.limits.teams.max;
 	}
 	function validateTeamsMin(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		let valid = arenaProperties.header.limits.teams.min < selectElements.length;
-		btnRemoveTeam.disabled = !valid;
-		return valid;
+		btnRemoveTeam.disabled = selectElements.length < arenaProperties.header.limits.teams.min;
+		return arenaProperties.header.limits.teams.min <= selectElements.length;
 	}
 	function validateTeams(){
 		return validateTeamsMin() && validateTeamsMax();
