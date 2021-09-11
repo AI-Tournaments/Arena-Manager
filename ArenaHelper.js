@@ -123,6 +123,9 @@ class ArenaHelper{
 		static #getWorker = (participantWrapper, name) => {
 			return participantWrapper.private.workers.find(workerWrapper => workerWrapper.name === name);
 		}
+		static #sendMessage(queueItem){
+			ArenaHelper.#postMessage({type: 'Message-Worker', message: queueItem.message});
+		}
 		static #messageWorker = (name='', participantWrapper, body) => {
 			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
 			if(!workerWrapper.ready){
@@ -134,26 +137,33 @@ class ArenaHelper{
 				let responseReceived;
 				let responseRejected;
 				promise = new Promise((resolve, reject) => {responseReceived = resolve; responseRejected = reject;});
-				let queueItem = {done: null, responseReceived: responseReceived, responseRejected: responseRejected};
+				let queueItem = {
+					done: null,
+					messageIndex: body.index,
+					message: {receiver: workerWrapper.iframeId, body: body},
+					responseReceived: responseReceived,
+					responseRejected: responseRejected
+				};
 				ArenaHelper.#responseQueue.push(queueItem);
-				workerWrapper.pendingMessages.push({index: body.index, queueItem: queueItem});
+				workerWrapper.pendingMessages.push(queueItem);
+				if(workerWrapper.pendingMessages.length === 1){
+					ArenaHelper.Participants.#sendMessage(queueItem);
+				}
+			}else{
+				throw new Error('Message type "'+body.type+'" is not implemented.');
 			}
-			ArenaHelper.#postMessage({type: 'Message-Worker', message: {receiver: workerWrapper.iframeId, body: body}});
 			return promise;
 		}
 		static #getPendingMessage = (participantWrapper, workerName, messageIndex) => {
 			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, workerName);
-			let queueItem;
-			for(let index = 0; index < workerWrapper.pendingMessages.length; index++){
-				if(workerWrapper.pendingMessages[index].index === messageIndex){
-					queueItem = workerWrapper.pendingMessages[index].queueItem;
-					workerWrapper.pendingMessages.splice(index, 1);
-					return new Promise(resolve => queueItem.done = resolve);
+			if(workerWrapper.pendingMessages.length){
+				let queueItem = workerWrapper.pendingMessages.shift();
+				if(workerWrapper.pendingMessages.length){
+					ArenaHelper.Participants.#sendMessage(workerWrapper.pendingMessages[0]);
 				}
+				return new Promise(resolve => queueItem.done = resolve);
 			}
-			if(queueItem === undefined){
-				throw new Error('queueItem not found. '+JSON.stringify({participant: participantWrapper.participant.name, worker: workerName, messageIndex: messageIndex}));
-			}
+			throw new Error('queueItem not found. '+JSON.stringify({participant: participantWrapper.participant.name, worker: workerName, messageIndex: messageIndex}));
 		}
 		/** INPUT
 		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
