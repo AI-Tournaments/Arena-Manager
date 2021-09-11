@@ -44,6 +44,7 @@ class ParticipantHelper{
 			delete Math.seedrandom;
 			Date = null;
 			performance = null;
+			console.log('// TODO: Decuple (new) Worker.');
 			// Initiate participant.
 			ParticipantHelper.#executionLimit = messageEvent.data.settings.general.executionLimit;
 			class Settings{
