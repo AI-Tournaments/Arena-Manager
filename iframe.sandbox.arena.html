@@ -166,7 +166,13 @@
 												arena.onerror = errorEvent => {
 													console.error(errorEvent.message);
 													arena.terminate();
-													_arenaResponses[index] = {...messageEvent.data.message, settings: {general: {seed: _data.settings.general.seed}}, status: 'Fatal'};
+													_arenaResponses[index] = {
+														status: 'Aborted',
+														error: errorEvent.message,
+														participantName: 'Fatal-Abort',
+														settings: {general: {seed: _data.settings.general.seed}},
+														log: []
+													};
 													resolve();
 												};
 												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
