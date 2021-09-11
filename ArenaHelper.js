@@ -65,7 +65,6 @@ class ArenaHelper{
 		function fatal(message){
 			console.error(message);
 			ArenaHelper.postAbort('Fatal-Abort', message);
-			throw new Error(message);
 		}
 		let debug = false;
 		ArenaHelper.#init = ()=>{
