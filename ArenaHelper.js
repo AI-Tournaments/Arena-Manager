@@ -403,8 +403,7 @@ class ArenaHelper{
 			try{
 				blob = new Blob([text], {type: 'application/javascript'});
 			}catch(e){
-				window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
-				blob = new BlobBuilder();
+				blob = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
 				blob.append(text);
 				blob = blob.getBlob();
 			}
