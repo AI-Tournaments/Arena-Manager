@@ -126,7 +126,7 @@
 								&& limits.participants.max === undefined ? true : _data.participants.flat().length <= limits.participants.max
 								&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= _data.participants.sort((x,y)=>y.length-x.length)[0].length
 								&& limits.participantsPerTeam.max === undefined ? true : _data.participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max){
-									Promise.all(_scriptLoaded_promises).then(() => {
+									Promise.allSettled(_scriptLoaded_promises).then(() => {
 										Math.seedrandom(_data.settings.general.seed);
 										let arenaSetup_promises = [];
 										let arenas = [];
@@ -183,14 +183,14 @@
 												arena.postMessage(arenaInput);
 											});
 										}
-										Promise.all(arenaSetup_promises).then(()=>{
-											Promise.all(_arenaReadyToStart).then(()=>{
+										Promise.allSettled(arenaSetup_promises).then(()=>{
+											Promise.allSettled(_arenaReadyToStart).then(()=>{
 												if(!_data.settings.general.advanced.allowRemoteExecution){
 													blockNetwork();
 												}
 												arenas.forEach(arena=>arena.postMessage({type: 'Start'}));
 											});
-											Promise.all(_arenaPromises).then(()=>{
+											Promise.allSettled(_arenaPromises).then(()=>{
 												function getTeamColor(teamIndex){
 													let hue = ((teamIndex/_data.participants.length)+.5)%1;
 													let saturation = 0.5;

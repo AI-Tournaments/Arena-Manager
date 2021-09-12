@@ -382,7 +382,7 @@ class ArenaHelper{
 			let _onError = error=>{
 				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
-			Promise.all(promises).then(() => {
+			Promise.allSettled(promises).then(() => {
 				ArenaHelper.#postMessage({type: 'Ready-To-Start', message: null});
 			}).catch(error => _onError(error));
 		}

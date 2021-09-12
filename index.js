@@ -330,7 +330,7 @@ function a(){
 						}));
 					}
 				});
-				Promise.all(promises).then(() => {
+				Promise.allSettled(promises).then(() => {
 					sortOptions(availableParticipants_select);
 					arenaListReady();
 				})
