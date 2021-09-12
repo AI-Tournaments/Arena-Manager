@@ -18,9 +18,10 @@ class ParticipantHelper{
 		if(ParticipantHelper.#initiated){
 			if(typeof ParticipantHelper.onmessage === 'function'){
 				class Message{
-					constructor(data, type){
-						this.data = data;
-						this.type = type;
+					constructor(data){
+						this.data = data.message;
+						this.type = data.type;
+						this.messageIndex = data.index;
 						this.respond = (data=null) => {
 							if(ParticipantHelper.#executionWatcher !== undefined){
 								ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
@@ -31,7 +32,7 @@ class ParticipantHelper{
 				}
 				ParticipantHelper.#messageIndex = messageEvent.data.index;
 				ParticipantHelper.#executionWatcher = setTimeout(ParticipantHelper.#messageTimeout, ParticipantHelper.#executionLimit);
-				ParticipantHelper.onmessage(new Message(messageEvent.data.message, messageEvent.data.type));
+				ParticipantHelper.onmessage(new Message(messageEvent.data));
 			}else{
 				fatal('ParticipantHelper.onmessage is not a function.');
 			}
