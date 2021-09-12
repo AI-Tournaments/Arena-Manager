@@ -73,7 +73,7 @@
 								_worker.onmessage = messageEvent => {
 									switch(messageEvent.data.type){
 										case 'Response': respond('Message', messageEvent.data.response); break;
-										case 'Message-Timeout': _parent.postMessage({type: 'Event', data: {event: 'Message-Timeout', source: _source}}, '*'); break;
+										case 'Message-Timeout': respond('Message-Timeout'); break;
 									}
 								}
 								_worker.postMessage(messageEvent.data.workerData);
