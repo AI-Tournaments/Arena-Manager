@@ -229,7 +229,7 @@ class ArenaHelper{
 					name: name,
 					promiseWorkerReady: null,
 					ready: false,
-					iframeId: 'matchIndex-'+data.matchIndex+'_team-'+participant.team+'_'+'member-'+participant.member+'_'+name,
+					iframeId: 'matchIndex-'+data.matchIndex+'_team-'+participant.team+'_'+'member-'+participant.member+'_'+encodeURIComponent(name),
 					messageIndex: 0,
 					pendingMessages: []
 				};
