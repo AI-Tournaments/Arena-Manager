@@ -9,7 +9,7 @@ function a(){
 		_meta: {
 			bestOf: {min: 1, max: null},
 			timelimit_ms: {min: 1, max: null},
-			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants, or keep them secret."}}
+			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants or keep them secret."}}
 		}
 	};
 	let advancedSettings = {
