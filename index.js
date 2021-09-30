@@ -400,7 +400,7 @@ function a(){
 			participants: bracket,
 			settings: data.settings
 		};
-		if(0 === json.participants.length){
+		if(json.participants.length === 0){
 			for(const select of document.getElementsByClassName('participants')){
 				if(select.id !== 'participants-selectable'){
 					let team = [];
