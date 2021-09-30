@@ -116,16 +116,20 @@
 								}
 							}
 							document.title = document.title.replace('X', _data.arena.full_name);
+							function checkLimits(json){
+								let limits = json.header.limits;
+								let participants = JSON.parse(JSON.stringify(_data.participants));
+								return limits.teams.min === undefined ? true : limits.teams.min <= participants.length
+								&& limits.teams.max === undefined ? true : participants.length <= limits.teams.max
+								&& limits.participants.min === undefined ? true : limits.participants.min <= participants.flat().length
+								&& limits.participants.max === undefined ? true : participants.flat().length <= limits.participants.max
+								&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= participants.sort((x,y)=>y.length-x.length)[0].length
+								&& limits.participantsPerTeam.max === undefined ? true : participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max;
+							}
 							fetch(_data.arena.raw_url+'properties.json')
 							.then(response => response.json())
 							.then(json => {
-								let limits = json.header.limits;
-								if(limits.teams.min === undefined ? true : limits.teams.min <= _data.participants.length
-								&& limits.teams.max === undefined ? true : _data.participants.length <= limits.teams.max
-								&& limits.participants.min === undefined ? true : limits.participants.min <= _data.participants.flat().length
-								&& limits.participants.max === undefined ? true : _data.participants.flat().length <= limits.participants.max
-								&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= _data.participants.sort((x,y)=>y.length-x.length)[0].length
-								&& limits.participantsPerTeam.max === undefined ? true : _data.participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max){
+								if(checkLimits(json)){
 									Promise.allSettled(_scriptLoaded_promises).then(() => {
 										Math.seedrandom(_data.settings.general.seed);
 										let arenaSetup_promises = [];
