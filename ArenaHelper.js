@@ -174,6 +174,12 @@ class ArenaHelper{
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
+			data.participants.forEach(members => {
+				for(let index = members.length - 1; 0 < index; index--){
+					let newIndex = Math.floor(Math.random()*(index + 1));
+					[members[index], members[newIndex]] = [members[newIndex], members[index]];
+				}
+			});
 			class Settings{
 				constructor(settings={}){
 					for(const key in settings){
