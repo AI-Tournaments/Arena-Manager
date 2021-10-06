@@ -23,6 +23,10 @@ function a(){
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
 	let advanceOptions = document.getElementById('advance-options');
 	let includePreviews = document.getElementById('include-previews');
+	let rerunUntilError = document.getElementById('rerun-until-error');
+	if(localStorage.getItem('Local development')){
+		document.getElementById('advanced-testing').classList.remove('hidden');
+	}
 	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
@@ -221,26 +225,43 @@ function a(){
 		}
 		if(messageEvent.origin === 'null'){
 			iframe.parentElement.removeChild(iframe);
-			let replayData = {
-				header: {
-					defaultReplay: localArenas[_json.raw_url] ? localArenas[_json.raw_url] : messageEvent.data.defaultReplay
-				},
-				body: messageEvent.data.value
-			};
-			pendingArenaSandboxes.splice(pendingArenaSandboxes.indexOf(messageEvent.source), 1);
-			Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
-				element.parentNode.removeChild(element);
-			});
-			if(!document.title.startsWith('auto-run')){
-				_replayContainer = document.createElement('iframe');
-				_replayContainer.classList.add('replay-container');
-				_replayContainer.src = '../Replay/';
-				document.body.appendChild(_replayContainer);
-				setTimeout(()=>{
-					console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
-					_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
-					_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
-				}, 1000);
+			if(rerunUntilError.checked){
+				let count = parseInt(rerunUntilError.dataset.counter);
+				if(!count){
+					count = 0;
+				}
+				count++;
+				console.log('Rerun counter', count);
+				rerunUntilError.dataset.counter = count;
+			}
+			if(rerunUntilError.checked && messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length === 0){
+				start();
+			}else{
+				if(rerunUntilError.checked){
+					messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
+					rerunUntilError.dataset.counter = 0;
+				}
+				let replayData = {
+					header: {
+						defaultReplay: localArenas[_json.raw_url] ? localArenas[_json.raw_url] : messageEvent.data.defaultReplay
+					},
+					body: messageEvent.data.value
+				};
+				pendingArenaSandboxes.splice(pendingArenaSandboxes.indexOf(messageEvent.source), 1);
+				Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
+					element.parentNode.removeChild(element);
+				});
+				if(!document.title.startsWith('auto-run')){
+					_replayContainer = document.createElement('iframe');
+					_replayContainer.classList.add('replay-container');
+					_replayContainer.src = '../Replay/';
+					document.body.appendChild(_replayContainer);
+					setTimeout(()=>{
+						console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
+						_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
+						_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
+					}, 1000);
+				}
 			}
 		}
 	}
