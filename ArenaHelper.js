@@ -416,7 +416,7 @@ class ArenaHelper{
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
 			let worker = new Worker(createObjectURL(blob));
-			worker.onmessage = () => resolve(worker);
+			worker.onmessage = ()=>resolve(worker);
 			return promise;
 		});
 	}
