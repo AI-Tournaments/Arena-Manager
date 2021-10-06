@@ -117,7 +117,11 @@ class ArenaHelper{
 			}
 		}
 		onMessageWatcher();
-		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
+		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init()).catch(error => {
+			let nameArray = __url.split('.').slice(-2)[0].split('/');
+			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
+			ArenaHelper.postAbort(nameArray.join('/'), error.toString())
+		});
 		ArenaHelper.#postMessage(null);
 	}
 	static Participants = class{
