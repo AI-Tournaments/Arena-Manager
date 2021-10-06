@@ -404,7 +404,7 @@ class ArenaHelper{
 		.then(text => {
 			let _importScripts = 'importScripts(\''+includeScripts.join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
 			let useStrict = text.toLowerCase().startsWith('use strict', 1);
-			text = (useStrict ? '\'use strict\'; ' : '') + 'let __url = \''+url+'\'; ' + _importScripts + text;
+			text = (useStrict ? '\'use strict\'; ' : '') + 'const __url = \''+url+'\'; ' + _importScripts + text;
 			let blob;
 			try{
 				blob = new Blob([text], {type: 'application/javascript'});
