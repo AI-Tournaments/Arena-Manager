@@ -239,6 +239,7 @@ function a(){
 			}else{
 				if(rerunUntilError.checked){
 					messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
+					console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
 					rerunUntilError.dataset.counter = 0;
 				}
 				let replayData = {
