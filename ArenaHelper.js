@@ -117,10 +117,14 @@ class ArenaHelper{
 			}
 		}
 		onMessageWatcher();
-		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init()).catch(error => {
+		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
+		
+		self.addEventListener("unhandledrejection", function(promiseRejectionEvent){
 			let nameArray = __url.split('.').slice(-2)[0].split('/');
 			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
-			ArenaHelper.postAbort(nameArray.join('/'), error.toString())
+			let stack = promiseRejectionEvent.reason.stack.split('\n');
+			let message = stack[0]+' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
+			ArenaHelper.postAbort(nameArray.join('/'), message);
 		});
 		ArenaHelper.#postMessage(null);
 	}
