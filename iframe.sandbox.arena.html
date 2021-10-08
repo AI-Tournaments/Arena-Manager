@@ -173,12 +173,13 @@
 												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
 												arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.
 												arena.onerror = errorEvent => {
-													console.error(errorEvent.message);
+													let message = errorEvent.message+' @ '+errorEvent.lineno+':'+errorEvent.colno;
+													console.error(message);
 													arena.terminate();
 													_arenaResponses[index] = {
 														status: 'Aborted',
-														error: errorEvent.message,
-														participantName: 'Error',
+														error: message,
+														participantName: arenaInput.arena.full_name,
 														settings: arenaInput.settings,
 														log: []
 													};
