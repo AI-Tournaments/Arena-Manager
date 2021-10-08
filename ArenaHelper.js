@@ -118,7 +118,6 @@ class ArenaHelper{
 		}
 		onMessageWatcher();
 		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
-		
 		self.addEventListener("unhandledrejection", function(promiseRejectionEvent){
 			let nameArray = __url.split('.').slice(-2)[0].split('/');
 			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
