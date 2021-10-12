@@ -121,8 +121,13 @@ class ArenaHelper{
 		self.addEventListener("unhandledrejection", function(promiseRejectionEvent){
 			let nameArray = __url.split('.').slice(-2)[0].split('/');
 			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
-			let stack = promiseRejectionEvent.reason.stack.split('\n');
-			let message = stack[0]+' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
+			let message;
+			if(promiseRejectionEvent.reason.stack){
+				let stack = promiseRejectionEvent.reason.stack.split('\n');
+				message = stack[0]+' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
+			}else{
+				message = promiseRejectionEvent.reason;
+			}
 			ArenaHelper.postAbort(nameArray.join('/'), message);
 		});
 		ArenaHelper.#postMessage(null);
