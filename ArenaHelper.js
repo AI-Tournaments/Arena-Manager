@@ -406,28 +406,44 @@ class ArenaHelper{
 		}
 	}
 	static CreateWorkerFromRemoteURL(url='', includeScripts=[]){
-		function createObjectURL(blob){
+		function createObjectURL(javascript){
+			let blob;
+			try{
+				blob = new Blob([javascript], {type: 'application/javascript'});
+			}catch(e){
+				blob = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
+				blob.append(javascript);
+				blob = blob.getBlob();
+			}
 			let urlObject = URL.createObjectURL(blob);
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
 			return urlObject;
 		}
-		return fetch(url)
-		.then(response => response.text())
-		.then(text => {
-			let _importScripts = 'importScripts(\''+includeScripts.join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
-			let useStrict = text.toLowerCase().startsWith('use strict', 1);
-			text = (useStrict ? '\'use strict\'; ' : '') + 'const __url = \''+url+'\'; ' + _importScripts + text;
-			let blob;
-			try{
-				blob = new Blob([text], {type: 'application/javascript'});
-			}catch(e){
-				blob = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
-				blob.append(text);
-				blob = blob.getBlob();
+		return fetch(url).then(response => response.text()).then(text => {
+			let header = (()=>{
+				try{
+					return JSON.parse(text.substring(text.indexOf('/**')+3, text.indexOf('**/')));
+				}catch(error){
+					return {};
+				}
+			})();
+			if(header.dependencies){
+				let scope = url.slice(0, url.lastIndexOf('/')+1);
+				header.dependencies.forEach((dependency, index) => {
+					header.dependencies[index] = scope + dependency;
+				});
+			}else{
+				header.dependencies = [];
 			}
+			let preText = 'importScripts(\''+[...includeScripts.system, ...includeScripts.modules].join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
+			if(header.dependencies.length){
+				preText += 'importScripts(\''+header.dependencies.join('\', \'')+'\'); ';
+			}
+			let useStrict = text.toLowerCase().startsWith('use strict', 1);
+			text = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preText+text;
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let worker = new Worker(createObjectURL(blob));
+			let worker = new Worker(createObjectURL(text));
 			worker.onmessage = ()=>resolve(worker);
 			return promise;
 		});

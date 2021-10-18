@@ -163,16 +163,6 @@ function a(){
 		}
 	}
 	addArena = localArena => {
-		if(!localArena.includeScripts){
-			localArena.includeScripts = {arena: [], participants: []}
-		}else{
-			if(!localArena.arena){
-				localArena.arena = [];
-			}
-			if(!localArena.participants){
-				localArena.participants = [];
-			}
-		}
 		if(!localArena.name){
 			localArena.name = localArena.arena;
 		}
@@ -185,8 +175,7 @@ function a(){
 			default_branch: null,
 			stars: -1,
 			commit: null,
-			version: null,
-			includeScripts: localArena.includeScripts
+			version: null
 		};
 		_settingsOverride = {arena: json.raw_url, settings: localArena.settings};
 		arenaListReadyPromise.then(()=>{

@@ -25,6 +25,7 @@
 					let _scriptLoaded_promises = [];
 					let _messageQueue = [];
 					let _messagePending = [];
+					let _modules = [];
 					window.onmessage = messageEvent => {
 						_parent = {
 							source: messageEvent.source,
@@ -80,7 +81,10 @@
 										name: data.name,
 										participant: data.participant,
 										workerData: data.workerData,
-										includeScripts: [..._data.arena.includeScripts.participants, _data.urls.randomseed, _data.urls.ParticipantHelper]
+										includeScripts: {
+											modules: _modules,
+											system: [_data.urls.randomseed, _data.urls.ParticipantHelper]
+										}
 									}, '*');
 								}, 1000);
 							}else{
@@ -130,6 +134,9 @@
 							.then(response => response.json())
 							.then(json => {
 								if(checkLimits(json)){
+									if(json.header.modules){
+										json.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
+									}
 									Promise.allSettled(_scriptLoaded_promises).then(() => {
 										Math.seedrandom(_data.settings.general.seed);
 										let arenaSetup_promises = [];
@@ -137,7 +144,7 @@
 										for(let index = 0; index < _data.settings.general.bestOf; index++){
 											let arenaSetup;
 											arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
-											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', [..._data.arena.includeScripts.arena, _data.urls.randomseed, _data.urls.ArenaHelper]).then(arena => {
+											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.randomseed, _data.urls.ArenaHelper]}).then(arena => {
 												arenas.push(arena);
 												let readyToStart;
 												_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
