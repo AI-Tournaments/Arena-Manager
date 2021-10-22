@@ -12,7 +12,7 @@ class ArenaHelper{
 	static #participants_getParticipantWrapper = null;
 	static #postMessage_native = ()=>{};
 	static #postMessage = data => {
-		ArenaHelper.#postMessage_native.call(globalThis, data);
+		ArenaHelper.#postMessage_native.call(globalThis, JSON.parse(JSON.stringify(data)));
 	}
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value, raw=false)=>{

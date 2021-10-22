@@ -19,7 +19,7 @@ class ParticipantHelper{
 					this.respond = (data=null) => {
 						if(ParticipantHelper.#executionWatcher !== undefined){
 							ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
-							ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: data});
+							ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: JSON.parse(JSON.stringify(data))});
 						}
 					}
 				}
