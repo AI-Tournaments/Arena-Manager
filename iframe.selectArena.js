@@ -3,7 +3,6 @@ function a(){
 	console.log('// TODO: Fix height of iframe or scroll of parent when this takes two rows on small screen.');
 	let _arenas = [];
 	let _preSelectedArena = '';
-	let _includePreviews = false;
 	let sourceWindow = undefined;
 	let arenaList = document.getElementById('arena');
 	let arenaFilter = document.getElementById('arena-filter');
@@ -27,8 +26,7 @@ function a(){
 					sourceWindow = messageEvent.source;
 				}
 				_preSelectedArena = messageEvent.data.value.preSelectedArena;
-				_includePreviews = messageEvent.data.value.includePreviews;
-				getArenas();
+				getArenas(messageEvent.data.value.includePreviews);
 				break;
 			case 'add-arena':
 				addArena_local(messageEvent.data.value);
@@ -49,17 +47,17 @@ function a(){
 		option.selected = true;
 		arenaList.onchange({target: option});
 	}
-	function getArenas(){
+	function getArenas(includePreviews){
 		[...arenaList.getElementsByTagName('option')].filter(o => !o.classList.contains('local')).forEach(o => arenaList.removeChild(o));
-		GitHubApi.fetchArenas().then(arenas => {
+		GitHubApi.fetchArenas(includePreviews).then(arenas => {
 			_arenas = arenas;
-			filterPreviews();
+			filterPreviews(includePreviews);
 		});
 	}
-	function filterPreviews(){
+	function filterPreviews(includePreviews){
 		let preSelected = undefined;
 		let options = [...arenaFilter.selectedOptions].flatMap(selectedOption => selectedOption.value);
-		_arenas.filter(arena => _includePreviews ? true : arena.version !== null).forEach(arena => {
+		_arenas.filter(arena => includePreviews ? true : arena.version !== null).forEach(arena => {
 			if(options.includes('all') || (arena.official && options.includes('official')) || (!arena.official && options.includes('community'))){
 				let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 				cssStar = cssStar.substring(1,cssStar.length-1);

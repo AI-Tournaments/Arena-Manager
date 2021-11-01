@@ -80,7 +80,7 @@ function a(){
 	}
 	function setArena(messageEvent){
 		jsonEditor = null;
-		fetch(messageEvent.data.value + 'properties.json').then(response => response.json()).then(insecureJson => {
+		fetch((messageEvent.data.value??'') + 'properties.json').then(response => response.json()).then(insecureJson => {
 			_arenaProperties = secureJson(insecureJson);
 			let jsonEditor_element;
 			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaRefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));

@@ -233,7 +233,7 @@ function a(){
 				}
 				let replayData = {
 					header: {
-						defaultReplay: localArenas[_json.raw_url] ? localArenas[_json.raw_url] : messageEvent.data.defaultReplay
+						defaultReplay: localArenas[_json.raw_url] ?? messageEvent.data.defaultReplay
 					},
 					body: messageEvent.data.value
 				};
