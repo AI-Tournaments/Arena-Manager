@@ -244,7 +244,7 @@ function a(){
 				if(!document.title.startsWith('auto-run')){
 					_replayContainer = document.createElement('iframe');
 					_replayContainer.classList.add('replay-container');
-					_replayContainer.src = 'https://ai-tournaments.github.io/AI-Tournaments/Replay/';
+					_replayContainer.src = '/AI-Tournaments/Replay/';
 					document.body.appendChild(_replayContainer);
 					setTimeout(()=>{
 						console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
