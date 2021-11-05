@@ -145,16 +145,14 @@
 					<div>
 						<input type="button" id="add-interface" value="Add interface">
 					</div>
-					<fieldset id="arena-setup" class="hidden">
-						<legend>Arena setup</legend>
-						<input type="button" value="Clear">
-						<div id="setup-editor" class="hidden"></div>
-					</fieldset>
+					<input type="checkbox" id="advanced-testing-checkbox">
+					<label for="advanced-testing-checkbox">Advanced testing.</label><img src="" onerror="console.log('// TODO: Toggle on `Local development` data.')"></img>
 					<fieldset id="advanced-testing" class="hidden">
 						<legend>Testing</legend>
 						<input type="checkbox" id="rerun-until-error">
 						<label for="rerun-until-error">Rerun until error.</label>
 						<p>Check JavaScript console for completion execution counter.</p>
+						<div id="setup-editor" class="hidden">Arena setup</div>
 					</fieldset>
 				</div>
 			</div>
