@@ -127,6 +127,9 @@
 			#advance-options fieldset {
 				border-color: var(--main-color);
 			}
+			#interface-url:invalid {
+				color: var(--error-color);
+			}
 		</style>
 		<script src="ArenaHelper.js"></script>
 		<script src="index.js"></script>
@@ -143,6 +146,7 @@
 						<label for="include-previews">Fetch latest (unreleased) version of arenas.</label>
 					</div>
 					<div>
+						<input type="url" id="interface-url" placeholder="http://localhost/interface.html">
 						<input type="button" id="add-interface" value="Add interface">
 					</div>
 					<input type="checkbox" id="advanced-testing-checkbox">
