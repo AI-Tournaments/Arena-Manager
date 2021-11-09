@@ -17,7 +17,7 @@ class ParticipantHelper{
 				this.messageIndex = data.index;
 				if(this.type === 'Post'){
 					this.respond = (data=null) => {
-						if(ParticipantHelper.#executionWatcher !== undefined){
+						if(ParticipantHelper.#executionWatcher){
 							ParticipantHelper.#executionWatcher = clearTimeout(ParticipantHelper.#executionWatcher);
 							ParticipantHelper.#postMessage_native.call(globalThis, {type: 'Response', response: JSON.parse(JSON.stringify(data))});
 						}
