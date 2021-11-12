@@ -68,7 +68,9 @@
 						}
 						function addWorker(data){
 							let iframe = document.getElementById(data.iframeId);
-							if(iframe === null){
+							if(iframe){
+								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
+							}else{
 								iframe = document.createElement('iframe');
 								iframe.id = data.iframeId;
 								iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
@@ -87,8 +89,6 @@
 										}
 									}, '*');
 								}, 1000);
-							}else{
-								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
 							}
 						}
 						function messageWorker(message){
