@@ -123,7 +123,7 @@ function a(){
 				getParticipants(_json.full_name);
 				arenaReadme.srcdoc = '';
 				arenaReadmeFieldset.classList.add('hidden');
-				fetch((_json.default ?? _json.default)+'README.md').then(response => response.ok?response.text():null).then(readme => {
+				fetch((_json.default ?? _json.raw_url)+'README.md').then(response => response.ok?response.text():null).then(readme => {
 					if(readme){
 						GitHubApi.formatMarkdown(readme, {async: true, removeBodyMargin: true}).then(iframe => arenaReadme.srcdoc = iframe.srcdoc);
 					}
