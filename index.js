@@ -24,6 +24,8 @@ function a(){
 	let advanceOptions = document.getElementById('advance-options');
 	let includePreviews = document.getElementById('include-previews');
 	let rerunUntilError = document.getElementById('rerun-until-error');
+	let interfaceUrl = document.getElementById('interface-url');
+	let interfaceAdd = document.getElementById('add-interface');
 	if(localStorage.getItem('Local development')){
 		document.getElementById('advanced-testing').classList.remove('hidden');
 	}
@@ -35,6 +37,20 @@ function a(){
 	advanceOptions.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		advanceOptions.classList.toggle('open');
 		advanceOptions.classList.remove('closed');
+	});
+	interfaceAdd.addEventListener('click', ()=>{
+		if(interfaceUrl.value){
+			let value = interfaceUrl.value;
+			interfaceUrl.value = '';
+			fetch(value).then(response => response.ok?response.text():null).then(html => {
+				if(html){
+					let titleStart = html.toLocaleLowerCase().indexOf('<title>');
+					let titleStop = html.toLocaleLowerCase().indexOf('</title>');
+					let title = html.substr(titleStart+'<title>'.length, titleStop);
+					addParticipant('!'+value, title?title:value);
+				}
+			});
+		}
 	});
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local development');
@@ -188,6 +204,18 @@ function a(){
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
 		return option;
+	}
+	function strip(html=''){
+		let output;
+		let tempString;
+		do{
+			tempString = output;
+			let element = document.createElement('div');
+			element.innerHTML = html;
+			output = element.textContent || element.innerText || '';
+		}
+		while(tempString !== output && output !== '');
+		return output;
 	}
 	function getTournamentLog(messageEvent){
 		console.log('// TODO: Is getTournamentLog() still used? Can it be removed or modified?');
@@ -351,7 +379,7 @@ function a(){
 	function addParticipantOption(url, name){
 		let option = document.createElement('option');
 		option.dataset.raw_url = url;
-		option.dataset.name = name;
+		option.dataset.name = strip(name).trim();
 		option.innerHTML = option.dataset.name;
 		availableParticipants_select.appendChild(option);
 		return option;
