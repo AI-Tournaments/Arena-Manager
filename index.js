@@ -432,6 +432,9 @@ function a(){
 		let iframe = document.createElement('iframe');
 		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
 		iframe.sandbox = 'allow-scripts';
+		if(json.participants.flat().flatMap(p => p.url).find(url => url.startsWith('!'))){
+			iframe.sandbox += ' allow-popups allow-same-origin';
+		}
 		iframe.style.display = 'none';
 		iframe.id = json.iframeID;
 		div.appendChild(iframe);

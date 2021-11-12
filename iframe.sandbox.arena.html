@@ -75,6 +75,9 @@
 								iframe.id = data.iframeId;
 								iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
 								iframe.sandbox = 'allow-scripts';
+								if(data.url.startsWith('!')){
+									iframe.sandbox += ' allow-popups allow-same-origin';
+								}
 								document.body.appendChild(iframe);
 								setTimeout(()=>{
 									console.log('// TODO: Change from setTimeout to `Sandbox-Participant-Worker-Initiated`, like ReplayHelper.');
