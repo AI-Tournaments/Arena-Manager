@@ -14,6 +14,7 @@
 			let _executionLimit = null;
 			let _scriptLoaded_promise = null;
 			let _messageIndex = null;
+			let _interface_keepOpenAfterTermination;
 			(()=>{
 				let script = document.createElement('script');
 				let scriptLoaded;
@@ -40,45 +41,80 @@
 						_worker.terminate();
 						respond('Message', 'Dead', true);
 					}
+					function postMessage(messageEvent){
+						_messageIndex = messageEvent.data.index;
+						if(messageEvent.data.systemMessage){
+							systemMessages[messageEvent.data.message]();
+						}else{
+							_worker.postMessage(messageEvent.data);
+						}
+					}
 					function blockNetwork(){
 						window.stop();
 						window.requestAnimationFrame(blockNetwork);
 					}
+					let systemMessages = {
+						'Kill': kill
+					};
 					window.onmessage = messageEvent => {
 						if(_parent === null){
 							_parent = messageEvent.source;
-						}
-						let systemMessages = {
-							'Kill': kill
-						};
-						window.onmessage = messageEvent => {
-							_messageIndex = messageEvent.data.index;
-							if(messageEvent.data.systemMessage){
-								systemMessages[messageEvent.data.message]();
-							}else{
-								_worker.postMessage(messageEvent.data);
+							_source = {
+								participant: messageEvent.data.participant,
+								name: messageEvent.data.name,
+								iframeId: _iframeId,
+								matchIndex: parseInt(_iframeId.match(/(\d+)/g)[0])
 							}
 						}
 						_scriptLoaded_promise.then(() => {
-							ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
-								_worker = worker;
-								if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
-									blockNetwork();
-								}
-								console.log('// TODO: Prepared for measuring memory usage.');
-								_source = {participant: messageEvent.data.participant, name: messageEvent.data.name, iframeId: _iframeId, matchIndex: parseInt(_iframeId.match(/(\d+)/g)[0])}
-								_worker.onerror = messageEvent => {
-									_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
-								}
-								_worker.onmessage = messageEvent => {
-									switch(messageEvent.data.type){
-										case 'Response': respond('Message', messageEvent.data.response); break;
-										case 'Message-Timeout': respond('Message-Timeout'); break;
+							if(messageEvent.data.url.startsWith('!')){
+								let created = false;
+								window.onmessage = messageEvent => {
+									if(messageEvent.source === _worker){
+										if(created){
+											respond('Message', messageEvent.data);
+										}else{
+											created = true;
+											_interface_keepOpenAfterTermination = messageEvent.data;
+											_worker.postMessage({settings: {}, opponents: {}}, '*');
+											respond('Worker-Created');
+										}
+									}else{
+										postMessage(messageEvent);
 									}
 								}
-								_worker.postMessage(messageEvent.data.workerData);
-								respond('Worker-Created');
-							});
+								let interfaceUrl = messageEvent.data.url.substr(1);
+								_worker = window.open(interfaceUrl);
+								if(_worker){
+									_worker.terminate = ()=>{
+										if(!_interface_keepOpenAfterTermination){
+											_worker.close();
+										}
+									}
+								}else{
+									console.error('Could not open interface', interfaceUrl);
+								}
+							}else{
+								window.onmessage = messageEvent => {postMessage(messageEvent)}
+								ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
+									_worker = worker;
+									if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
+										blockNetwork();
+									}
+									console.log('// TODO: Prepared for measuring memory usage.');
+									_worker.onerror = messageEvent => {
+										_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
+									}
+									_worker.onmessage = messageEvent => {
+										switch(messageEvent.data.type){
+											case 'Response': respond('Message', messageEvent.data.response); break;
+											case 'Message-Timeout': respond('Message-Timeout'); break;
+										}
+									}
+									_worker.postMessage(messageEvent.data.workerData);
+									respond('Worker-Created');
+								});
+							}
 						});
 					}
 				}else{
