@@ -27,7 +27,7 @@ function a(){
 	let interfaceUrl = document.getElementById('interface-url');
 	let interfaceAdd = document.getElementById('add-interface');
 	if(localStorage.getItem('Local development')){
-		document.getElementById('advanced-testing').classList.remove('hidden');
+		advanceOptions.classList.remove('hidden');
 	}
 	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
