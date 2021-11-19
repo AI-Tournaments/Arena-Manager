@@ -68,6 +68,8 @@
 						}
 						_scriptLoaded_promise.then(() => {
 							if(messageEvent.data.url.startsWith('!')){
+								/** URL:s that begins with a exclamation mark (!) is reserved for interfaces thats opens as a window instead as a Worker. */
+								let workerData = messageEvent.data.workerData;
 								let created = false;
 								window.onmessage = messageEvent => {
 									if(messageEvent.source === _worker){
@@ -76,7 +78,7 @@
 										}else{
 											created = true;
 											_interface_keepOpenAfterTermination = messageEvent.data;
-											_worker.postMessage({settings: {}, opponents: {}}, '*');
+											_worker.postMessage(workerData, '*');
 											respond('Worker-Created');
 										}
 									}else{
