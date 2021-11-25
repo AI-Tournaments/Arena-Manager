@@ -38,15 +38,21 @@
 						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, index: _messageIndex}}}, '*');
 					}
 					function kill(){
-						_worker.terminate();
+						if(_worker instanceof Worker){
+							_worker.terminate();
+						}else{
+							if(!_interface_keepOpenAfterTermination){
+								_worker.close();
+							}
+						}
 						respond('Message', 'Dead', true);
 					}
-					function postMessage(messageEvent){
+					function postMessage(messageEvent, targetOrigin){
 						_messageIndex = messageEvent.data.index;
 						if(messageEvent.data.systemMessage){
 							systemMessages[messageEvent.data.message]();
 						}else{
-							_worker.postMessage(messageEvent.data);
+							_worker.postMessage(messageEvent.data, targetOrigin);
 						}
 					}
 					function blockNetwork(){
@@ -82,18 +88,12 @@
 											respond('Worker-Created');
 										}
 									}else{
-										postMessage(messageEvent);
+										postMessage(messageEvent, '*');
 									}
 								}
 								let interfaceUrl = messageEvent.data.url.substr(1);
 								_worker = window.open(interfaceUrl);
-								if(_worker){
-									_worker.terminate = ()=>{
-										if(!_interface_keepOpenAfterTermination){
-											_worker.close();
-										}
-									}
-								}else{
+								if(!_worker){
 									console.error('Could not open interface', interfaceUrl);
 								}
 							}else{
