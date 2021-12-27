@@ -9,6 +9,7 @@
 		<script>
 			'use strict'
 			function a(){
+				const JS_INTERPRETER = 'master';
 				function isIframe(){
 					try{
 						return window.self !== window.top;
@@ -66,7 +67,7 @@
 							window.stop();
 							window.requestAnimationFrame(blockNetwork);
 						}
-						function addWorker(data){
+						function addParticipantWorker(data){
 							let iframe = document.getElementById(data.iframeId);
 							if(iframe){
 								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
@@ -88,7 +89,11 @@
 										workerData: data.workerData,
 										includeScripts: {
 											modules: _modules,
-											system: [_data.urls.randomseed, _data.urls.ParticipantHelper]
+											system: [
+												_data.urls.randomseed,
+												_data.urls.ParticipantHelper,
+												'https://github.com/NeilFraser/JS-Interpreter/blob/'+JS_INTERPRETER+'/acorn_interpreter.js'
+											]
 										}
 									}, '*');
 								}, 1000);
@@ -156,7 +161,7 @@
 												arenaSetup();
 												_arenaWorkers[index] = arena;
 												let callbacks = {
-													'Add-Worker': addWorker,
+													'Add-Worker': addParticipantWorker,
 													'Message-Worker': messageWorker,
 													'Ready-To-Start': readyToStart
 												};
