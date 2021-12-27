@@ -66,7 +66,7 @@
 							window.stop();
 							window.requestAnimationFrame(blockNetwork);
 						}
-						function addWorker(data){
+						function addParticipantWorker(data){
 							let iframe = document.getElementById(data.iframeId);
 							if(iframe){
 								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
@@ -156,7 +156,7 @@
 												arenaSetup();
 												_arenaWorkers[index] = arena;
 												let callbacks = {
-													'Add-Worker': addWorker,
+													'Add-Worker': addParticipantWorker,
 													'Message-Worker': messageWorker,
 													'Ready-To-Start': readyToStart
 												};
