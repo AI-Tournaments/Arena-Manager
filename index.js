@@ -179,25 +179,30 @@ function a(){
 		}
 	}
 	addArena = localArena => {
-		if(!localArena.name){
-			localArena.name = localArena.arena;
-		}
-		localArenas[localArena.arena] = localArena.replay;
-		let json = {
-			name: localArena.name,
-			raw_url: localArena.arena,
-			html_url: localArena.arena,
-			full_name: 'local/'+localArena.name,
-			default_branch: null,
-			stars: -1,
-			commit: null,
-			version: null
-		};
-		_settingsOverride = {arena: json.raw_url, settings: localArena.settings};
-		arenaListReadyPromise.then(()=>{
+		let arena;
+		if(localArena.arena){
+			if(!localArena.name){
+				localArena.name = localArena.arena;
+			}
+			localArenas[localArena.arena] = localArena.replay;
+			arena = {
+				name: localArena.name,
+				raw_url: localArena.arena,
+				html_url: localArena.arena,
+				full_name: 'local/'+localArena.name,
+				default_branch: null,
+				stars: -1,
+				commit: null,
+				version: null
+			};
+			_settingsOverride = {arena: arena.raw_url, settings: localArena.settings};
+			arenaListReadyPromise.then(()=>{
+				localParticipants = localArena.participants;
+				selectArena.contentWindow.postMessage({type: 'add-arena', value: arena});
+			});
+		}else{
 			localParticipants = localArena.participants;
-			selectArena.contentWindow.postMessage({type: 'add-arena', value: json});
-		});
+		}
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
@@ -344,7 +349,7 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		if(!localParticipants){
+		if(!_settingsOverride){
 			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena,{
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
