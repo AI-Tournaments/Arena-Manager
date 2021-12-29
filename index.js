@@ -54,7 +54,7 @@ function a(){
 	});
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local development');
-		if(item !== null){
+		if(item){
 			addArena(JSON.parse(item));
 		}
 	});
@@ -128,7 +128,7 @@ function a(){
 						GitHubApi.formatMarkdown(readme, {async: true, removeBodyMargin: true}).then(iframe => arenaReadme.srcdoc = iframe.srcdoc);
 					}
 				});
-				if(_parentWindow !== null){
+				if(_parentWindow){
 					_parentWindow.postMessage({type: 'arena-changed', value: _json.full_name}, '*');
 				}
 			}
@@ -146,7 +146,7 @@ function a(){
 					for(let i = 0; i < Math.max(1, arenaProperties.header.limits.teams.min); i++){
 						createTeam();
 					}
-					if(localParticipants !== null){
+					if(localParticipants){
 						let teams = localParticipants.filter(p => 0 <= p.team);
 						teams = 0 < teams.length ? teams.sort(p => -p.team)[0].team : 0;
 						while(document.getElementsByClassName('participant-team-container').length < teams){
@@ -344,7 +344,7 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		if(localParticipants === null){
+		if(!localParticipants){
 			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena,{
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
