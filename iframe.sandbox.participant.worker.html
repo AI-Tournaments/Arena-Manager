@@ -94,7 +94,7 @@
 								let interfaceUrl = messageEvent.data.url.substr(1);
 								_worker = window.open(interfaceUrl);
 								if(!_worker){
-									console.error('Could not open interface', interfaceUrl);
+									console.error('Could not open interface. Was popup is blocked?', interfaceUrl);
 								}
 							}else{
 								window.onmessage = messageEvent => {postMessage(messageEvent)}
