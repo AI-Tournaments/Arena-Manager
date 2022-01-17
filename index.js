@@ -171,8 +171,7 @@ function a(){
 				case 'size-changed': settingsIframe.style.height = messageEvent.data.value.height + 'px'; break;
 			}
 		}else{
-			console.error('Source element not defined!');
-			console.error(messageEvent.source.frameElement);
+			console.error('Source element not defined', messageEvent.source.frameElement);
 		}
 		if(window.onresize){
 			window.onresize();
