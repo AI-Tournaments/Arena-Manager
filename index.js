@@ -9,6 +9,7 @@ function a(){
 	let _replayContainer;
 	let _parentWindow = null;
 	let _settingsOverride = null;
+	let _replayData = null;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -58,8 +59,6 @@ function a(){
 			addArena(JSON.parse(item));
 		}
 	});
-	console.log('// TODO: Change from setTimeout to `Settings-Initiated`, like ReplayHelper.');
-	setTimeout(()=>{settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*')}, 1000);
 	btnAddTeam.onclick = createTeam;
 	btnRemoveTeam.onclick = removeTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -100,7 +99,16 @@ function a(){
 	};
 	window.onhashchange();
 	window.onmessage = messageEvent => {
-		if(messageEvent.data.type === 'Replay-Height'){
+		if(messageEvent.data.type === 'Replay-Initiated'){
+			_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(_replayData)}, '*');
+		}else if(messageEvent.data.type === 'Settings-Initiated'){
+			settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*');
+		}else if(messageEvent.data.type === 'Sandbox-Arena-Initiated'){
+			let pendingArenaSandbox = pendingArenaSandboxes.find(s => s.contentWindow === messageEvent.source);
+			if(pendingArenaSandbox){
+				pendingArenaSandbox.ready();
+			}
+		}else if(messageEvent.data.type === 'Replay-Height'){
 			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
 			document.documentElement.scrollTop = document.documentElement.scrollHeight;
 		}else if(messageEvent.data.type === 'auto-run'){
@@ -132,7 +140,7 @@ function a(){
 					_parentWindow.postMessage({type: 'arena-changed', value: _json.full_name}, '*');
 				}
 			}
-		}else if(pendingArenaSandboxes.includes(messageEvent.source)){
+		}else if(pendingArenaSandboxes.findIndex(s => s.contentWindow === messageEvent.source) !== -1){
 			openReplay(messageEvent);
 		}else if(messageEvent.data.type === 'SetParent'){
 			_parentWindow = messageEvent.source;
@@ -262,13 +270,13 @@ function a(){
 				console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
 				rerunUntilError.dataset.counter = 0;
 			}
-			let replayData = {
+			_replayData = {
 				header: {
 					defaultReplay: localArenas[_json.raw_url] ?? messageEvent.data.defaultReplay
 				},
 				body: messageEvent.data.value
 			};
-			pendingArenaSandboxes.splice(pendingArenaSandboxes.indexOf(messageEvent.source), 1);
+			pendingArenaSandboxes.splice(pendingArenaSandboxes.findIndex(s => s.contentWindow === messageEvent.source), 1);
 			Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
 				element.parentNode.removeChild(element);
 			});
@@ -277,11 +285,6 @@ function a(){
 				_replayContainer.classList.add('replay-container');
 				_replayContainer.src = '/AI-Tournaments/Replay/';
 				document.body.appendChild(_replayContainer);
-				setTimeout(()=>{
-					console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
-					_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
-					_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
-				}, 1000);
 			}
 		}
 	}
@@ -474,8 +477,8 @@ function a(){
 		}
 		output.classList.add('log');
 		div.appendChild(output);
-		pendingArenaSandboxes.push(iframe.contentWindow);
-		console.log('// TODO: Change from setTimeout to `Sandbox-Arena-Initiated`, like ReplayHelper.');
-		setTimeout(()=>iframe.contentWindow.postMessage(json, '*'), 1000);
+		let resolve;
+		new Promise(r => resolve = r).then(()=>iframe.contentWindow.postMessage(json, '*'));
+		pendingArenaSandboxes.push({contentWindow: iframe.contentWindow, ready: resolve});
 	}
 }

@@ -262,4 +262,5 @@ function a(){
 		json.general.customInput = jsonEditor === null ? {} : jsonEditor.get();
 		messageEvent.source.postMessage({type: 'settings', value: {header: {replay: _arenaProperties.header.replay}, settings: json}}, messageEvent.origin);
 	}
+	window.parent.postMessage({type: 'Settings-Initiated'}, '*');
 }

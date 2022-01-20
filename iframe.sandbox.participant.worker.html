@@ -97,7 +97,7 @@
 									console.error('Could not open interface. Was popup is blocked?', interfaceUrl);
 								}
 							}else{
-								window.onmessage = messageEvent => {postMessage(messageEvent)}
+								window.onmessage = messageEvent => postMessage(messageEvent);
 								ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
 									_worker = worker;
 									if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
@@ -122,6 +122,7 @@
 				}else{
 					window.location.replace(window.location.href.replace('\/(?:.(?!\/))+$', '/'));
 				}
+				window.parent.postMessage({type: 'Participant-Worker-Initiated', data: _iframeId}, '*');
 			}
 		</script>
 	</head>
