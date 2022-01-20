@@ -78,23 +78,23 @@
 								let workerData = messageEvent.data.workerData;
 								let created = false;
 								window.onmessage = messageEvent => {
-									if(messageEvent.source === _worker){
+									if(messageEvent.source === _parent){
+										postMessage(messageEvent, '*');
+									}else{
 										if(created){
 											respond('Message', messageEvent.data);
 										}else{
 											created = true;
 											_interface_keepOpenAfterTermination = messageEvent.data;
+											_worker = messageEvent.source;
 											_worker.postMessage(workerData, '*');
 											respond('Worker-Created');
 										}
-									}else{
-										postMessage(messageEvent, '*');
 									}
 								}
 								let interfaceUrl = messageEvent.data.url.substr(1);
-								_worker = window.open(interfaceUrl);
-								if(!_worker){
-									console.error('Could not open interface. Was popup is blocked?', interfaceUrl);
+								if(!window.open(interfaceUrl)){
+									alert('Could not open interface. Was popup is blocked?\n'+interfaceUrl);
 								}
 							}else{
 								window.onmessage = messageEvent => postMessage(messageEvent);
