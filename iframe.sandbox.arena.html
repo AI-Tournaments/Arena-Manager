@@ -26,6 +26,7 @@
 					let _messageQueue = [];
 					let _messagePending = [];
 					let _modules = [];
+					let _participantPromises = {};
 					window.onmessage = messageEvent => {
 						_parent = {
 							source: messageEvent.source,
@@ -66,16 +67,20 @@
 							window.stop();
 							window.requestAnimationFrame(blockNetwork);
 						}
-						function addWorker(data){
+						function addParticipantWorker(data){
 							let iframe = document.getElementById(data.iframeId);
-							if(iframe === null){
+							if(iframe){
+								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
+							}else{
 								iframe = document.createElement('iframe');
 								iframe.id = data.iframeId;
 								iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
 								iframe.sandbox = 'allow-scripts';
+								if(data.url.startsWith('!')){
+									iframe.sandbox += ' allow-popups allow-same-origin';
+								}
 								document.body.appendChild(iframe);
-								setTimeout(()=>{
-									console.log('// TODO: Change from setTimeout to `Sandbox-Participant-Worker-Initiated`, like ReplayHelper.');
+								let promise = new Promise(resolve => _participantPromises[data.iframeId] = resolve).then(()=>{
 									iframe.contentWindow.postMessage({
 										url: data.url,
 										name: data.name,
@@ -86,9 +91,7 @@
 											system: [_data.urls.randomseed, _data.urls.ParticipantHelper]
 										}
 									}, '*');
-								}, 1000);
-							}else{
-								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
+								});
 							}
 						}
 						function messageWorker(message){
@@ -99,23 +102,27 @@
 						}
 						if(_data.arena !== undefined){
 							window.onmessage = messageEvent => {
-								if(messageEvent.data.data.payload.systemMessage){
-									switch(messageEvent.data.data.payload.message){
-										default: throw new Error('SystemMessage "'+messageEvent.data.data.payload.message+'" not found.');
-										case 'Dead':
-											let iframe = document.getElementById(messageEvent.data.data.source.iframeId);
-											iframe.parentNode.removeChild(iframe);
-											break;
+								if(messageEvent.data.type === 'Participant-Worker-Initiated'){
+									_participantPromises[messageEvent.data.data]();
+								}else{
+									if(messageEvent.data.data.payload.systemMessage){
+										switch(messageEvent.data.data.payload.message){
+											default: throw new Error('SystemMessage "'+messageEvent.data.data.payload.message+'" not found.');
+											case 'Dead':
+												let iframe = document.getElementById(messageEvent.data.data.source.iframeId);
+												iframe.parentNode.removeChild(iframe);
+												break;
+										}
 									}
-								}
-								_arenaWorkers[messageEvent.data.data.source.matchIndex].postMessage(messageEvent.data);
-								if(messageEvent.data.data.event.startsWith('Message')){
-									let index = _messagePending.findIndex(m => m.receiver === messageEvent.data.data.source.iframeId);
-									if(index !== -1){
-										_messagePending.splice(index, 1);
-									}
-									if(0 < _messageQueue.length){
-										nextMessage();
+									_arenaWorkers[messageEvent.data.data.source.matchIndex].postMessage(messageEvent.data);
+									if(messageEvent.data.data.event.startsWith('Message')){
+										let index = _messagePending.findIndex(m => m.receiver === messageEvent.data.data.source.iframeId);
+										if(index !== -1){
+											_messagePending.splice(index, 1);
+										}
+										if(0 < _messageQueue.length){
+											nextMessage();
+										}
 									}
 								}
 							}
@@ -153,7 +160,7 @@
 												arenaSetup();
 												_arenaWorkers[index] = arena;
 												let callbacks = {
-													'Add-Worker': addWorker,
+													'Add-Worker': addParticipantWorker,
 													'Message-Worker': messageWorker,
 													'Ready-To-Start': readyToStart
 												};
@@ -321,6 +328,7 @@
 				}else{
 					window.location.replace(window.location.href.replace('\/(?:.(?!\/))+$', '/'));
 				}
+				window.parent.postMessage({type: 'Sandbox-Arena-Initiated'}, '*');
 			}
 		</script>
 	</head>

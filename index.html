@@ -127,6 +127,9 @@
 			#advance-options fieldset {
 				border-color: var(--main-color);
 			}
+			#interface-url:invalid {
+				color: var(--error-color);
+			}
 		</style>
 		<script src="ArenaHelper.js"></script>
 		<script src="index.js"></script>
@@ -135,7 +138,7 @@
 	<body onload="a()">
 		<div id="padding-wrapper">
 			<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
-			<div id="advance-options" class="closed">
+			<div id="advance-options" class="closed hidden">
 				<legend class="clickable">Advance</legend>
 				<div id="advance-options-wrapper">
 					<div>
@@ -143,18 +146,16 @@
 						<label for="include-previews">Fetch latest (unreleased) version of arenas.</label>
 					</div>
 					<div>
+						<input type="url" id="interface-url" placeholder="http://localhost/interface.html">
 						<input type="button" id="add-interface" value="Add interface">
 					</div>
-					<fieldset id="arena-setup" class="hidden">
-						<legend>Arena setup</legend>
-						<input type="button" value="Clear">
-						<div id="setup-editor" class="hidden"></div>
-					</fieldset>
-					<fieldset id="advanced-testing" class="hidden">
+					<input type="checkbox" id="advanced-testing-checkbox">
+					<fieldset id="advanced-testing">
 						<legend>Testing</legend>
 						<input type="checkbox" id="rerun-until-error">
 						<label for="rerun-until-error">Rerun until error.</label>
 						<p>Check JavaScript console for completion execution counter.</p>
+						<div id="setup-editor" class="hidden">Arena setup</div>
 					</fieldset>
 				</div>
 			</div>

@@ -9,6 +9,7 @@ function a(){
 	let _replayContainer;
 	let _parentWindow = null;
 	let _settingsOverride = null;
+	let _replayData = null;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -24,8 +25,10 @@ function a(){
 	let advanceOptions = document.getElementById('advance-options');
 	let includePreviews = document.getElementById('include-previews');
 	let rerunUntilError = document.getElementById('rerun-until-error');
+	let interfaceUrl = document.getElementById('interface-url');
+	let interfaceAdd = document.getElementById('add-interface');
 	if(localStorage.getItem('Local development')){
-		document.getElementById('advanced-testing').classList.remove('hidden');
+		advanceOptions.classList.remove('hidden');
 	}
 	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
@@ -36,14 +39,26 @@ function a(){
 		advanceOptions.classList.toggle('open');
 		advanceOptions.classList.remove('closed');
 	});
+	interfaceAdd.addEventListener('click', ()=>{
+		if(interfaceUrl.value){
+			let value = interfaceUrl.value;
+			interfaceUrl.value = '';
+			fetch(value).then(response => response.ok?response.text():null).then(html => {
+				if(html){
+					let titleStart = html.toLocaleLowerCase().indexOf('<title>');
+					let titleStop = html.toLocaleLowerCase().indexOf('</title>');
+					let title = html.substr(titleStart+'<title>'.length, titleStop);
+					addParticipant('!'+value, title?title:value);
+				}
+			});
+		}
+	});
 	requestAnimationFrame(()=>{
 		let item = localStorage.getItem('Local development');
-		if(item !== null){
+		if(item){
 			addArena(JSON.parse(item));
 		}
 	});
-	console.log('// TODO: Change from setTimeout to `Settings-Initiated`, like ReplayHelper.');
-	setTimeout(()=>{settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*')}, 1000);
 	btnAddTeam.onclick = createTeam;
 	btnRemoveTeam.onclick = removeTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -84,7 +99,16 @@ function a(){
 	};
 	window.onhashchange();
 	window.onmessage = messageEvent => {
-		if(messageEvent.data.type === 'Replay-Height'){
+		if(messageEvent.data.type === 'Replay-Initiated'){
+			_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(_replayData)}, '*');
+		}else if(messageEvent.data.type === 'Settings-Initiated'){
+			settingsIframe.contentWindow.postMessage({type: 'MatchParentStyle', value: styleMode}, '*');
+		}else if(messageEvent.data.type === 'Sandbox-Arena-Initiated'){
+			let pendingArenaSandbox = pendingArenaSandboxes.find(s => s.contentWindow === messageEvent.source);
+			if(pendingArenaSandbox){
+				pendingArenaSandbox.ready();
+			}
+		}else if(messageEvent.data.type === 'Replay-Height'){
 			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
 			document.documentElement.scrollTop = document.documentElement.scrollHeight;
 		}else if(messageEvent.data.type === 'auto-run'){
@@ -107,16 +131,16 @@ function a(){
 				getParticipants(_json.full_name);
 				arenaReadme.srcdoc = '';
 				arenaReadmeFieldset.classList.add('hidden');
-				fetch((_json.default ?? _json.default)+'README.md').then(response => response.ok?response.text():null).then(readme => {
+				fetch((_json.default ?? _json.raw_url)+'README.md').then(response => response.ok?response.text():null).then(readme => {
 					if(readme){
 						GitHubApi.formatMarkdown(readme, {async: true, removeBodyMargin: true}).then(iframe => arenaReadme.srcdoc = iframe.srcdoc);
 					}
 				});
-				if(_parentWindow !== null){
+				if(_parentWindow){
 					_parentWindow.postMessage({type: 'arena-changed', value: _json.full_name}, '*');
 				}
 			}
-		}else if(pendingArenaSandboxes.includes(messageEvent.source)){
+		}else if(pendingArenaSandboxes.findIndex(s => s.contentWindow === messageEvent.source) !== -1){
 			openReplay(messageEvent);
 		}else if(messageEvent.data.type === 'SetParent'){
 			_parentWindow = messageEvent.source;
@@ -130,7 +154,7 @@ function a(){
 					for(let i = 0; i < Math.max(1, arenaProperties.header.limits.teams.min); i++){
 						createTeam();
 					}
-					if(localParticipants !== null){
+					if(localParticipants){
 						let teams = localParticipants.filter(p => 0 <= p.team);
 						teams = 0 < teams.length ? teams.sort(p => -p.team)[0].team : 0;
 						while(document.getElementsByClassName('participant-team-container').length < teams){
@@ -155,39 +179,55 @@ function a(){
 				case 'size-changed': settingsIframe.style.height = messageEvent.data.value.height + 'px'; break;
 			}
 		}else{
-			console.error('Source element not defined!');
-			console.error(messageEvent.source.frameElement);
+			console.error('Source element not defined', messageEvent.source.frameElement);
 		}
 		if(window.onresize){
 			window.onresize();
 		}
 	}
 	addArena = localArena => {
-		if(!localArena.name){
-			localArena.name = localArena.arena;
-		}
-		localArenas[localArena.arena] = localArena.replay;
-		let json = {
-			name: localArena.name,
-			raw_url: localArena.arena,
-			html_url: localArena.arena,
-			full_name: 'local/'+localArena.name,
-			default_branch: null,
-			stars: -1,
-			commit: null,
-			version: null
-		};
-		_settingsOverride = {arena: json.raw_url, settings: localArena.settings};
-		arenaListReadyPromise.then(()=>{
+		let arena;
+		if(localArena.arena){
+			if(!localArena.name){
+				localArena.name = localArena.arena;
+			}
+			localArenas[localArena.arena] = localArena.replay;
+			arena = {
+				name: localArena.name,
+				raw_url: localArena.arena,
+				html_url: localArena.arena,
+				full_name: 'local/'+localArena.name,
+				default_branch: null,
+				stars: -1,
+				commit: null,
+				version: null
+			};
+			_settingsOverride = {arena: arena.raw_url, settings: localArena.settings};
+			arenaListReadyPromise.then(()=>{
+				localParticipants = localArena.participants;
+				selectArena.contentWindow.postMessage({type: 'add-arena', value: arena});
+			});
+		}else{
 			localParticipants = localArena.participants;
-			selectArena.contentWindow.postMessage({type: 'add-arena', value: json});
-		});
+		}
 	}
 	addParticipant = (url='', name='Manually added participant') => {
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
 		return option;
+	}
+	function strip(html=''){
+		let output;
+		let tempString;
+		do{
+			tempString = output;
+			let element = document.createElement('div');
+			element.innerHTML = html;
+			output = element.textContent || element.innerText || '';
+		}
+		while(tempString !== output && output !== '');
+		return output;
 	}
 	function getTournamentLog(messageEvent){
 		console.log('// TODO: Is getTournamentLog() still used? Can it be removed or modified?');
@@ -212,46 +252,39 @@ function a(){
 			arenaMatch = [];
 			arenaMatches[iframe] = arenaMatch;
 		}
-		if(messageEvent.origin === 'null'){
-			iframe.parentElement.removeChild(iframe);
-			if(rerunUntilError.checked){
-				let count = parseInt(rerunUntilError.dataset.counter);
-				if(!count){
-					count = 0;
-				}
-				count++;
-				console.log('Rerun counter', count);
-				rerunUntilError.dataset.counter = count;
+		iframe.parentElement.removeChild(iframe);
+		if(rerunUntilError.checked){
+			let count = parseInt(rerunUntilError.dataset.counter);
+			if(!count){
+				count = 0;
 			}
-			if(rerunUntilError.checked && messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length === 0){
-				start();
-			}else{
-				if(rerunUntilError.checked){
-					messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
-					console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
-					rerunUntilError.dataset.counter = 0;
-				}
-				let replayData = {
-					header: {
-						defaultReplay: localArenas[_json.raw_url] ?? messageEvent.data.defaultReplay
-					},
-					body: messageEvent.data.value
-				};
-				pendingArenaSandboxes.splice(pendingArenaSandboxes.indexOf(messageEvent.source), 1);
-				Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
-					element.parentNode.removeChild(element);
-				});
-				if(!document.title.startsWith('auto-run')){
-					_replayContainer = document.createElement('iframe');
-					_replayContainer.classList.add('replay-container');
-					_replayContainer.src = '/AI-Tournaments/Replay/';
-					document.body.appendChild(_replayContainer);
-					setTimeout(()=>{
-						console.log('// TODO: Change from setTimeout to `ReplayContainer-Initiated`, like ReplayHelper. If this is not already done?');
-						_replayContainer.contentWindow.postMessage({type: 'Init-Fetch-Replay-Height'}, '*');
-						_replayContainer.contentWindow.postMessage({type: 'Replay-Data', replayData: JSON.stringify(replayData)}, '*');
-					}, 1000);
-				}
+			count++;
+			console.log('Rerun counter', count);
+			rerunUntilError.dataset.counter = count;
+		}
+		if(rerunUntilError.checked && messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length === 0){
+			start();
+		}else{
+			if(rerunUntilError.checked){
+				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
+				console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
+				rerunUntilError.dataset.counter = 0;
+			}
+			_replayData = {
+				header: {
+					defaultReplay: localArenas[_json.raw_url] ?? messageEvent.data.defaultReplay
+				},
+				body: messageEvent.data.value
+			};
+			pendingArenaSandboxes.splice(pendingArenaSandboxes.findIndex(s => s.contentWindow === messageEvent.source), 1);
+			Array.from(document.getElementsByClassName('replay-container')).forEach(element => {
+				element.parentNode.removeChild(element);
+			});
+			if(!document.title.startsWith('auto-run')){
+				_replayContainer = document.createElement('iframe');
+				_replayContainer.classList.add('replay-container');
+				_replayContainer.src = '/AI-Tournaments/Replay/';
+				document.body.appendChild(_replayContainer);
 			}
 		}
 	}
@@ -318,7 +351,7 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		if(localParticipants === null){
+		if(!localParticipants){
 			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena,{
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
@@ -351,7 +384,7 @@ function a(){
 	function addParticipantOption(url, name){
 		let option = document.createElement('option');
 		option.dataset.raw_url = url;
-		option.dataset.name = name;
+		option.dataset.name = strip(name).trim();
 		option.innerHTML = option.dataset.name;
 		availableParticipants_select.appendChild(option);
 		return option;
@@ -432,6 +465,9 @@ function a(){
 		let iframe = document.createElement('iframe');
 		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
 		iframe.sandbox = 'allow-scripts';
+		if(json.participants.flat().flatMap(p => p.url).find(url => url.startsWith('!'))){
+			iframe.sandbox += ' allow-popups allow-same-origin';
+		}
 		iframe.style.display = 'none';
 		iframe.id = json.iframeID;
 		div.appendChild(iframe);
@@ -441,8 +477,8 @@ function a(){
 		}
 		output.classList.add('log');
 		div.appendChild(output);
-		pendingArenaSandboxes.push(iframe.contentWindow);
-		console.log('// TODO: Change from setTimeout to `Sandbox-Arena-Initiated`, like ReplayHelper.');
-		setTimeout(()=>iframe.contentWindow.postMessage(json, '*'), 1000);
+		let resolve;
+		new Promise(r => resolve = r).then(()=>iframe.contentWindow.postMessage(json, '*'));
+		pendingArenaSandboxes.push({contentWindow: iframe.contentWindow, ready: resolve});
 	}
 }
