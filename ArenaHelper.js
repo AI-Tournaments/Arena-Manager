@@ -67,10 +67,8 @@ class ArenaHelper{
 			console.error(message);
 			ArenaHelper.postAbort('Fatal-Abort', message);
 		}
-		let debug = false;
 		ArenaHelper.#init = ()=>{
 			if(typeof ArenaHelper.init === 'function'){
-				if(debug){debugger;} // Use the browser debugger to step in to the ArenaHelper.init function below.
 				ArenaHelper.init(ArenaHelper.#participants, ArenaHelper.#settings);
 			}else{
 				fatal('ArenaHelper.init is not a function.');
@@ -80,7 +78,6 @@ class ArenaHelper{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
 			}
-			debug = messageEvent.data.debug;
 			Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.
 			delete Math.seedrandom;
@@ -178,9 +175,8 @@ class ArenaHelper{
 			}
 			throw new Error('queueItem not found. '+JSON.stringify({participant: participantWrapper.participant.name, worker: workerName, messageIndex: messageIndex}));
 		}
-		/** INPUT
-		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
-		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
+		/**
+		 *	Input is the same as input to the arena.
 		 */
 		constructor(data={}){
 			if(ArenaHelper.#participants !== null){

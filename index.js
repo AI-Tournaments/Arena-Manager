@@ -16,7 +16,7 @@ function a(){
 	let arenaMatches = null;
 	let selectArena = document.getElementById('selectArena');
 	let settingsIframe = document.getElementById('settings');
-	let logContainer = document.getElementById('logContainer');
+	let iframeWrapper = document.getElementById('iframeWrapper');
 	let btnAddTeam = document.getElementById('add-team');
 	let btnRemoveTeam = document.getElementById('remove-team');
 	let participantGroups = document.getElementById('participant-groups');
@@ -112,10 +112,10 @@ function a(){
 			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
 			document.documentElement.scrollTop = document.documentElement.scrollHeight;
 		}else if(messageEvent.data.type === 'auto-run'){
+			debugger // Is this used for anything else then client side tournament?
 			_json = messageEvent.data.arena;
 			document.title = messageEvent.data.type;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
-			getTournamentLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
 			if(document.title !== 'auto-run'){
 				document.getElementById('wrapper').classList.remove('hidden');
@@ -228,22 +228,6 @@ function a(){
 		}
 		while(tempString !== output && output !== '');
 		return output;
-	}
-	function getTournamentLog(messageEvent){
-		console.log('// TODO: Is getTournamentLog() still used? Can it be removed or modified?');
-		if(pendingArenaSandboxes.length === 0){
-			let dataset = [];
-			for(const key in arenaMatches){
-				if(Object.hasOwnProperty.call(arenaMatches, key)){
-					const arenaMatch = arenaMatches[key];
-					debugger;
-					console.log(arenaMatch);
-				}
-			}
-			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: dataset}}, messageEvent.origin);
-		}else{
-			setTimeout(()=>{getTournamentLog(messageEvent)}, 1000);
-		}
 	}
 	function openReplay(messageEvent){
 		let iframe = document.getElementById(messageEvent.data.iframeID);
@@ -425,8 +409,8 @@ function a(){
 		validateTeams();
 	}
 	function start(){
-		while(0 < logContainer.childElementCount){
-			logContainer.removeChild(logContainer.firstChild);
+		while(0 < iframeWrapper.childElementCount){
+			iframeWrapper.removeChild(iframeWrapper.firstChild);
 		}
 		arenaMatches = {};
 		settingsIframe.contentWindow.postMessage({type: 'GetSettings'}, '*');
@@ -458,25 +442,15 @@ function a(){
 				}
 			}
 		}
-		let isDebugMode = location.href.includes('?debug');
-		let div = document.createElement('div');
-		console.log('// TODO: Check if logContainer[].div is needed. Maybe it is enough with just a single "iframeWrapper".');
-		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
-		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
+		iframe.src = 'iframe.sandbox.arena.html';
 		iframe.sandbox = 'allow-scripts';
 		if(json.participants.flat().flatMap(p => p.url).find(url => url.startsWith('!'))){
 			iframe.sandbox += ' allow-popups allow-same-origin';
 		}
 		iframe.style.display = 'none';
 		iframe.id = json.iframeID;
-		div.appendChild(iframe);
-		let output = document.createElement('div');
-		if(!isDebugMode){
-			output.style.display = 'none';
-		}
-		output.classList.add('log');
-		div.appendChild(output);
+		iframeWrapper.appendChild(iframe);
 		let resolve;
 		new Promise(r => resolve = r).then(()=>iframe.contentWindow.postMessage(json, '*'));
 		pendingArenaSandboxes.push({contentWindow: iframe.contentWindow, ready: resolve});

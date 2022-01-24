@@ -51,9 +51,6 @@
 								}
 							}
 						}
-						if(location.href.includes('?debug')){
-							_data.debug = true;
-						}
 						[_data.urls.ArenaHelper, _data.urls.randomseed].forEach(url => {
 							let script = document.createElement('script');
 							let scriptLoaded;
@@ -176,9 +173,6 @@
 															default:
 																throw new Error('Callback "'+callback+'" not found.');
 															case 'Aborted':
-																if(_data.debug){
-																	debugger;
-																}
 															case 'Done':
 																arena.terminate();
 																_arenaResponses[index] = {...messageEvent.data.message, status: messageEvent.data.type};
