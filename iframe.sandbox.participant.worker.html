@@ -78,26 +78,26 @@
 								let workerData = messageEvent.data.workerData;
 								let created = false;
 								window.onmessage = messageEvent => {
-									if(messageEvent.source === _worker){
+									if(messageEvent.source === _parent){
+										postMessage(messageEvent, '*');
+									}else{
 										if(created){
 											respond('Message', messageEvent.data);
 										}else{
 											created = true;
 											_interface_keepOpenAfterTermination = messageEvent.data;
+											_worker = messageEvent.source;
 											_worker.postMessage(workerData, '*');
 											respond('Worker-Created');
 										}
-									}else{
-										postMessage(messageEvent, '*');
 									}
 								}
 								let interfaceUrl = messageEvent.data.url.substr(1);
-								_worker = window.open(interfaceUrl);
-								if(!_worker){
-									console.error('Could not open interface', interfaceUrl);
+								if(!window.open(interfaceUrl)){
+									console.error('Could not open interface. Was popup is blocked?', interfaceUrl);
 								}
 							}else{
-								window.onmessage = messageEvent => {postMessage(messageEvent)}
+								window.onmessage = messageEvent => postMessage(messageEvent);
 								ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
 									_worker = worker;
 									if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
@@ -122,6 +122,7 @@
 				}else{
 					window.location.replace(window.location.href.replace('\/(?:.(?!\/))+$', '/'));
 				}
+				window.parent.postMessage({type: 'Participant-Worker-Initiated', data: _iframeId}, '*');
 			}
 		</script>
 	</head>

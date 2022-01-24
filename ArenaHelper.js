@@ -363,14 +363,49 @@ class ArenaHelper{
 			}
 			class Participant{
 				constructor(name, teamIndex, participantIndex, participantWrapper){
-					this.name = name;
-					this.team = teamIndex,
-					this.member = participantIndex,
 					this.payload = {};
-					this.addWorker = name => {
-						ArenaHelper.#participants.addWorker(this, name);
-					}
-					this.postMessage = async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage});
+					Object.defineProperty(this, 'name', {
+						value: name,
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'team', {
+						value: teamIndex,
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'member', {
+						value: participantIndex,
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'addWorker', {
+						value: name=>ArenaHelper.#participants.addWorker(this, name),
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'postMessage', {
+						value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage}),
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'addScore', {
+						value: points=>_participants.addScore(teamIndex, points),
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
+					Object.defineProperty(this, 'addBonusScore', {
+						value: points=>_participants.addBonusScore(this, points),
+						writable: false,
+						enumerable: true,
+						configurable: true
+					});
 				}
 			}
 			data.participants.forEach((team, teamIndex) => {
