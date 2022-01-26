@@ -83,7 +83,7 @@ function a(){
 		fetch((messageEvent.data.value??'') + 'properties.json').then(response => response.json()).then(insecureJson => {
 			_arenaProperties = secureJson(insecureJson);
 			let jsonEditor_element;
-			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaRefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
+			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaDefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
@@ -238,7 +238,7 @@ function a(){
 				}
 			});
 			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? _arenaProperties.header.customInput.default : undefined);
-			jsonEditor.setSchema(customInput ? _arenaProperties.header.customInput.schema : undefined, customInput ? _arenaProperties.header.customInput.schemaRefs : undefined);
+			jsonEditor.setSchema(customInput ? _arenaProperties.header.customInput.schema : undefined, customInput ? _arenaProperties.header.customInput.schemaDefs : undefined);
 			messageEvent.source.postMessage({type: 'properties', value: {properties: _arenaProperties}}, messageEvent.origin);
 		});
 	}
