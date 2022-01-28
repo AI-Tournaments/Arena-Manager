@@ -27,9 +27,11 @@ function a(){
 	let rerunUntilError = document.getElementById('rerun-until-error');
 	let interfaceUrl = document.getElementById('interface-url');
 	let interfaceAdd = document.getElementById('add-interface');
-	if(localStorage.getItem('Local development')){
-		advanceOptions.classList.remove('hidden');
-	}
+	try{
+		if(JSON.parse(localStorage.getItem('LocalDevelopment.Data')).find(setup => setup.active)){
+			advanceOptions.classList.remove('hidden');
+		}
+	}catch(error){}
 	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
@@ -54,9 +56,12 @@ function a(){
 		}
 	});
 	requestAnimationFrame(()=>{
-		let item = localStorage.getItem('Local development');
-		if(item){
-			addArena(JSON.parse(item));
+		let setup;
+		try{
+			setup = JSON.parse(localStorage.getItem('LocalDevelopment.Data')).find(setup => setup.active);
+		}catch(error){}
+		if(setup){
+			addArena(setup);
 		}
 	});
 	btnAddTeam.onclick = createTeam;
