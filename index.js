@@ -426,8 +426,9 @@ function a(){
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
 				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
+				replay: data.header.replay,
 				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
-				replay: data.header.replay
+				jsInterpreter: 'https://github.com/NeilFraser/JS-Interpreter/blob/master/acorn_interpreter.js'
 			},
 			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
