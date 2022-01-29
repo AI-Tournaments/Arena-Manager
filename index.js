@@ -193,21 +193,21 @@ function a(){
 	addArena = localArena => {
 		let arena;
 		if(localArena.arena){
-			if(!localArena.name){
-				localArena.name = localArena.arena;
+			if(!localArena.arena.name){
+				localArena.arena.name = localArena.arena.url;
 			}
-			localArenas[localArena.arena] = localArena.replay;
+			localArenas[localArena.arena.url] = localArena.arena.replay;
 			arena = {
-				name: localArena.name,
-				raw_url: localArena.arena,
-				html_url: localArena.arena,
-				full_name: 'local/'+localArena.name,
+				name: localArena.arena.name,
+				raw_url: localArena.arena.url,
+				html_url: localArena.arena.url,
+				full_name: 'local/'+localArena.arena.name,
 				default_branch: null,
 				stars: -1,
 				commit: null,
 				version: null
 			};
-			_settingsOverride = {arena: arena.raw_url, settings: localArena.settings};
+			_settingsOverride = {arena: arena.raw_url, settings: localArena.arena.settings};
 			arenaListReadyPromise.then(()=>{
 				localParticipants = localArena.participants;
 				selectArena.contentWindow.postMessage({type: 'add-arena', value: arena});
