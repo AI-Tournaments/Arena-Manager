@@ -28,7 +28,7 @@ function a(){
 	let interfaceUrl = document.getElementById('interface-url');
 	let interfaceAdd = document.getElementById('add-interface');
 	try{
-		if(JSON.parse(localStorage.getItem('LocalDevelopment.Data')).find(setup => setup.active)){
+		if(JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active)){
 			advanceOptions.classList.remove('hidden');
 		}
 	}catch(error){}
@@ -58,7 +58,7 @@ function a(){
 	requestAnimationFrame(()=>{
 		let setup;
 		try{
-			setup = JSON.parse(localStorage.getItem('LocalDevelopment.Data')).find(setup => setup.active);
+			setup = JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active);
 		}catch(error){}
 		if(setup){
 			addArena(setup);
