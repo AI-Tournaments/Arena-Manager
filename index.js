@@ -340,7 +340,7 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		if(!localParticipants){
+		if(!localParticipants || !_settingsOverride){
 			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena,{
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
