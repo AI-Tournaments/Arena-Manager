@@ -178,6 +178,11 @@ function a(){
 						});
 						localParticipants = null;
 						btnStart.disabled = !validateStart();
+						try{
+							if(JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active).autoStart){
+								start();
+							}
+						}catch(error){}
 					}
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
