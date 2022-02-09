@@ -11,7 +11,6 @@
 			let _worker = null;
 			let _source = null;
 			let _iframeId = window.location.search.substring(1);
-			let _executionLimit = null;
 			let _scriptLoaded_promise = null;
 			let _messageIndex = null;
 			let _interface_keepOpenAfterTermination;
@@ -98,23 +97,24 @@
 								}
 							}else{
 								window.onmessage = messageEvent => postMessage(messageEvent);
-								ArenaHelper.CreateWorkerFromRemoteURL(messageEvent.data.url, messageEvent.data.includeScripts).then(worker=>{
+								ArenaHelper.CreateWorkerFromRemoteURL('ParticipantWorker.js').then(worker=>{
 									_worker = worker;
-									if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
-										blockNetwork();
-									}
-									console.log('// TODO: Prepared for measuring memory usage.');
 									_worker.onerror = messageEvent => {
 										_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 									}
-									_worker.onmessage = messageEvent => {
-										switch(messageEvent.data.type){
-											case 'Response': respond('Message', messageEvent.data.response); break;
-											case 'Message-Timeout': respond('Message-Timeout'); break;
+									_worker.onmessage = ()=>{
+										if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
+											blockNetwork();
 										}
+										_worker.onmessage = messageEvent => {
+											switch(messageEvent.data.type){
+												case 'Response': respond('Message', messageEvent.data.response); break;
+												case 'Message-Timeout': respond('Message-Timeout'); break;
+											}
+										}
+										respond('Worker-Created');
 									}
-									_worker.postMessage(messageEvent.data.workerData);
-									respond('Worker-Created');
+									_worker.postMessage(messageEvent.data);
 								});
 							}
 						});

@@ -430,10 +430,10 @@ function a(){
 			arena: _json,
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
-				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
 				replay: data.header.replay,
+				babel: 'https://unpkg.com/@babel/standalone@7.16.12/babel.min.js',
 				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
-				jsInterpreter: 'https://github.com/NeilFraser/JS-Interpreter/blob/master/acorn_interpreter.js'
+				jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/acorn_interpreter.js'
 			},
 			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
