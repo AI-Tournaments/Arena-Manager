@@ -115,7 +115,7 @@ class ArenaHelper{
 		}
 		onMessageWatcher();
 		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
-		self.addEventListener("unhandledrejection", function(promiseRejectionEvent){
+		self.addEventListener('unhandledrejection', function(promiseRejectionEvent){
 			let nameArray = __url.split('.').slice(-2)[0].split('/');
 			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
 			let message;
@@ -436,7 +436,7 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static CreateWorkerFromRemoteURL(url='', includeScripts=[]){
+	static CreateWorkerFromRemoteURL(url='', includeScripts={}){
 		function createObjectURL(javascript){
 			let blob;
 			try{
@@ -450,31 +450,33 @@ class ArenaHelper{
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
 			return urlObject;
 		}
-		return fetch(url).then(response => response.text()).then(text => {
-			let header = (()=>{
-				try{
-					return JSON.parse(text.substring(text.indexOf('/**')+3, text.indexOf('**/')));
-				}catch(error){
-					return {};
+		return fetch(url).then(response => response.text()).then(jsCode => {
+			if(url.endsWith('/arena.js')){
+				let header = (()=>{
+					try{
+						return JSON.parse(jsCode.substring(jsCode.indexOf('/**')+3, jsCode.indexOf('**/')));
+					}catch(error){
+						return {};
+					}
+				})();
+				if(header.dependencies){
+					let scope = url.slice(0, url.lastIndexOf('/')+1);
+					header.dependencies.forEach((dependency, index) => {
+						header.dependencies[index] = scope + dependency;
+					});
+				}else{
+					header.dependencies = [];
 				}
-			})();
-			if(header.dependencies){
-				let scope = url.slice(0, url.lastIndexOf('/')+1);
-				header.dependencies.forEach((dependency, index) => {
-					header.dependencies[index] = scope + dependency;
-				});
-			}else{
-				header.dependencies = [];
+				let preCode = `importScripts('${[...includeScripts.system, ...includeScripts.modules].join('\', \'')}'); ${(url.endsWith('/arena.js') ? 'ArenaHelper.preInit(); ' : '')}`;
+				if(header.dependencies.length){
+					preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
+				}
+				let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
+				jsCode = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preCode+jsCode;
 			}
-			let preText = 'importScripts(\''+[...includeScripts.system, ...includeScripts.modules].join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
-			if(header.dependencies.length){
-				preText += 'importScripts(\''+header.dependencies.join('\', \'')+'\'); ';
-			}
-			let useStrict = text.toLowerCase().startsWith('use strict', 1);
-			text = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preText+text;
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let worker = new Worker(createObjectURL(text));
+			let worker = new Worker(createObjectURL(jsCode));
 			worker.onmessage = ()=>resolve(worker);
 			return promise;
 		});
