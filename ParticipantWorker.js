@@ -71,6 +71,7 @@ onmessage = messageEvent => {
 		header.dependencies.forEach(url => {
 			participantDependencies.push(fetch(url).then(response => response.text()));
 		});
+		participantDependencies.push(Promise.resolve(`Math.seedrandom('`+messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId+`');\ndelete Math.seedrandom;\nDate = null;\nperformance = null;`));
 		participantDependencies.push(Promise.resolve(participantSource));
 		Promise.allSettled(systemDependencies).then(()=>{
 			Promise.allSettled(participantDependencies).then(results => {
