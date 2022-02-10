@@ -446,9 +446,7 @@ class ArenaHelper{
 				blob.append(javascript);
 				blob = blob.getBlob();
 			}
-			let urlObject = URL.createObjectURL(blob);
-			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
-			return urlObject;
+			return URL.createObjectURL(blob);
 		}
 		return fetch(url).then(response => response.text()).then(jsCode => {
 			if(url.endsWith('/arena.js')){
@@ -476,8 +474,9 @@ class ArenaHelper{
 			}
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let worker = new Worker(createObjectURL(jsCode));
-			worker.onmessage = ()=>resolve(worker);
+			let urlObject = createObjectURL(jsCode);
+			let worker = new Worker(urlObject);
+			worker.onmessage = ()=>{URL.revokeObjectURL(urlObject); resolve(worker);};
 			return promise;
 		});
 	}

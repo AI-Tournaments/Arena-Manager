@@ -1,18 +1,5 @@
 'use strict'
 onmessage = messageEvent => {
-	function createObjectURL(javascript){
-		let blob;
-		try{
-			blob = new Blob([javascript], {type: 'application/javascript'});
-		}catch(e){
-			blob = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
-			blob.append(javascript);
-			blob = blob.getBlob();
-		}
-		let urlObject = URL.createObjectURL(blob);
-		setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
-		return urlObject;
-	}
 	function messageInterpreter(data){
 		data = {
 			data: data
@@ -37,7 +24,19 @@ onmessage = messageEvent => {
 		systemDependencies.push(fetch(url).then(response => response.text()));
 	});
 	Promise.allSettled(systemDependencies).then(results => {
-		importScripts(...results.map(r => createObjectURL(r.value)));
+		importScripts(...results.map(r => {
+			let blob;
+			try{
+				blob = new Blob([r.value], {type: 'application/javascript'});
+			}catch(e){
+				blob = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
+				blob.append(r.value);
+				blob = blob.getBlob();
+			}
+			let urlObject = URL.createObjectURL(blob);
+			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Script does not work if urlObject is removed to early.
+			return urlObject;
+		}));
 	});
 	let generalSettings = messageEvent.data.workerData.settings.general;
 	let interpreter;
