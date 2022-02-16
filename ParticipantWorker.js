@@ -1,24 +1,37 @@
 'use strict'
 onmessage = messageEvent => {
-	function messageInterpreter(data){
-		data = {
-			data: data
-		};
-		interpreter.appendCode('onmessage('+JSON.stringify(data)+');');
-		let stepsLeft = generalSettings.executionSteps;
-		while(interpreter.step() && 0 < stepsLeft){
-			stepsLeft--;
+	function babelTransform(source){
+		return Babel.transform(source, {'presets': ['es2015']}).code;
+	}
+	function messageInterpreter(input){
+		let state = serialize(interpreter);
+		interpreter.appendCode('\nonmessage('+JSON.stringify({type: 'Post', data: input})+');');
+		stepCounter = 0;
+		let stepsRemaining = generalSettings.executionSteps;
+		while(interpreter.step() && 0 < stepsRemaining){
+			stepCounter++;
+			stepsRemaining--;
 		}
-		if(!stepsLeft){
-			sendTimeout();
+		if(!stepsRemaining){
+			initNewInterpreter().then(()=>{
+				deserialize(state, interpreter);
+				interpreter.appendCode('\nonmessage({"type": "Timeout-Rollback"});');
+				stepsRemaining = generalSettings.executionSteps;
+				while(interpreter.step() && 0 < stepsRemaining){
+					stepsRemaining--;
+				}
+				sendTimeout();
+			});
 		}
 	}
 	function sendResponse(data){
-		postMessage({type: 'Response', response: data});
+		postMessage({type: 'Response', response: {value: data, executionSteps: stepCounter}});
 	}
 	function sendTimeout(){
 		postMessage({type: 'Message-Timeout'});
 	}
+	let stepCounter;
+	let initNewInterpreter = ()=>{};
 	let systemDependencies = [];
 	messageEvent.data.includeScripts.system.forEach(url => {
 		systemDependencies.push(fetch(url).then(response => response.text()));
@@ -40,17 +53,20 @@ onmessage = messageEvent => {
 	});
 	let generalSettings = messageEvent.data.workerData.settings.general;
 	let interpreter;
-	let resolve;
-	let interpreterDone = new Promise(r => resolve = r);
-	onmessage = messageEvent => {
-		interpreterDone.then(() => {
-			messageInterpreter(messageEvent.data.message);
-		});
-	};
+	let interpreterReady;
+	(()=>{
+		let promise = new Promise(r => interpreterReady = r);
+		onmessage = messageEvent => {
+			promise.then(() => {
+				messageInterpreter(messageEvent.data.message);
+			});
+		};
+	})();
 	let participantDependencies = [];
 	messageEvent.data.includeScripts.participant.forEach(url => {
 		participantDependencies.push(fetch(url).then(response => response.text()));
 	});
+	participantDependencies.push(Promise.resolve(`Math.seedrandom('`+messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId+`');\ndelete Math.seedrandom;\nDate = null; let onmessage = null;`));
 	fetch(messageEvent.data.url).then(response => response.text()).then(participantSource => {
 		let header = (()=>{
 			try{
@@ -67,31 +83,33 @@ onmessage = messageEvent => {
 		}else{
 			header.dependencies = [];
 		}
+		let participantSources = [];
 		header.dependencies.forEach(url => {
-			participantDependencies.push(fetch(url).then(response => response.text()));
+			participantSources.push(fetch(url).then(response => response.text()));
 		});
-		participantDependencies.push(Promise.resolve(`Math.seedrandom('`+messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId+`');\ndelete Math.seedrandom;\nDate = null;\nperformance = null;`));
-		participantDependencies.push(Promise.resolve(participantSource));
+		participantSources.push(Promise.resolve(participantSource));
 		Promise.allSettled(systemDependencies).then(()=>{
 			Promise.allSettled(participantDependencies).then(results => {
-				let sources = results.map(r => r.value);
-				var initFunc = function(interpreter, globalObject){
-					interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
-				};
-				interpreter = new Interpreter(Babel.transform(sources.join('\n'), {'presets': ['es2015']}).code, initFunc);
-				let threshold = generalSettings.participantInitThreshold;
-				let initThreshold = Date.now() + threshold*1000;
-				let timeLeft = true;
-				while(interpreter.step() && timeLeft){ // Init participant and all dependencies.
-					timeLeft = 0 < initThreshold - Date.now();
+				initNewInterpreter = async()=>{
+					interpreter = new Interpreter(babelTransform(results.map(r => r.value).join('\n')), (interpreter, globalObject)=>{
+						interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
+					});
+					interpreter.run(); // Init system dependencies.
+					interpreter.appendCode('\n'+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
+					let stepsRemaining = generalSettings.executionStepsInit;
+					while(interpreter.step() && 0 < stepsRemaining){ // Init participant.
+						stepsRemaining--;
+					}
+					if(stepsRemaining){
+						messageInterpreter(messageEvent.data.workerData); // Init arena state.
+						interpreterReady();
+						postMessage(null);
+						return interpreter;
+					}else{
+						throw new Error('Init participant ('+messageEvent.data.url+') timeout ('+threshold+'s).');
+					}
 				}
-				if(timeLeft){
-					messageInterpreter(messageEvent.data.workerData); // Init arena state.
-				}else{
-					throw new Error('Init participant ('+messageEvent.data.url+') timeout ('+threshold+'s).');
-				}
-				resolve();
-				postMessage(null);
+				initNewInterpreter();
 			}).catch(error => {throw new Error(error)});
 		});
 	})
