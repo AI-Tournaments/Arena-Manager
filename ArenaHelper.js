@@ -83,7 +83,7 @@ class ArenaHelper{
 			delete Math.seedrandom;
 			Date = null;
 			performance = null;
-			console.log('// TODO: Decuple (new) Worker.');
+			console.log('// TODO: Decuple (new) Worker.'); // Why?
 			// Initiate participants.
 			new ArenaHelper.Participants(messageEvent.data);
 			onmessage = ArenaHelper.#onmessage;
