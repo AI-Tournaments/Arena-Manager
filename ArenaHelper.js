@@ -217,7 +217,7 @@ class ArenaHelper{
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
-					pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
+					pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message.value, executionSteps: payload.message.executionSteps});
 				});
 			}
 			ArenaHelper.#participants_onMessageTimeout = (source, payload) => {
