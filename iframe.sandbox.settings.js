@@ -6,11 +6,11 @@ function a(){
 		bestOf: 1,
 		discloseOpponents: ['Yes', 'AccountOnly', 'No'],
 		executionSteps: 100000,
-		participantInitThreshold: 30,
+		executionStepsInit: 100000,
 		_meta: {
 			bestOf: {min: 1},
-			executionSteps: {min: 1},
-			participantInitThreshold: {min: 1, comment: {message: "Allowed execution time for initiation of new participant."}},
+			executionSteps: {min: 1, comment: {message: "Allowed execution time for responding to arena message."}},
+			executionStepsInit: {min: 1, comment: {message: "Allowed execution time for initiation of new participant."}},
 			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants or keep them secret."}}
 		}
 	};
