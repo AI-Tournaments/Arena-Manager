@@ -2,6 +2,12 @@
 let addArena;
 let addParticipant;
 function a(){
+	const EXTERNAL_RESOURCES = {
+		babel: 'https://unpkg.com/@babel/standalone@7.16.12/babel.min.js',
+		randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
+		jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/acorn_interpreter.js',
+		jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/demos/serialize.js'
+	}
 	let styleMode = window.self == window.top ? 'top' : 'iFrame';
 	document.documentElement.classList.add(styleMode);
 	let _sortByStars = false;
@@ -431,9 +437,7 @@ function a(){
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
 				replay: data.header.replay,
-				babel: 'https://unpkg.com/@babel/standalone@7.16.12/babel.min.js',
-				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
-				jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/acorn_interpreter.js'
+				...EXTERNAL_RESOURCES
 			},
 			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
