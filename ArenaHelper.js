@@ -83,6 +83,8 @@ class ArenaHelper{
 			delete Math.seedrandom;
 			Date = null;
 			performance = null;
+			globalThis.setTimeout=()=>{};
+			globalThis.setInterval=()=>{};
 			console.log('// TODO: Decuple (new) Worker.'); // Why?
 			// Initiate participants.
 			new ArenaHelper.Participants(messageEvent.data);
