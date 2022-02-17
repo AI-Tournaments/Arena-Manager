@@ -2,13 +2,31 @@
 let addArena;
 let addParticipant;
 function a(){
-	const EXTERNAL_RESOURCES = {
-		babel: 'https://unpkg.com/@babel/standalone@7.16.12/babel.min.js',
-		randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
-		jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/acorn.js',
-		jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/interpreter.js',
-		jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/92aeaa2fceb58159bc491c0983e7e1309dc1d421/demos/serialize.js'
-	}
+	const EXTERNAL_RESOURCES = (()=>{
+		let version = {
+			'{babel}': 'standalone@7.16.12',
+			'{seedrandom}': '3.0.5',
+			'{NeilFraser/JS-Interpreter}': '92aeaa2fceb58159bc491c0983e7e1309dc1d421'
+		};
+		let resources = {
+			babel: 'https://unpkg.com/@babel/{babel}/babel.min.js',
+			randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
+			jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/acorn.js',
+			jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/interpreter.js',
+			jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/demos/serialize.js'
+		}
+		for(const resourceKey in resources){
+			if(Object.hasOwnProperty.call(resources, resourceKey)){
+				for(const versionKey in version){
+					if(Object.hasOwnProperty.call(version, versionKey)){
+						resources[resourceKey] = resources[resourceKey].replace(versionKey, version[versionKey]);
+					}
+				}
+			}
+		}
+		Object.freeze(resources);
+		return resources;
+	})();
 	let styleMode = window.self == window.top ? 'top' : 'iFrame';
 	document.documentElement.classList.add(styleMode);
 	let _sortByStars = false;
