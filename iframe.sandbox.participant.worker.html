@@ -14,7 +14,7 @@
 			let _scriptLoaded_promise = null;
 			let _messageIndex = null;
 			let _interface_keepOpenAfterTermination;
-			if(true){
+			(()=>{
 				let script = document.createElement('script');
 				let scriptLoaded;
 				_scriptLoaded_promise = new Promise(resolve => scriptLoaded = resolve);
@@ -23,7 +23,7 @@
 				}
 				script.src = decodeURI(location.hash.substring(1));
 				document.head.appendChild(script);
-			}
+			})();
 			function a(){
 				function isIframe(){
 					try{
