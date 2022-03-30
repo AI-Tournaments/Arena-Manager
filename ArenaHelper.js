@@ -37,7 +37,6 @@ class ArenaHelper{
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
 			default: throw new Error('Message type "'+messageEvent.data.type+'" not found.');
-			case 'Event': throw new Error('Message type "Event" is depredated.');
 			case 'Start': ArenaHelper.#arenaReady(); break;
 			case 'Response': ArenaHelper.#response(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}

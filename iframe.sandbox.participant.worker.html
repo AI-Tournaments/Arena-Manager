@@ -99,16 +99,16 @@
 								ArenaHelper.CreateWorkerFromRemoteURL('ParticipantWorker.js').then(worker=>{
 									_worker = worker;
 									_worker.onerror = messageEvent => {
-										_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
+										throw new Error(messageEvent.data); // Message type "Event" is depredated.
 									}
 									_worker.onmessage = m=>{
 										if(m.data){
 											respond(m.data.type, m.data.response);
 										}else{
-										if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
-											blockNetwork();
-										}
-										respond('Worker-Created');
+											if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
+												blockNetwork();
+											}
+											respond('Worker-Created');
 										}
 									}
 									_worker.postMessage(messageEvent.data);
