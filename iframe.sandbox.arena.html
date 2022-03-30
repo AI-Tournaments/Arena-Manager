@@ -63,47 +63,6 @@
 							window.stop();
 							window.requestAnimationFrame(blockNetwork);
 						}
-						function addParticipantWorker(data){
-							let iframe = document.getElementById(data.iframeId);
-							if(iframe){
-								_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
-							}else{
-								iframe = document.createElement('iframe');
-								iframe.id = data.iframeId;
-								iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
-								iframe.sandbox = 'allow-scripts';
-								if(data.url.startsWith('!')){
-									iframe.sandbox += ' allow-popups allow-same-origin';
-								}
-								document.body.appendChild(iframe);
-								let promise = new Promise(resolve => _participantPromises[data.iframeId] = resolve).then(()=>{
-									iframe.contentWindow.postMessage({
-										url: data.url,
-										name: data.name,
-										participant: data.participant,
-										workerData: data.workerData,
-										includeScripts: {
-											modules: _modules,
-											system: [
-												_data.urls.babel,
-												_data.urls.jsAcorn,
-												_data.urls.jsInterpreter,
-												_data.urls.jsInterpreterSerializer
-											],
-											participant: [
-												_data.urls.randomseed
-											]
-										}
-									}, '*');
-								});
-							}
-						}
-						function messageWorker(message){
-							_messageQueue.push(message);
-							if(_messagePending.length < _freeMessageChannels){
-								nextMessage();
-							}
-						}
 						if(_data.arena !== undefined){
 							window.onmessage = messageEvent => {
 								if(messageEvent.data.type === 'Participant-Worker-Initiated'){
@@ -119,7 +78,7 @@
 										}
 									}
 									_arenaWorkers[messageEvent.data.data.source.matchIndex].postMessage(messageEvent.data);
-									if(messageEvent.data.data.event.startsWith('Message')){
+									if(messageEvent.data.data.event.startsWith('Response')){
 										let index = _messagePending.findIndex(m => m.receiver === messageEvent.data.data.source.iframeId);
 										if(index !== -1){
 											_messagePending.splice(index, 1);
@@ -164,8 +123,48 @@
 												arenaSetup();
 												_arenaWorkers[index] = arena;
 												let callbacks = {
-													'Add-Worker': addParticipantWorker,
-													'Message-Worker': messageWorker,
+													'Add-Worker': (data)=>{
+														let iframe = document.getElementById(data.iframeId);
+														if(iframe){
+															_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
+														}else{
+															iframe = document.createElement('iframe');
+															iframe.id = data.iframeId;
+															iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
+															iframe.sandbox = 'allow-scripts';
+															if(data.url.startsWith('!')){
+																iframe.sandbox += ' allow-popups allow-same-origin';
+															}
+															document.body.appendChild(iframe);
+															let promise = new Promise(resolve => _participantPromises[data.iframeId] = resolve).then(()=>{
+																delete _participantPromises[data.iframeId];
+																iframe.contentWindow.postMessage({
+																	url: data.url,
+																	name: data.name,
+																	participant: data.participant,
+																	workerData: data.workerData,
+																	includeScripts: {
+																		modules: _modules,
+																		system: [
+																			_data.urls.babel,
+																			_data.urls.jsAcorn,
+																			_data.urls.jsInterpreter,
+																			_data.urls.jsInterpreterSerializer
+																		],
+																		participant: [
+																			_data.urls.randomseed
+																		]
+																	}
+																}, '*');
+															});
+														}
+													},
+													'Message-Worker': (message)=>{
+														_messageQueue.push(message);
+														if(_messagePending.length < _freeMessageChannels){
+															nextMessage();
+														}
+													},
 													'Ready-To-Start': readyToStart
 												};
 												arena.onmessage = messageEvent => {

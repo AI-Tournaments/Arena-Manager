@@ -34,17 +34,7 @@
 				}
 				if(isIframe()){
 					function respond(event, message=null, systemMessage=false){
-						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, index: _messageIndex}}}, '*');
-					}
-					function kill(){
-						if(_worker instanceof Worker){
-							_worker.terminate();
-						}else{
-							if(!_interface_keepOpenAfterTermination){
-								_worker.close();
-							}
-						}
-						respond('Message', 'Dead', true);
+						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, messageIndex: _messageIndex}}}, '*');
 					}
 					function postMessage(messageEvent, targetOrigin){
 						_messageIndex = messageEvent.data.index;
@@ -59,7 +49,16 @@
 						window.requestAnimationFrame(blockNetwork);
 					}
 					let systemMessages = {
-						'Kill': kill
+						'Kill': ()=>{
+							if(_worker instanceof Worker){
+								_worker.terminate();
+							}else{
+								if(!_interface_keepOpenAfterTermination){
+									_worker.close();
+								}
+							}
+							respond('Response', 'Dead', true);
+						}
 					};
 					window.onmessage = messageEvent => {
 						if(_parent === null){
@@ -81,7 +80,7 @@
 										postMessage(messageEvent, '*');
 									}else{
 										if(created){
-											respond('Message', messageEvent.data);
+											respond('Response', messageEvent.data);
 										}else{
 											created = true;
 											_interface_keepOpenAfterTermination = messageEvent.data;
@@ -102,17 +101,15 @@
 									_worker.onerror = messageEvent => {
 										_parent.postMessage({type: 'Event', data: {event: 'Error', source: _source, payload: {error: {message: messageEvent.message, lineno: messageEvent.lineno, colno: messageEvent.colno}}}}, '*');
 									}
-									_worker.onmessage = ()=>{
+									_worker.onmessage = m=>{
+										if(m.data){
+											respond(m.data.type, m.data.response);
+										}else{
 										if(!messageEvent.data.workerData.settings.general.advanced.allowRemoteExecution){
 											blockNetwork();
 										}
-										_worker.onmessage = messageEvent => {
-											switch(messageEvent.data.type){
-												case 'Response': respond('Message', messageEvent.data.response); break;
-												case 'Message-Timeout': respond('Message-Timeout'); break;
-											}
-										}
 										respond('Worker-Created');
+										}
 									}
 									_worker.postMessage(messageEvent.data);
 								});

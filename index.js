@@ -52,11 +52,9 @@ function a(){
 	let rerunUntilError = document.getElementById('rerun-until-error');
 	let interfaceUrl = document.getElementById('interface-url');
 	let interfaceAdd = document.getElementById('add-interface');
-	try{
-		if(JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active)){
-			advanceOptions.classList.remove('hidden');
-		}
-	}catch(error){}
+	if(isLocalDevelopment()){
+		advanceOptions.classList.remove('hidden');
+	}
 	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
@@ -81,10 +79,7 @@ function a(){
 		}
 	});
 	requestAnimationFrame(()=>{
-		let setup;
-		try{
-			setup = JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active);
-		}catch(error){}
+		let setup = getLocalDevelopment();
 		if(setup){
 			addArena(setup);
 		}
@@ -204,7 +199,7 @@ function a(){
 						localParticipants = null;
 						btnStart.disabled = !validateStart();
 						try{
-							if(JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active).autoStart){
+							if(isLocalDevelopment()){
 								start();
 							}
 						}catch(error){}
@@ -252,6 +247,14 @@ function a(){
 		sortOptions(availableParticipants_select);
 		return option;
 	}
+	function getLocalDevelopment(){
+		try{
+			return JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active);
+		}catch(error){}
+	}
+	function isLocalDevelopment(){
+		return !!getLocalDevelopment();
+	}
 	function strip(html=''){
 		let output;
 		let tempString;
@@ -267,11 +270,12 @@ function a(){
 	function openReplay(messageEvent){
 		let iframe = document.getElementById(messageEvent.data.iframeID);
 		let arenaMatch = arenaMatches[iframe];
-		if(arenaMatch === undefined){
+		if(!arenaMatch){
 			arenaMatch = [];
 			arenaMatches[iframe] = arenaMatch;
 		}
 		iframe.parentElement.removeChild(iframe);
+		let containsErrors = !!messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length;
 		if(rerunUntilError.checked){
 			let count = parseInt(rerunUntilError.dataset.counter);
 			if(!count){
@@ -281,13 +285,16 @@ function a(){
 			console.log('Rerun counter', count);
 			rerunUntilError.dataset.counter = count;
 		}
-		if(rerunUntilError.checked && messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length === 0){
+		if(rerunUntilError.checked && !containsErrors){
 			start();
 		}else{
 			if(rerunUntilError.checked){
 				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
 				console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
 				rerunUntilError.dataset.counter = 0;
+			}
+			if(containsErrors && isLocalDevelopment()){
+				console.table(messageEvent.data.value.matchLogs.map((matchLog, index) => {return {Origin: matchLog.participantName, Error: matchLog.error, Seed: matchLog.seed, Match: index, Log: matchLog.log}}).filter(r => r.Error));
 			}
 			_replayData = {
 				header: {
@@ -453,6 +460,7 @@ function a(){
 	function begin(data, bracket=[]){
 		let json = {
 			arena: _json,
+			localDevelopment: isLocalDevelopment(),
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
 				replay: data.header.replay,
