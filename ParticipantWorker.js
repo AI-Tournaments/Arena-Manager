@@ -75,7 +75,7 @@ onmessage = messageEvent => {
 		participantDependencies.push(fetch(url).then(response => response.text()));
 	});
 	participantDependencies.push(Promise.resolve(`Math.seedrandom('`+messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId+`');`)); // Make seedrandom's state serializable.
-	participantDependencies.push(Promise.resolve(`delete Math.seedrandom;\nDate = null; let onmessage = null;`));
+	participantDependencies.push(Promise.resolve(`delete Math.seedrandom;\nDate = null;\nlet onmessage = null;`));
 	fetch(messageEvent.data.url).then(response => response.text()).then(participantSource => {
 		let header = (()=>{
 			try{
