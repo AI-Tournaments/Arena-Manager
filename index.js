@@ -112,7 +112,7 @@ function a(){
 	window.onhashchange = ()=>{
 		let hash = location.hash;
 		while(1 < hash.length && hash[1] === '#'){
-			hash = hash.substr(2);
+			hash = hash.substring(2);
 		}
 		selectArena.contentWindow.postMessage({
 			type: 'get-arenas',
