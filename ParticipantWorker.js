@@ -1,14 +1,15 @@
 'use strict'
+let _stepCounter;
 onmessage = messageEvent => {
 	function babelTransform(source){
 		return Babel.transform(source, {'presets': ['es2015']}).code;
 	}
 	function getParticipantResponse(){
-		stepCounter = 0;
+		_stepCounter = 0;
 		let stepsRemaining = generalSettings.executionSteps;
 		try{
-			while(interpreter.step() && stepsRemaining){
-				stepCounter++;
+			while(stepsRemaining && interpreter.step()){
+				_stepCounter++;
 				stepsRemaining--;
 			}
 		}catch(error){
@@ -16,9 +17,9 @@ onmessage = messageEvent => {
 		}
 		return stepsRemaining;
 	}
-	function messageInterpreter(input){
+	function messageInterpreter(input, type='Post'){
 		let state = serialize(interpreter);
-		interpreter.appendCode('\nonmessage('+JSON.stringify({type: 'Post', data: input})+');');
+		interpreter.appendCode('\nonmessage('+JSON.stringify({type: type, data: input})+');');
 		if(!getParticipantResponse()){
 			initNewInterpreter(state).then(()=>{
 				interpreter.appendCode('\nonmessage({"type": "Timeout-Rollback"});');
@@ -33,12 +34,11 @@ onmessage = messageEvent => {
 		}
 	}
 	function sendResponse(data){
-		postMessage({type: 'Response', response: {value: data, executionSteps: stepCounter}});
+		postMessage({type: 'Response', response: {value: data, executionSteps: _stepCounter}});
 	}
 	function sendTimeout(){
 		postMessage({type: 'Response-Timeout'});
 	}
-	let stepCounter;
 	let initNewInterpreter = ()=>{};
 	let systemDependencies = [];
 	messageEvent.data.includeScripts.system.forEach(url => {
@@ -118,10 +118,10 @@ onmessage = messageEvent => {
 							stepsRemaining--;
 						}
 						if(stepsRemaining){
-							messageInterpreter(messageEvent.data.workerData); // Init arena state.
+							messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena state.
 							interpreterReady();
 						}else{
-							throw new Error('Init participant ('+messageEvent.data.url+') timeout ('+threshold+'s).');
+							throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
 						}
 						return interpreter;
 					}
