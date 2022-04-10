@@ -114,7 +114,7 @@ onmessage = messageEvent => {
 							return;
 						}
 						let stepsRemaining = generalSettings.executionStepsInit;
-						while(interpreter.step() && stepsRemaining){ // Init participant.
+						while(stepsRemaining && interpreter.step()){ // Init participant.
 							stepsRemaining--;
 						}
 						if(stepsRemaining){
