@@ -199,7 +199,8 @@ function a(){
 						localParticipants = null;
 						btnStart.disabled = !validateStart();
 						try{
-							if(isLocalDevelopment()){
+							let setup = getLocalDevelopment();
+							if(setup && setup.autoStart){
 								start();
 							}
 						}catch(error){}
@@ -232,7 +233,7 @@ function a(){
 				commit: null,
 				version: null
 			};
-			_settingsOverride = {arena: arena.raw_url, settings: localArena.arena.settings};
+			_settingsOverride = {arena: arena.raw_url, settings: localArena.settings};
 			arenaListReadyPromise.then(()=>{
 				localParticipants = localArena.participants;
 				selectArena.contentWindow.postMessage({type: 'add-arena', value: arena});
@@ -309,7 +310,7 @@ function a(){
 			if(!document.title.startsWith('auto-run')){
 				_replayContainer = document.createElement('iframe');
 				_replayContainer.classList.add('replay-container');
-				_replayContainer.src = '/AI-Tournaments/Replay/';
+				_replayContainer.src = '/Replay/';
 				document.body.appendChild(_replayContainer);
 			}
 		}
