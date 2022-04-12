@@ -142,17 +142,16 @@
 																	url: data.url,
 																	name: data.name,
 																	participant: data.participant,
+																	localDevelopment: _data.localDevelopment,
 																	workerData: data.workerData,
 																	includeScripts: {
 																		modules: _modules,
 																		system: [
 																			_data.urls.babel,
 																			_data.urls.jsAcorn,
+																			_data.urls.randomseed,
 																			_data.urls.jsInterpreter,
 																			_data.urls.jsInterpreterSerializer
-																		],
-																		participant: [
-																			_data.urls.randomseed
 																		]
 																	}
 																}, '*');

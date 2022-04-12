@@ -4,7 +4,7 @@ onmessage = messageEvent => {
 	function babelTransform(source){
 		return Babel.transform(source, {'presets': ['es2015']}).code;
 	}
-	function getParticipantResponse(){
+	function getParticipantResponse(sendResponse=true){
 		_stepCounter = 0;
 		let stepsRemaining = generalSettings.executionSteps;
 		try{
@@ -13,7 +13,13 @@ onmessage = messageEvent => {
 				stepsRemaining--;
 			}
 		}catch(error){
-			postMessage({type: 'Response-Error', response: error.toString()});
+			if(sendResponse){
+				postMessage({type: 'Response-Error', response: error.toString()});
+			}else{
+				if(localDevelopment){
+					console.error('Response-Error', error);
+				}
+			}
 		}
 		return stepsRemaining;
 	}
@@ -23,7 +29,7 @@ onmessage = messageEvent => {
 		if(!getParticipantResponse()){
 			initNewInterpreter(state).then(()=>{
 				interpreter.appendCode('\nonmessage({"type": "Timeout-Rollback"});');
-				if(getParticipantResponse()){
+				if(getParticipantResponse(false)){
 					sendTimeout();
 				}else{
 					initNewInterpreter(state).then(()=>{
@@ -40,11 +46,9 @@ onmessage = messageEvent => {
 		postMessage({type: 'Response-Timeout'});
 	}
 	let initNewInterpreter = ()=>{};
-	let systemDependencies = [];
-	messageEvent.data.includeScripts.system.forEach(url => {
-		systemDependencies.push(fetch(url).then(response => response.text()));
-	});
-	Promise.allSettled(systemDependencies).then(results => {
+	let random;
+	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
+	Promise.allSettled(dependencies).then(results => {
 		importScripts(...results.map(r => {
 			let blob;
 			try{
@@ -58,8 +62,10 @@ onmessage = messageEvent => {
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Script does not work if urlObject is removed to early.
 			return urlObject;
 		}));
+		random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId);
 	});
 	let generalSettings = messageEvent.data.workerData.settings.general;
+	let localDevelopment = messageEvent.data.localDevelopment;
 	let interpreter;
 	let interpreterReady;
 	(()=>{
@@ -70,12 +76,6 @@ onmessage = messageEvent => {
 			});
 		};
 	})();
-	let participantDependencies = [];
-	messageEvent.data.includeScripts.participant.forEach(url => {
-		participantDependencies.push(fetch(url).then(response => response.text()));
-	});
-	participantDependencies.push(Promise.resolve(`Math.seedrandom('`+messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId+`');`)); // Make seedrandom's state serializable.
-	participantDependencies.push(Promise.resolve(`delete Math.seedrandom;\nDate = null;\nlet onmessage = null;`));
 	fetch(messageEvent.data.url).then(response => response.text()).then(participantSource => {
 		let header = (()=>{
 			try{
@@ -97,42 +97,41 @@ onmessage = messageEvent => {
 			participantSources.push(fetch(url).then(response => response.text()));
 		});
 		participantSources.push(Promise.resolve(participantSource));
-		Promise.allSettled(systemDependencies).then(()=>{
-			Promise.allSettled(participantDependencies).then(results => {
-				initNewInterpreter = async state => {
-					interpreter = new Interpreter(babelTransform(results.map(r => r.value).join('\n')), (interpreter, globalObject)=>{
-						interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
-					});
-					if(state){
-						deserialize(state, interpreter);
-					}else{
-						interpreter.run(); // Init dependencies.
-						try{
-							interpreter.appendCode('\n'+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
-						}catch(error){
-							postMessage({type: 'Fetal-Error', response: error.toString()});
-							return;
-						}
-						let stepsRemaining = generalSettings.executionStepsInit;
-						while(stepsRemaining && interpreter.step()){ // Init participant.
-							stepsRemaining--;
-						}
-						if(stepsRemaining){
-							messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena state.
-							interpreterReady();
-						}else{
-							throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
-						}
-						return interpreter;
-					}
-				}
-				initNewInterpreter().then(i => {
-					if(i){
-						postMessage(null);
-					}
+		Promise.allSettled(dependencies).then(()=>{
+			initNewInterpreter = async state => {
+				interpreter = new Interpreter(babelTransform('Date = null;\nlet onmessage = null;'), (interpreter, globalObject)=>{
+					interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
+					let math = interpreter.getProperty(globalObject, 'Math');
+					interpreter.setProperty(math, 'random', interpreter.createNativeFunction(random));
 				});
-			}).catch(error => {throw new Error(error)});
-		});
+				if(state){
+					deserialize(state, interpreter);
+				}else{
+					try{
+						interpreter.appendCode('\n'+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
+					}catch(error){
+						postMessage({type: 'Fetal-Error', response: error.toString()});
+						return;
+					}
+					let stepsRemaining = generalSettings.executionStepsInit;
+					while(stepsRemaining && interpreter.step()){ // Init participant.
+						stepsRemaining--;
+					}
+					if(stepsRemaining){
+						messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena state.
+						interpreterReady();
+					}else{
+						throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
+					}
+					return interpreter;
+				}
+			}
+			initNewInterpreter().then(i => {
+				if(i){
+					postMessage(null);
+				}
+			});
+		}).catch(error => {throw new Error(error)});
 	})
 };
 postMessage(null);
