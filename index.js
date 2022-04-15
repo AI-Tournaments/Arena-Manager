@@ -1,6 +1,4 @@
 'use strict'
-let addArena;
-let addParticipant;
 function a(){
 	const EXTERNAL_RESOURCES = (()=>{
 		let version = {
@@ -216,7 +214,7 @@ function a(){
 			window.onresize();
 		}
 	}
-	addArena = localArena => {
+	function addArena(localArena){
 		let arena;
 		if(localArena.arena){
 			if(!localArena.arena.name){
@@ -242,7 +240,7 @@ function a(){
 			localParticipants = localArena.participants;
 		}
 	}
-	addParticipant = (url='', name='Manually added participant') => {
+	function addParticipant(url='', name='Manually added participant'){
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
