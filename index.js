@@ -46,14 +46,12 @@ function a(){
 	let arenaReadme = document.getElementById('arena-readme');
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
 	let advanceOptions = document.getElementById('advance-options');
-	let includePreviews = document.getElementById('include-previews');
 	let rerunUntilError = document.getElementById('rerun-until-error');
 	let interfaceUrl = document.getElementById('interface-url');
 	let interfaceAdd = document.getElementById('add-interface');
 	if(isLocalDevelopment()){
 		advanceOptions.classList.remove('hidden');
 	}
-	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
 		arenaReadme.style.height = arenaReadme.contentWindow.window.document.documentElement.scrollHeight + 'px';
@@ -115,8 +113,7 @@ function a(){
 		selectArena.contentWindow.postMessage({
 			type: 'get-arenas',
 			value: {
-				preSelectedArena: hash.substring(1),
-				includePreviews: includePreviews.checked
+				preSelectedArena: hash.substring(1)
 			}
 		});
 	};
