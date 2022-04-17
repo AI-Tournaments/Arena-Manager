@@ -9,8 +9,8 @@ function a(){
 		executionStepsInit: 100000,
 		_meta: {
 			bestOf: {min: 1},
-			executionSteps: {min: 1, comment: {message: "Allowed execution time for responding to arena message."}},
-			executionStepsInit: {min: 1, comment: {message: "Allowed execution time for initiation of new participant."}},
+			executionSteps: {min: 0, comment: {message: "Allowed execution time for responding to arena message.<br>Set 0 for infinite."}},
+			executionStepsInit: {min: 0, comment: {message: "Allowed execution time for initiation of new participant.<br>Set 0 for infinite."}},
 			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants or keep them secret."}}
 		}
 	};

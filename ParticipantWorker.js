@@ -6,7 +6,7 @@ onmessage = messageEvent => {
 	}
 	function getParticipantResponse(sendResponse=true){
 		_stepCounter = 0;
-		let stepsRemaining = generalSettings.executionSteps;
+		let stepsRemaining = 0 < generalSettings.executionSteps ? generalSettings.executionSteps : Infinity;
 		try{
 			while(stepsRemaining && interpreter.step()){
 				_stepCounter++;
@@ -113,7 +113,7 @@ onmessage = messageEvent => {
 						postMessage({type: 'Fetal-Error', response: error.toString()});
 						return;
 					}
-					let stepsRemaining = generalSettings.executionStepsInit;
+					let stepsRemaining = 0 < generalSettings.executionStepsInit ? generalSettings.executionStepsInit : Infinity;
 					while(stepsRemaining && interpreter.step()){ // Init participant.
 						stepsRemaining--;
 					}
