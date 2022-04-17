@@ -33,6 +33,7 @@ function a(){
 	let _parentWindow = null;
 	let _settingsOverride = null;
 	let _replayData = null;
+	let _rerunUntilErrorCounter = 0;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
@@ -45,41 +46,11 @@ function a(){
 	let participantGroups = document.getElementById('participant-groups');
 	let arenaReadme = document.getElementById('arena-readme');
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
-	let advanceOptions = document.getElementById('advance-options');
-	let rerunUntilError = document.getElementById('rerun-until-error');
-	let interfaceUrl = document.getElementById('interface-url');
-	let interfaceAdd = document.getElementById('add-interface');
-	if(isLocalDevelopment()){
-		advanceOptions.classList.remove('hidden');
-	}
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
 		arenaReadme.style.height = arenaReadme.contentWindow.window.document.documentElement.scrollHeight + 'px';
 	});
-	advanceOptions.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
-		advanceOptions.classList.toggle('open');
-		advanceOptions.classList.remove('closed');
-	});
-	interfaceAdd.addEventListener('click', ()=>{
-		if(interfaceUrl.value){
-			let value = interfaceUrl.value;
-			interfaceUrl.value = '';
-			fetch(value).then(response => response.ok?response.text():null).then(html => {
-				if(html){
-					let titleStart = html.toLocaleLowerCase().indexOf('<title>');
-					let titleStop = html.toLocaleLowerCase().indexOf('</title>');
-					let title = html.substr(titleStart+'<title>'.length, titleStop);
-					addParticipant('!'+value, title?title:value);
-				}
-			});
-		}
-	});
-	requestAnimationFrame(()=>{
-		let setup = getLocalDevelopment();
-		if(setup){
-			addArena(setup);
-		}
-	});
+	addArena(getLocalDevelopment() ?? {});
 	btnAddTeam.onclick = createTeam;
 	btnRemoveTeam.onclick = removeTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -212,13 +183,12 @@ function a(){
 		}
 	}
 	function addArena(localArena){
-		let arena;
 		if(localArena.arena){
 			if(!localArena.arena.name){
 				localArena.arena.name = localArena.arena.url;
 			}
 			localArenas[localArena.arena.url] = localArena.arena.replay;
-			arena = {
+			let arena = {
 				name: localArena.arena.name,
 				raw_url: localArena.arena.url,
 				html_url: localArena.arena.url,
@@ -272,22 +242,18 @@ function a(){
 		}
 		iframe.parentElement.removeChild(iframe);
 		let containsErrors = !!messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length;
-		if(rerunUntilError.checked){
-			let count = parseInt(rerunUntilError.dataset.counter);
-			if(!count){
-				count = 0;
-			}
-			count++;
-			console.log('Rerun counter', count);
-			rerunUntilError.dataset.counter = count;
+		let setup = getLocalDevelopment() ?? {};
+		if(setup.rerunUntilError){
+			_rerunUntilErrorCounter++;
+			console.log('Rerun counter', _rerunUntilErrorCounter);
 		}
-		if(rerunUntilError.checked && !containsErrors){
+		if(setup.rerunUntilError && !containsErrors){
 			start();
 		}else{
-			if(rerunUntilError.checked){
-				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
-				console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
-				rerunUntilError.dataset.counter = 0;
+			if(setup.rerunUntilError){
+				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+_rerunUntilErrorCounter+')');
+				console.debug('Rerun testing crash', {'Rerun counter': _rerunUntilErrorCounter, 'Crash settings': messageEvent.data.value.settings});
+				_rerunUntilErrorCounter = 0;
 			}
 			if(containsErrors && isLocalDevelopment()){
 				console.table(messageEvent.data.value.matchLogs.map((matchLog, index) => {return {Origin: matchLog.participantName, Error: matchLog.error, Seed: matchLog.seed, Match: index, Log: matchLog.log}}).filter(r => r.Error));
