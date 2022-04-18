@@ -50,7 +50,6 @@ function a(){
 		arenaReadmeFieldset.classList.toggle('hidden');
 		arenaReadme.style.height = arenaReadme.contentWindow.window.document.documentElement.scrollHeight + 'px';
 	});
-	addArena(getLocalDevelopment() ?? {});
 	btnAddTeam.onclick = createTeam;
 	btnRemoveTeam.onclick = removeTeam;
 	let btnStart = document.getElementById('btnStart');
@@ -76,6 +75,7 @@ function a(){
 	availableParticipants_select.multiple = true;
 	availableParticipantsWrapper.appendChild(availableParticipants_select);
 	participantGroups.appendChild(availableParticipantsWrapper);
+	addArena(getLocalDevelopment() ?? {});
 	window.onhashchange = ()=>{
 		let hash = location.hash;
 		while(1 < hash.length && hash[1] === '#'){
@@ -151,15 +151,16 @@ function a(){
 						while(document.getElementsByClassName('participant-team-container').length < teams){
 							createTeam();
 						}
-						localParticipants.reverse().forEach((participant, index) => {
+						localParticipants.forEach((participant, index) => {
 							if(typeof participant === 'object'){
-								let option = addParticipant(participant.url, participant.name);
+								let fallbackName = 'Manually added '+(index+1)+ ' ('+(participant.url[0]==='!'?'interface':'participant')+')';
+								let option = addParticipant(participant.url, participant.name ?? fallbackName);
 								let select = document.getElementById('participant-team-' + participant.team);
 								if(select){
 									select.add(option);
 								}
 							}else{
-								addParticipant(participant, 'Manually added participant '+(index+1));
+								addParticipant(participant, 'Manually added '+(index+1)+ ' ('+(participant[0]==='!'?'interface':'participant')+')');
 							}
 						});
 						localParticipants = null;
