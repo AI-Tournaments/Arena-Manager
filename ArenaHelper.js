@@ -462,7 +462,7 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static CreateWorkerFromRemoteURL(url='', includeScripts={}){
+	static CreateWorkerFromRemoteURL(url='', includeScripts={}, seed){
 		function createObjectURL(javascript){
 			let blob;
 			try{
@@ -475,29 +475,42 @@ class ArenaHelper{
 			return URL.createObjectURL(blob);
 		}
 		return fetch(url).then(response => response.text()).then(jsCode => {
-			if(url.endsWith('/arena.js')){
-				let header = (()=>{
-					try{
-						return JSON.parse(jsCode.substring(jsCode.indexOf('/**')+3, jsCode.indexOf('**/')));
-					}catch(error){
-						return {};
-					}
-				})();
-				if(header.dependencies){
-					let scope = url.slice(0, url.lastIndexOf('/')+1);
-					header.dependencies.forEach((dependency, index) => {
-						header.dependencies[index] = scope + dependency;
-					});
-				}else{
-					header.dependencies = [];
-				}
-				let preCode = `importScripts('${[...includeScripts.system, ...includeScripts.modules].join('\', \'')}'); ${(url.endsWith('/arena.js') ? 'ArenaHelper.preInit(); ' : '')}`;
-				if(header.dependencies.length){
-					preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
-				}
-				let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
-				jsCode = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preCode+jsCode;
+			let _includeScripts = [];
+			if(includeScripts.system){
+				_includeScripts.push(...includeScripts.system);
 			}
+			if(includeScripts.modules){
+				_includeScripts.push(...includeScripts.modules);
+			}
+			let header = (()=>{
+				try{
+					return JSON.parse(jsCode.substring(jsCode.indexOf('/**')+3, jsCode.indexOf('**/')));
+				}catch(error){
+					return {};
+				}
+			})();
+			if(header.dependencies){
+				let scope = url.slice(0, url.lastIndexOf('/')+1);
+				header.dependencies.forEach((dependency, index) => {
+					header.dependencies[index] = scope + dependency;
+				});
+			}else{
+				header.dependencies = [];
+			}
+			let preCode = '';
+			if(_includeScripts.length){
+				preCode += `importScripts('${_includeScripts.join('\', \'')}'); `;
+			}
+			if(url.endsWith('/arena.js')){
+				preCode += 'ArenaHelper.preInit(); ';
+			}else if(seed){
+				preCode += 'Date = null; Math.seedrandom(\''+seed+'\'); delete Math.seedrandom; globalThis.onmessage=(m)=>{onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})}; let onmessage = null; postMessage(null); ';
+			}
+			if(header.dependencies.length){
+				preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
+			}
+			let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
+			jsCode = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preCode+jsCode;
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
 			let urlObject = createObjectURL(jsCode);
