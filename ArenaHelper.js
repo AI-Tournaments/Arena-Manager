@@ -319,8 +319,7 @@ class ArenaHelper{
 						name: name,
 						url: participantWrapper.private.url,
 						workerData: {
-							...team.precomputedWorkerData,
-							iframeId: workerWrapper.iframeId
+							...team.precomputedWorkerData
 						}
 					}
 				});
