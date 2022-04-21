@@ -36,7 +36,7 @@
 					function respond(event, message=null, systemMessage=false){
 						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, messageIndex: _messageIndex}}}, '*');
 					}
-					function messageWorker(messageEvent, targetOrigin){
+					function messageEventToWorker(messageEvent, targetOrigin){
 						_messageIndex = messageEvent.data.index;
 						if(messageEvent.data.systemMessage){
 							systemMessages[messageEvent.data.message]();
@@ -77,7 +77,7 @@
 								let created = false;
 								window.onmessage = messageEvent => {
 									if(messageEvent.source === _parent){
-										messageWorker(messageEvent, '*');
+										messageEventToWorker(messageEvent, '*');
 									}else{
 										if(created){
 											respond('Response', messageEvent.data);
@@ -96,7 +96,7 @@
 								}
 							}else if(messageEvent.data.url.startsWith('?')){
 								/** URL:s that begins with a question mark (?) is reserved for plain javascript that can be debugged. */
-								window.onmessage = messageEvent => messageWorker(messageEvent);
+								window.onmessage = messageEvent => messageEventToWorker(messageEvent);
 								let url = messageEvent.data.url.substr(1);
 								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: messageEvent.data.includeScripts.system.filter(s => s.includes('seedrandom'))}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
 									_worker = worker;
@@ -107,7 +107,7 @@
 									respond('Worker-Created');
 								});
 							}else{
-								window.onmessage = messageEvent => messageWorker(messageEvent);
+								window.onmessage = messageEvent => messageEventToWorker(messageEvent);
 								ArenaHelper.CreateWorkerFromRemoteURL('ParticipantWorker.js').then(worker=>{
 									_worker = worker;
 									_worker.onerror = messageEvent => {
