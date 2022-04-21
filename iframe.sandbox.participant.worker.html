@@ -101,7 +101,7 @@
 								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: messageEvent.data.includeScripts.system.filter(s => s.includes('seedrandom'))}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
 									_worker = worker;
 									_worker.onmessage = m=>{
-										respond('Response', {value: m.data, executionSteps: 1});
+										respond('Response', m.data);
 									}
 									_worker.postMessage(messageEvent.data);
 									respond('Worker-Created');

@@ -504,7 +504,7 @@ class ArenaHelper{
 			if(url.endsWith('/arena.js')){
 				preCode += 'ArenaHelper.preInit(); ';
 			}else if(seed){
-				preCode += 'Date = null; Math.seedrandom(\''+seed+'\'); delete Math.seedrandom; globalThis.onmessage=(m)=>{onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})}; let onmessage = null; postMessage(null); ';
+				preCode += 'Date = null; Math.seedrandom(\''+seed+'\'); delete Math.seedrandom; globalThis.onmessage=(m)=>{onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})}; let onmessage = null; let postMessage=(value,executionSteps=1)=>{globalThis.postMessage({value: value, executionSteps: executionSteps})}; globalThis.postMessage(null); ';
 			}
 			if(header.dependencies.length){
 				preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
