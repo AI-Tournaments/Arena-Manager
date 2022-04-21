@@ -103,7 +103,7 @@
 									_worker.onmessage = m=>{
 										respond('Response', m.data);
 									}
-									_worker.postMessage(messageEvent.data);
+									messageEventToWorker(messageEvent);
 									respond('Worker-Created');
 								});
 							}else{
@@ -123,7 +123,7 @@
 											respond('Worker-Created');
 										}
 									}
-									_worker.postMessage(messageEvent.data);
+									messageEventToWorker(messageEvent);
 								});
 							}
 						});
