@@ -8,9 +8,8 @@ onmessage = messageEvent => {
 		_stepCounter = 0;
 		let stepsRemaining = 0 < generalSettings.executionSteps ? generalSettings.executionSteps : Infinity;
 		try{
-			while(stepsRemaining && interpreter.step()){
+			while(stepsRemaining-_stepCounter && interpreter.step()){
 				_stepCounter++;
-				stepsRemaining--;
 			}
 		}catch(error){
 			if(sendResponse){
