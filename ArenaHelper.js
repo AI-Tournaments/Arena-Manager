@@ -2,13 +2,13 @@
 class ArenaHelper{
 	static #log = [];
 	static #settings = null;
+	static #arenaReady = null;
 	static #responseQueue = [];
 	static #participants = null;
 	static #participants_onError = null;
 	static #participants_onMessage = null;
-	static #participants_onMessageTimeout = null;
 	static #participants_workerCreated = null;
-	static #arenaReady = null;
+	static #participants_onMessageTimeout = null;
 	static #participants_getParticipantWrapper = null;
 	static #postMessage_native = ()=>{};
 	static #postMessage = data => {
@@ -37,7 +37,6 @@ class ArenaHelper{
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
 			default: throw new Error('Message type "'+messageEvent.data.type+'" not found.');
-			case 'Event': break;
 			case 'Start': ArenaHelper.#arenaReady(); break;
 			case 'Response': ArenaHelper.#response(messageEvent.data.data.event, messageEvent.data.data.source, messageEvent.data.data.payload); break;
 		}
@@ -49,14 +48,27 @@ class ArenaHelper{
 	static #response = (event, source, payload) => {
 		switch(event){
 			default: throw new Error('Response-Event "'+event+'" not found.');
-			case 'Message': ArenaHelper.#participants_onMessage(source, payload); break;
-			case 'Message-Timeout': ArenaHelper.#participants_onMessageTimeout(source, payload); break;
-			case 'Error': ArenaHelper.#participants_onError(source, payload); break;
+			case 'Response': ArenaHelper.#participants_onMessage(source, payload); break;
+			case 'Fetal-Error':
+			case 'Response-Error':
+				if(ArenaHelper.localDevelopment){
+					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+					console.error(event, 'Error occurred in message '+payload.messageIndex+' for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".\n'+payload.message);
+				}
+				ArenaHelper.#participants_onError(source, payload);
+				break;
+			case 'Response-Timeout':
+				if(ArenaHelper.localDevelopment){
+					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
+					console.warn('Response-Timeout', 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".');
+				}
+				ArenaHelper.#participants_onMessageTimeout(source, payload);
+				break;
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
 		}
 		while(ArenaHelper.#responseQueue.length && ArenaHelper.#responseQueue[0].done !== null){
 			let queueItem = ArenaHelper.#responseQueue[0];
-			queueItem.done({responseReceived: queueItem.responseReceived, responseRejected: queueItem.responseRejected});
+			queueItem.done({responseReceived: queueItem.responseReceived});
 			ArenaHelper.#responseQueue.splice(0, 1);
 		}
 	}
@@ -67,10 +79,8 @@ class ArenaHelper{
 			console.error(message);
 			ArenaHelper.postAbort('Fatal-Abort', message);
 		}
-		let debug = false;
 		ArenaHelper.#init = ()=>{
 			if(typeof ArenaHelper.init === 'function'){
-				if(debug){debugger;} // Use the browser debugger to step in to the ArenaHelper.init function below.
 				ArenaHelper.init(ArenaHelper.#participants, ArenaHelper.#settings);
 			}else{
 				fatal('ArenaHelper.init is not a function.');
@@ -80,13 +90,14 @@ class ArenaHelper{
 			if(messageEvent.data.settings.general.seed === ''){
 				throw new Error('No seed given!');
 			}
-			debug = messageEvent.data.debug;
 			Math.seedrandom(messageEvent.data.settings.general.seed);
 			// Disable features that could be used to generate unpredictable random numbers.
 			delete Math.seedrandom;
 			Date = null;
 			performance = null;
-			console.log('// TODO: Decuple (new) Worker.');
+			globalThis.setTimeout=()=>{};
+			globalThis.setInterval=()=>{};
+			console.log('// TODO: Decuple (new) Worker.'); // Why?
 			// Initiate participants.
 			new ArenaHelper.Participants(messageEvent.data);
 			onmessage = ArenaHelper.#onmessage;
@@ -118,7 +129,7 @@ class ArenaHelper{
 		}
 		onMessageWatcher();
 		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
-		self.addEventListener("unhandledrejection", function(promiseRejectionEvent){
+		self.addEventListener('unhandledrejection', function(promiseRejectionEvent){
 			let nameArray = __url.split('.').slice(-2)[0].split('/');
 			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
 			let message;
@@ -141,21 +152,19 @@ class ArenaHelper{
 		}
 		static #messageWorker = (name='', participantWrapper, body) => {
 			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
-			if(!workerWrapper.ready){
+			if(!workerWrapper.ready && !body.systemMessage){
 				throw new Error('Error: Worker called before it was ready.');
 			}
 			let promise;
 			if(body.type === 'Post'){
 				body.index = workerWrapper.messageIndex++;
 				let responseReceived;
-				let responseRejected;
-				promise = new Promise((resolve, reject) => {responseReceived = resolve; responseRejected = reject;});
+				promise = new Promise((resolve, reject) => {responseReceived = resolve;});
 				let queueItem = {
 					done: null,
 					messageIndex: body.index,
 					message: {receiver: workerWrapper.iframeId, body: body},
-					responseReceived: responseReceived,
-					responseRejected: responseRejected
+					responseReceived: responseReceived
 				};
 				ArenaHelper.#responseQueue.push(queueItem);
 				workerWrapper.pendingMessages.push(queueItem);
@@ -167,7 +176,7 @@ class ArenaHelper{
 			}
 			return promise;
 		}
-		static #getPendingMessage = (participantWrapper, workerName, messageIndex) => {
+		static #getPendingMessage = (participantWrapper, workerName) => {
 			let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, workerName);
 			if(workerWrapper.pendingMessages.length){
 				let queueItem = workerWrapper.pendingMessages.shift();
@@ -176,16 +185,21 @@ class ArenaHelper{
 				}
 				return new Promise(resolve => queueItem.done = resolve);
 			}
-			throw new Error('queueItem not found. '+JSON.stringify({participant: participantWrapper.participant.name, worker: workerName, messageIndex: messageIndex}));
+			return Promise.reject({reason: 'queueItem not found.', participant: participantWrapper.participant.name, worker: workerName});
 		}
-		/** INPUT
-		 *	Input is the same as input to the arena. Read about '?debug' to find out how to access it.
-		 *	READ: https://github.com/AI-Tournaments/AI-Tournaments#develop-environment
+		/**
+		 *	Input is the same as input to the arena.
 		 */
 		constructor(data={}){
 			if(ArenaHelper.#participants !== null){
 				throw new Error('Participants is already constructed.');
 			}
+			Object.defineProperty(ArenaHelper, 'localDevelopment', {
+				value: data.localDevelopment,
+				writable : false,
+				enumerable : true,
+				configurable : false
+			});
 			data.participants.forEach(members => {
 				for(let index = members.length - 1; 0 < index; index--){
 					let newIndex = Math.floor(Math.random()*(index + 1));
@@ -201,6 +215,24 @@ class ArenaHelper{
 					}
 				}
 			}
+			class Response {
+				constructor(fields={}){
+					for(const key in fields){
+						if(Object.hasOwnProperty.call(fields, key)){
+							this[key] = fields[key];
+							Object.defineProperty(this, key, {
+								value: fields[key],
+								writable: false,
+								enumerable: true,
+								configurable: false
+							});
+						}
+					}
+				}
+			}
+			class ResponseError extends Response {}
+			class ResponseMessage extends Response {}
+			class ResponseTimeout extends Response {}
 			ArenaHelper.#settings = new Settings(data.settings);
 			ArenaHelper.#participants = this;
 			let promises = [];
@@ -208,24 +240,26 @@ class ArenaHelper{
 			let wrappers = [];
 			ArenaHelper.#setParticipants(this);
 			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
-			ArenaHelper.#participants_onError = (source, messageIndex) => {
+			ArenaHelper.#participants_onError = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-				console.error('// TODO: Write error message! (or maybe not?)');
-				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, messageIndex).then(pendingMessage => {
-					console.log("// TODO: Kill participant.");
-					pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'ParticipantError'});
-				});
+				if(typeof payload.messageIndex === 'number'){
+					ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name).then(pendingMessage => {
+						pendingMessage.responseReceived(new ResponseError({participant: participantWrapper.participant, workerName: source.name}));
+					});
+				}else{
+					ArenaHelper.postAbort('Fatal-Error', 'participant: '+participantWrapper.participant.name+'\nworker: '+source.name+'\n'+payload.message);
+				}
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
-					pendingMessage.responseReceived({participant: participantWrapper.participant, workerName: source.name, data: payload.message});
+					pendingMessage.responseReceived(new ResponseMessage({participant: participantWrapper.participant, workerName: source.name, message: {data: payload.message.value, ticks: payload.message.executionSteps}}));
 				});
 			}
 			ArenaHelper.#participants_onMessageTimeout = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
-					pendingMessage.responseRejected({participant: participantWrapper.participant, message: 'MessageTimeout'});
+					pendingMessage.responseReceived(new ResponseTimeout({participant: participantWrapper.participant, workerName: source.name}));
 				});
 			}
 			ArenaHelper.#participants_workerCreated = source => {
@@ -285,8 +319,7 @@ class ArenaHelper{
 						name: name,
 						url: participantWrapper.private.url,
 						workerData: {
-							...team.precomputedWorkerData,
-							iframeId: workerWrapper.iframeId
+							...team.precomputedWorkerData
 						}
 					}
 				});
@@ -364,47 +397,36 @@ class ArenaHelper{
 			class Participant{
 				constructor(name, teamIndex, participantIndex, participantWrapper){
 					this.payload = {};
-					Object.defineProperty(this, 'name', {
-						value: name,
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'team', {
-						value: teamIndex,
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'member', {
-						value: participantIndex,
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'addWorker', {
-						value: name=>ArenaHelper.#participants.addWorker(this, name),
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'postMessage', {
-						value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage}),
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'addScore', {
-						value: points=>_participants.addScore(teamIndex, points),
-						writable: false,
-						enumerable: true,
-						configurable: true
-					});
-					Object.defineProperty(this, 'addBonusScore', {
-						value: points=>_participants.addBonusScore(this, points),
-						writable: false,
-						enumerable: true,
-						configurable: true
+					[
+						{
+							name: 'name',
+							value: name
+						},{
+							name: 'team',
+							value: teamIndex
+						},{
+							name: 'member',
+							value: participantIndex
+						},{
+							name: 'addWorker',
+							value: name=>ArenaHelper.#participants.addWorker(this, name)
+						},{
+							name: 'postMessage',
+							value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage})
+						},{
+							name: 'addScore',
+							value: points=>_participants.addScore(teamIndex, points)
+						},{
+							name: 'addBonusScore',
+							value: points=>_participants.addBonusScore(this, points)
+						}
+					].forEach(field => {
+						Object.defineProperty(this, field.name, {
+							value: field.value,
+							writable: false,
+							enumerable: true,
+							configurable: false
+						});
 					});
 				}
 			}
@@ -440,7 +462,7 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static CreateWorkerFromRemoteURL(url='', includeScripts=[]){
+	static CreateWorkerFromRemoteURL(url='', includeScripts={}, seed){
 		function createObjectURL(javascript){
 			let blob;
 			try{
@@ -450,14 +472,19 @@ class ArenaHelper{
 				blob.append(javascript);
 				blob = blob.getBlob();
 			}
-			let urlObject = URL.createObjectURL(blob);
-			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Worker does not work if urlObject is removed to early.
-			return urlObject;
+			return URL.createObjectURL(blob);
 		}
-		return fetch(url).then(response => response.text()).then(text => {
+		return fetch(url).then(response => response.text()).then(jsCode => {
+			let _includeScripts = [];
+			if(includeScripts.system){
+				_includeScripts.push(...includeScripts.system);
+			}
+			if(includeScripts.modules){
+				_includeScripts.push(...includeScripts.modules);
+			}
 			let header = (()=>{
 				try{
-					return JSON.parse(text.substring(text.indexOf('/**')+3, text.indexOf('**/')));
+					return JSON.parse(jsCode.substring(jsCode.indexOf('/**')+3, jsCode.indexOf('**/')));
 				}catch(error){
 					return {};
 				}
@@ -470,16 +497,25 @@ class ArenaHelper{
 			}else{
 				header.dependencies = [];
 			}
-			let preText = 'importScripts(\''+[...includeScripts.system, ...includeScripts.modules].join('\', \'')+'\'); ' + (url.endsWith('/arena.js') ? 'ArenaHelper' : 'ParticipantHelper') + '.preInit(); ';
-			if(header.dependencies.length){
-				preText += 'importScripts(\''+header.dependencies.join('\', \'')+'\'); ';
+			let preCode = '';
+			if(_includeScripts.length){
+				preCode += `importScripts('${_includeScripts.join('\', \'')}'); `;
 			}
-			let useStrict = text.toLowerCase().startsWith('use strict', 1);
-			text = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preText+text;
+			if(url.endsWith('/arena.js')){
+				preCode += 'ArenaHelper.preInit(); ';
+			}else if(seed){
+				preCode += 'Date = null; Math.seedrandom(\''+seed+'\'); delete Math.seedrandom; globalThis.onmessage=(m)=>{onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})}; let onmessage = null; let postMessage=(value,executionSteps=1)=>{globalThis.postMessage({value: value, executionSteps: executionSteps})}; globalThis.postMessage(null); ';
+			}
+			if(header.dependencies.length){
+				preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
+			}
+			let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
+			jsCode = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preCode+jsCode;
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let worker = new Worker(createObjectURL(text));
-			worker.onmessage = ()=>resolve(worker);
+			let urlObject = createObjectURL(jsCode);
+			let worker = new Worker(urlObject);
+			worker.onmessage = ()=>{URL.revokeObjectURL(urlObject); resolve(worker);};
 			return promise;
 		});
 	}

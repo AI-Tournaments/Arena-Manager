@@ -6,8 +6,7 @@
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-TJFMG29186"></script><script>window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-TJFMG29186');</script>
 		<meta content="width=device-width, initial-scale=1.0" name="viewport">
 		<meta content="yes" name="mobile-web-app-capable">
-		<link rel="stylesheet" href="https://ai-tournaments.github.io/AI-Tournaments/defaults.css">
-		<link rel="stylesheet" href="log.css">
+		<link rel="stylesheet" href="https://ai-tournaments.github.io/defaults.css">
 		<style>
 			:root {
 				--advance-options-width: 286px;
@@ -72,93 +71,14 @@
 			#fieldset-arena-readme.hidden>:not(legend) {
 				display: none;
 			}
-
-			@keyframes open-advance-options {
-				from {
-					width: 0;
-				}
-				to {
-					width: var(--advance-options-width);
-				}
-			}
-			@keyframes close-advance-options {
-				from {
-					width: var(--advance-options-width);
-				}
-				to {
-					width: 0;
-				}
-			}
-			#advance-options {
-				position: fixed;
-				background-color: var(--main-background-color);
-				border-right: 0;
-				height: 512px;
-				right: 0;
-				width: 0;
-				top: 49px;
-				padding-bottom: 4px;
-			}
-			#advance-options-wrapper {
-				width: var(--advance-options-width);
-				height: -webkit-fill-available;
-				border: var(--main-color) 1px solid;
-				border-right-width: 0;
-				padding: 4px;
-			}
-			#advance-options.open {
-				animation: 2s open-advance-options ease-in-out;
-				width: var(--advance-options-width);
-			}
-			#advance-options:not(.open):not(.closed) {
-				animation: 2s close-advance-options ease-in-out;
-				width: 0;
-			}
-			#advance-options>legend {
-				position: absolute;
-				transform: rotate(270deg);
-				background-color: var(--main-background-color);
-				border: var(--main-color) 1px solid;
-				top: 38px;
-				left: -53px;
-				border-bottom: 0;
-				padding: 2px 10px 1px 10px;
-			}
-			#advance-options fieldset {
-				border-color: var(--main-color);
-			}
-			#interface-url:invalid {
-				color: var(--error-color);
-			}
 		</style>
 		<script src="ArenaHelper.js"></script>
 		<script src="index.js"></script>
-		<script src="https://ai-tournaments.github.io/AI-Tournaments/GitHubApi.js"></script>
+		<script src="https://ai-tournaments.github.io/GitHubApi.js"></script>
 	</head>
 	<body onload="a()">
 		<div id="padding-wrapper">
 			<iframe id="selectArena" src="iframe.selectArena.html"></iframe>
-			<div id="advance-options" class="closed hidden">
-				<legend class="clickable">Advance</legend>
-				<div id="advance-options-wrapper">
-					<div>
-						<input type="checkbox" id="include-previews">
-						<label for="include-previews">Fetch latest (unreleased) version of arenas.</label>
-					</div>
-					<div>
-						<input type="url" id="interface-url" placeholder="http://localhost/interface.html">
-						<input type="button" id="add-interface" value="Add interface">
-					</div>
-					<input type="checkbox" id="advanced-testing-checkbox">
-					<fieldset id="advanced-testing">
-						<legend>Testing</legend>
-						<input type="checkbox" id="rerun-until-error">
-						<label for="rerun-until-error">Rerun until error.</label>
-						<p>Check JavaScript console for completion execution counter.</p>
-						<div id="setup-editor" class="hidden">Arena setup</div>
-					</fieldset>
-				</div>
-			</div>
 			<div id="wrapper" class="hidden">
 				<fieldset id="fieldset-arena-readme" class="hidden">
 					<legend class="clickable">Readme</legend>
@@ -179,7 +99,7 @@
 				<div id="participant-groups"></div>
 				<iframe id="settings" style="height: 0;" src="iframe.sandbox.settings.html" sandbox="allow-scripts"></iframe>
 				<input type="button" id="btnStart" value="Start" disabled>
-				<div id="logContainer"></div>
+				<div id="iframeWrapper"></div>
 			</div>
 		</div>
 	</body>

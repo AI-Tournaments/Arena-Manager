@@ -5,10 +5,12 @@ function a(){
 		seed: '',
 		bestOf: 1,
 		discloseOpponents: ['Yes', 'AccountOnly', 'No'],
-		timelimit_ms: 1000,
+		executionSteps: 100000,
+		executionStepsInit: 100000,
 		_meta: {
-			bestOf: {min: 1, max: null},
-			timelimit_ms: {min: 1, max: null},
+			bestOf: {min: 1},
+			executionSteps: {min: 0, comment: {message: "Allowed execution time for responding to arena message.<br>Set 0 for infinite."}},
+			executionStepsInit: {min: 0, comment: {message: "Allowed execution time for initiation of new participant.<br>Set 0 for infinite."}},
 			discloseOpponents: {default: 'No', comment: {message: "Disclose opponents' name for the participants or keep them secret."}}
 		}
 	};
@@ -83,7 +85,7 @@ function a(){
 		fetch((messageEvent.data.value??'') + 'properties.json').then(response => response.json()).then(insecureJson => {
 			_arenaProperties = secureJson(insecureJson);
 			let jsonEditor_element;
-			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaRefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
+			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaDefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
 			function addComment(label, comment){
 				let wrapper = document.createElement('span');
 				wrapper.classList.add('comment');
@@ -94,7 +96,7 @@ function a(){
 				let iframedMessage = document.createElement('iframe');
 				iframedMessage.sandbox = '';
 				iframedMessage.classList.add('message');
-				iframedMessage.srcdoc = '<!DOCTYPE html><html><head><link rel="stylesheet" href="https://ai-tournaments.github.io/AI-Tournaments/defaults.css"></head><body>'+comment.message+'</body></html>';
+				iframedMessage.srcdoc = '<!DOCTYPE html><html><head><link rel="stylesheet" href="https://ai-tournaments.github.io/defaults.css"></head><body>'+comment.message+'</body></html>';
 				if(comment.height !== undefined){
 					iframedMessage.height = comment.height;
 				}
@@ -238,7 +240,7 @@ function a(){
 				}
 			});
 			jsonEditor = new JSONEditor(jsonEditor_element, {'modes': ['tree', 'code'], 'name': 'customInput', 'onModeChange': postSize}, customInput ? _arenaProperties.header.customInput.default : undefined);
-			jsonEditor.setSchema(customInput ? _arenaProperties.header.customInput.schema : undefined, customInput ? _arenaProperties.header.customInput.schemaRefs : undefined);
+			jsonEditor.setSchema(customInput ? _arenaProperties.header.customInput.schema : undefined, customInput ? _arenaProperties.header.customInput.schemaDefs : undefined);
 			messageEvent.source.postMessage({type: 'properties', value: {properties: _arenaProperties}}, messageEvent.origin);
 		});
 	}

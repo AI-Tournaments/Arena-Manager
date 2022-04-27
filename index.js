@@ -1,7 +1,30 @@
 'use strict'
-let addArena;
-let addParticipant;
 function a(){
+	const EXTERNAL_RESOURCES = (()=>{
+		let version = {
+			'{babel}': 'standalone@7.16.12',
+			'{seedrandom}': '3.0.5',
+			'{NeilFraser/JS-Interpreter}': '92aeaa2fceb58159bc491c0983e7e1309dc1d421'
+		};
+		let resources = {
+			babel: 'https://unpkg.com/@babel/{babel}/babel.min.js',
+			randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
+			jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/acorn.js',
+			jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/interpreter.js',
+			jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/demos/serialize.js'
+		}
+		for(const resourceKey in resources){
+			if(Object.hasOwnProperty.call(resources, resourceKey)){
+				for(const versionKey in version){
+					if(Object.hasOwnProperty.call(version, versionKey)){
+						resources[resourceKey] = resources[resourceKey].replace(versionKey, version[versionKey]);
+					}
+				}
+			}
+		}
+		Object.freeze(resources);
+		return resources;
+	})();
 	let styleMode = window.self == window.top ? 'top' : 'iFrame';
 	document.documentElement.classList.add(styleMode);
 	let _sortByStars = false;
@@ -10,54 +33,22 @@ function a(){
 	let _parentWindow = null;
 	let _settingsOverride = null;
 	let _replayData = null;
+	let _rerunUntilErrorCounter = 0;
 	let localArenas = {};
 	let localParticipants = null
 	let arenaProperties;
 	let arenaMatches = null;
 	let selectArena = document.getElementById('selectArena');
 	let settingsIframe = document.getElementById('settings');
-	let logContainer = document.getElementById('logContainer');
+	let iframeWrapper = document.getElementById('iframeWrapper');
 	let btnAddTeam = document.getElementById('add-team');
 	let btnRemoveTeam = document.getElementById('remove-team');
 	let participantGroups = document.getElementById('participant-groups');
 	let arenaReadme = document.getElementById('arena-readme');
 	let arenaReadmeFieldset = document.getElementById('fieldset-arena-readme');
-	let advanceOptions = document.getElementById('advance-options');
-	let includePreviews = document.getElementById('include-previews');
-	let rerunUntilError = document.getElementById('rerun-until-error');
-	let interfaceUrl = document.getElementById('interface-url');
-	let interfaceAdd = document.getElementById('add-interface');
-	if(localStorage.getItem('Local development')){
-		advanceOptions.classList.remove('hidden');
-	}
-	includePreviews.addEventListener('change', ()=>window.onhashchange());
 	arenaReadmeFieldset.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
 		arenaReadmeFieldset.classList.toggle('hidden');
 		arenaReadme.style.height = arenaReadme.contentWindow.window.document.documentElement.scrollHeight + 'px';
-	});
-	advanceOptions.getElementsByTagName('legend')[0].addEventListener('click', ()=>{
-		advanceOptions.classList.toggle('open');
-		advanceOptions.classList.remove('closed');
-	});
-	interfaceAdd.addEventListener('click', ()=>{
-		if(interfaceUrl.value){
-			let value = interfaceUrl.value;
-			interfaceUrl.value = '';
-			fetch(value).then(response => response.ok?response.text():null).then(html => {
-				if(html){
-					let titleStart = html.toLocaleLowerCase().indexOf('<title>');
-					let titleStop = html.toLocaleLowerCase().indexOf('</title>');
-					let title = html.substr(titleStart+'<title>'.length, titleStop);
-					addParticipant('!'+value, title?title:value);
-				}
-			});
-		}
-	});
-	requestAnimationFrame(()=>{
-		let item = localStorage.getItem('Local development');
-		if(item){
-			addArena(JSON.parse(item));
-		}
 	});
 	btnAddTeam.onclick = createTeam;
 	btnRemoveTeam.onclick = removeTeam;
@@ -84,16 +75,16 @@ function a(){
 	availableParticipants_select.multiple = true;
 	availableParticipantsWrapper.appendChild(availableParticipants_select);
 	participantGroups.appendChild(availableParticipantsWrapper);
+	addArena(getLocalDevelopment() ?? {});
 	window.onhashchange = ()=>{
 		let hash = location.hash;
 		while(1 < hash.length && hash[1] === '#'){
-			hash = hash.substr(2);
+			hash = hash.substring(2);
 		}
 		selectArena.contentWindow.postMessage({
 			type: 'get-arenas',
 			value: {
-				preSelectedArena: hash.substring(1),
-				includePreviews: includePreviews.checked
+				preSelectedArena: hash.substring(1)
 			}
 		});
 	};
@@ -112,10 +103,10 @@ function a(){
 			_replayContainer.style.height = parseFloat(messageEvent.data.value) + 'px';
 			document.documentElement.scrollTop = document.documentElement.scrollHeight;
 		}else if(messageEvent.data.type === 'auto-run'){
+			debugger // Is this used for anything else then client side tournament?
 			_json = messageEvent.data.arena;
 			document.title = messageEvent.data.type;
 			begin(messageEvent.data.settings, messageEvent.data.bracket);
-			getTournamentLog(messageEvent);
 		}else if(messageEvent.data.type === 'arena-changed'){
 			if(document.title !== 'auto-run'){
 				document.getElementById('wrapper').classList.remove('hidden');
@@ -160,19 +151,26 @@ function a(){
 						while(document.getElementsByClassName('participant-team-container').length < teams){
 							createTeam();
 						}
-						localParticipants.reverse().forEach((participant, index) => {
+						localParticipants.forEach((participant, index) => {
 							if(typeof participant === 'object'){
-								let option = addParticipant(participant.url, participant.name);
+								let fallbackName = 'Manually added '+(index+1)+ ' ('+(participant.url[0]==='!'?'interface':'participant')+')';
+								let option = addParticipant(participant.url, participant.name ?? fallbackName);
 								let select = document.getElementById('participant-team-' + participant.team);
 								if(select){
 									select.add(option);
 								}
 							}else{
-								addParticipant(participant, 'Manually added participant '+(index+1));
+								addParticipant(participant, 'Manually added '+(index+1)+ ' ('+(participant[0]==='!'?'interface':'participant')+')');
 							}
 						});
 						localParticipants = null;
 						btnStart.disabled = !validateStart();
+						try{
+							let setup = getLocalDevelopment();
+							if(setup && setup.autoStart){
+								start();
+							}
+						}catch(error){}
 					}
 					break;
 				case 'settings': begin(messageEvent.data.value); break;
@@ -185,18 +183,17 @@ function a(){
 			window.onresize();
 		}
 	}
-	addArena = localArena => {
-		let arena;
+	function addArena(localArena){
 		if(localArena.arena){
-			if(!localArena.name){
-				localArena.name = localArena.arena;
+			if(!localArena.arena.name){
+				localArena.arena.name = localArena.arena.url;
 			}
-			localArenas[localArena.arena] = localArena.replay;
-			arena = {
-				name: localArena.name,
-				raw_url: localArena.arena,
-				html_url: localArena.arena,
-				full_name: 'local/'+localArena.name,
+			localArenas[localArena.arena.url] = localArena.arena.replay;
+			let arena = {
+				name: localArena.arena.name,
+				raw_url: localArena.arena.url,
+				html_url: localArena.arena.url,
+				full_name: 'local/'+localArena.arena.name,
 				default_branch: null,
 				stars: -1,
 				commit: null,
@@ -211,11 +208,19 @@ function a(){
 			localParticipants = localArena.participants;
 		}
 	}
-	addParticipant = (url='', name='Manually added participant') => {
+	function addParticipant(url='', name='Manually added participant'){
 		let option = addParticipantOption(url, name);
 		option.classList.add('local');
 		sortOptions(availableParticipants_select);
 		return option;
+	}
+	function getLocalDevelopment(){
+		try{
+			return JSON.parse(localStorage.getItem('LocalDevelopment.Setups')).find(setup => setup.active);
+		}catch(error){}
+	}
+	function isLocalDevelopment(){
+		return !!getLocalDevelopment();
 	}
 	function strip(html=''){
 		let output;
@@ -229,46 +234,30 @@ function a(){
 		while(tempString !== output && output !== '');
 		return output;
 	}
-	function getTournamentLog(messageEvent){
-		console.log('// TODO: Is getTournamentLog() still used? Can it be removed or modified?');
-		if(pendingArenaSandboxes.length === 0){
-			let dataset = [];
-			for(const key in arenaMatches){
-				if(Object.hasOwnProperty.call(arenaMatches, key)){
-					const arenaMatch = arenaMatches[key];
-					debugger;
-					console.log(arenaMatch);
-				}
-			}
-			messageEvent.source.postMessage({type: 'log', value: {id: messageEvent.data.id, log: dataset}}, messageEvent.origin);
-		}else{
-			setTimeout(()=>{getTournamentLog(messageEvent)}, 1000);
-		}
-	}
 	function openReplay(messageEvent){
 		let iframe = document.getElementById(messageEvent.data.iframeID);
 		let arenaMatch = arenaMatches[iframe];
-		if(arenaMatch === undefined){
+		if(!arenaMatch){
 			arenaMatch = [];
 			arenaMatches[iframe] = arenaMatch;
 		}
 		iframe.parentElement.removeChild(iframe);
-		if(rerunUntilError.checked){
-			let count = parseInt(rerunUntilError.dataset.counter);
-			if(!count){
-				count = 0;
-			}
-			count++;
-			console.log('Rerun counter', count);
-			rerunUntilError.dataset.counter = count;
+		let containsErrors = !!messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length;
+		let setup = getLocalDevelopment() ?? {};
+		if(setup.rerunUntilError){
+			_rerunUntilErrorCounter++;
+			console.log('Rerun counter', _rerunUntilErrorCounter);
 		}
-		if(rerunUntilError.checked && messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).length === 0){
+		if(setup.rerunUntilError && !containsErrors){
 			start();
 		}else{
-			if(rerunUntilError.checked){
-				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+rerunUntilError.dataset.counter+')');
-				console.debug('Rerun testing crash', {'Rerun counter': parseInt(rerunUntilError.dataset.counter), 'Crash settings': messageEvent.data.value.settings});
-				rerunUntilError.dataset.counter = 0;
+			if(setup.rerunUntilError){
+				messageEvent.data.value.matchLogs.filter(matchLog => matchLog.error).forEach(matchLog => matchLog.error+=' (Rerun counter: '+_rerunUntilErrorCounter+')');
+				console.debug('Rerun testing crash', {'Rerun counter': _rerunUntilErrorCounter, 'Crash settings': messageEvent.data.value.settings});
+				_rerunUntilErrorCounter = 0;
+			}
+			if(containsErrors && isLocalDevelopment()){
+				console.table(messageEvent.data.value.matchLogs.map((matchLog, index) => {return {Origin: matchLog.participantName, Error: matchLog.error, Seed: matchLog.seed, Match: index, Log: matchLog.log}}).filter(r => r.Error));
 			}
 			_replayData = {
 				header: {
@@ -283,7 +272,7 @@ function a(){
 			if(!document.title.startsWith('auto-run')){
 				_replayContainer = document.createElement('iframe');
 				_replayContainer.classList.add('replay-container');
-				_replayContainer.src = '/AI-Tournaments/Replay/';
+				_replayContainer.src = '/Replay/';
 				document.body.appendChild(_replayContainer);
 			}
 		}
@@ -351,7 +340,7 @@ function a(){
 				selectElement.remove(0);
 			}
 		});
-		if(!localParticipants){
+		if(!localParticipants || !_settingsOverride){
 			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena,{
 				headers: {Accept: 'application/vnd.github.mercy-preview+json'} // TEMP: Remove when out of preview. https://docs.github.com/en/rest/reference/search#search-topics-preview-notices
@@ -425,8 +414,8 @@ function a(){
 		validateTeams();
 	}
 	function start(){
-		while(0 < logContainer.childElementCount){
-			logContainer.removeChild(logContainer.firstChild);
+		while(0 < iframeWrapper.childElementCount){
+			iframeWrapper.removeChild(iframeWrapper.firstChild);
 		}
 		arenaMatches = {};
 		settingsIframe.contentWindow.postMessage({type: 'GetSettings'}, '*');
@@ -434,11 +423,11 @@ function a(){
 	function begin(data, bracket=[]){
 		let json = {
 			arena: _json,
+			localDevelopment: isLocalDevelopment(),
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',
-				ParticipantHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ParticipantHelper.js',
-				randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js',
-				replay: data.header.replay
+				replay: data.header.replay,
+				...EXTERNAL_RESOURCES
 			},
 			iframeID: Date()+'_'+Math.random(),
 			participants: bracket,
@@ -458,25 +447,15 @@ function a(){
 				}
 			}
 		}
-		let isDebugMode = location.href.includes('?debug');
-		let div = document.createElement('div');
-		console.log('// TODO: Check if logContainer[].div is needed. Maybe it is enough with just a single "iframeWrapper".');
-		logContainer.appendChild(div);
 		let iframe = document.createElement('iframe');
-		iframe.src = 'iframe.sandbox.arena.html'+(isDebugMode?'?debug':'');
+		iframe.src = 'iframe.sandbox.arena.html';
 		iframe.sandbox = 'allow-scripts';
 		if(json.participants.flat().flatMap(p => p.url).find(url => url.startsWith('!'))){
 			iframe.sandbox += ' allow-popups allow-same-origin';
 		}
 		iframe.style.display = 'none';
 		iframe.id = json.iframeID;
-		div.appendChild(iframe);
-		let output = document.createElement('div');
-		if(!isDebugMode){
-			output.style.display = 'none';
-		}
-		output.classList.add('log');
-		div.appendChild(output);
+		iframeWrapper.appendChild(iframe);
 		let resolve;
 		new Promise(r => resolve = r).then(()=>iframe.contentWindow.postMessage(json, '*'));
 		pendingArenaSandboxes.push({contentWindow: iframe.contentWindow, ready: resolve});

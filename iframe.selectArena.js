@@ -26,7 +26,7 @@ function a(){
 					sourceWindow = messageEvent.source;
 				}
 				_preSelectedArena = messageEvent.data.value.preSelectedArena;
-				getArenas(messageEvent.data.value.includePreviews);
+				getArenas();
 				break;
 			case 'add-arena':
 				addArena_local(messageEvent.data.value);
@@ -47,17 +47,17 @@ function a(){
 		option.selected = true;
 		arenaList.onchange({target: option});
 	}
-	function getArenas(includePreviews){
+	function getArenas(){
 		[...arenaList.getElementsByTagName('option')].filter(o => !o.classList.contains('local')).forEach(o => arenaList.removeChild(o));
-		GitHubApi.fetchArenas(includePreviews).then(arenas => {
+		GitHubApi.fetchArenas().then(arenas => {
 			_arenas = arenas;
-			filterPreviews(includePreviews);
+			filterPreviews();
 		});
 	}
-	function filterPreviews(includePreviews){
+	function filterPreviews(){
 		let preSelected = undefined;
 		let options = [...arenaFilter.selectedOptions].flatMap(selectedOption => selectedOption.value);
-		_arenas.filter(arena => includePreviews ? true : arena.version !== null).forEach(arena => {
+		_arenas.filter(arena => arena.version).forEach(arena => {
 			if(options.includes('all') || (arena.official && options.includes('official')) || (!arena.official && options.includes('community'))){
 				let cssStar = getComputedStyle(document.documentElement).getPropertyValue('--github-stars').trim();
 				cssStar = cssStar.substring(1,cssStar.length-1);
