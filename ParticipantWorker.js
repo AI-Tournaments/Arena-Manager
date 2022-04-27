@@ -118,7 +118,7 @@ onmessage = messageEvent => {
 						stepsRemaining--;
 					}
 					if(stepsRemaining){
-						messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena state.
+						messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena setup.
 						interpreterReady();
 					}else{
 						throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
