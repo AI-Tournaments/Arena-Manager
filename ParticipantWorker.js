@@ -98,7 +98,7 @@ onmessage = messageEvent => {
 		participantSources.push(Promise.resolve(participantSource));
 		Promise.allSettled(dependencies).then(()=>{
 			initNewInterpreter = async state => {
-				interpreter = new Interpreter(babelTransform('Date = null;\nlet onmessage = null;'), (interpreter, globalObject)=>{
+				interpreter = new Interpreter(babelTransform('Date = null; let onmessage = null;'), (interpreter, globalObject)=>{
 					interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
 					let math = interpreter.getProperty(globalObject, 'Math');
 					interpreter.setProperty(math, 'random', interpreter.createNativeFunction(random));
@@ -107,7 +107,7 @@ onmessage = messageEvent => {
 					deserialize(state, interpreter);
 				}else{
 					try{
-						interpreter.appendCode('\n'+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
+						interpreter.appendCode(' '+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
 					}catch(error){
 						postMessage({type: 'Fetal-Error', response: error.toString()});
 						return;
