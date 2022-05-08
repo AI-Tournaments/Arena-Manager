@@ -462,6 +462,23 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
+	static babelTransform(source){
+		return Babel.transform(source, {'presets': ['es2015']}).code;
+	}
+	static getBabelDependencies(includeScripts={}, urlsOnly=false){
+		let urls = [
+			includeScripts.urls.coreJsBundle,
+			includeScripts.urls.regeneratorRuntime
+		];
+		if(urlsOnly){
+			return urls;
+		}
+		let promises = [];
+		urls.forEach(url => {
+			promises.push(fetch(url).then(response => response.text()));
+		});
+		return Promise.allSettled(promises).then(promises => promises.map(r => r.value).join(';\n'));
+	}
 	static CreateWorkerFromRemoteURL(url='', includeScripts={}, seed){
 		function createObjectURL(javascript){
 			let blob;
