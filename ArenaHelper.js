@@ -479,7 +479,7 @@ class ArenaHelper{
 		});
 		return Promise.allSettled(promises).then(promises => promises.map(r => r.value).join(';\n'));
 	}
-	static CreateWorkerFromRemoteURL(url='', includeScripts={}, seed){
+	static CreateWorkerFromRemoteURL(url='', options={}, seed){
 		function createObjectURL(javascript){
 			let blob;
 			try{
@@ -493,11 +493,11 @@ class ArenaHelper{
 		}
 		return fetch(url).then(response => response.text()).then(jsCode => {
 			let _includeScripts = [];
-			if(includeScripts.system){
-				_includeScripts.push(...includeScripts.system);
+			if(options.system){
+				_includeScripts.push(...options.system);
 			}
-			if(includeScripts.modules){
-				_includeScripts.push(...includeScripts.modules);
+			if(options.modules){
+				_includeScripts.push(...options.modules);
 			}
 			let header = (()=>{
 				try{
