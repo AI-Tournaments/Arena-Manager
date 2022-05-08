@@ -1,9 +1,6 @@
 'use strict'
 let _stepCounter;
 onmessage = messageEvent => {
-	function babelTransform(source){
-		return Babel.transform(source, {'presets': ['es2015']}).code;
-	}
 	function getParticipantResponse(sendResponse=true){
 		_stepCounter = 0;
 		let stepsRemaining = 0 < generalSettings.executionSteps ? generalSettings.executionSteps : Infinity;
@@ -22,9 +19,9 @@ onmessage = messageEvent => {
 		}
 		return stepsRemaining;
 	}
-	function messageInterpreter(input, type='Post'){
+	function messageInterpreter(input){
 		let state = serialize(interpreter);
-		interpreter.appendCode('\nonmessage('+JSON.stringify({type: type, data: input})+');');
+		interpreter.appendCode('\nonmessage('+JSON.stringify(input)+');');
 		if(!getParticipantResponse()){
 			initNewInterpreter(state).then(()=>{
 				interpreter.appendCode('\nonmessage({"type": "Timeout-Rollback"});');
@@ -71,7 +68,7 @@ onmessage = messageEvent => {
 		let promise = new Promise(r => interpreterReady = r);
 		onmessage = messageEvent => {
 			promise.then(() => {
-				messageInterpreter(messageEvent.data.message);
+				messageInterpreter({type: 'Post', data: messageEvent.data.message});
 			});
 		};
 	})();
@@ -97,40 +94,43 @@ onmessage = messageEvent => {
 		});
 		participantSources.push(Promise.resolve(participantSource));
 		Promise.allSettled(dependencies).then(()=>{
-			initNewInterpreter = async state => {
-				interpreter = new Interpreter(babelTransform('Date = null; let onmessage = null;'), (interpreter, globalObject)=>{
-					interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
-					let math = interpreter.getProperty(globalObject, 'Math');
-					interpreter.setProperty(math, 'random', interpreter.createNativeFunction(random));
-				});
-				if(state){
-					deserialize(state, interpreter);
-				}else{
-					try{
-						interpreter.appendCode(' '+babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join('\n')));
-					}catch(error){
-						postMessage({type: 'Fetal-Error', response: error.toString()});
-						return;
-					}
-					let stepsRemaining = 0 < generalSettings.executionStepsInit ? generalSettings.executionStepsInit : Infinity;
-					while(stepsRemaining && interpreter.step()){ // Init participant.
-						stepsRemaining--;
-					}
-					if(stepsRemaining){
-						messageInterpreter(messageEvent.data.workerData, 'Settings'); // Init arena setup.
-						interpreterReady();
+			ArenaHelper.getBabelDependencies(messageEvent.data.includeScripts).then(babel => {
+				initNewInterpreter = async state => {
+					interpreter = new Interpreter(ArenaHelper.babelTransform('const __url=\''+messageEvent.data.url+'\';\nDate = null;\nlet onmessage = null;\n'+babel), (interpreter, globalObject)=>{
+						interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
+						let math = interpreter.getProperty(globalObject, 'Math');
+						interpreter.setProperty(math, 'random', interpreter.createNativeFunction(random));
+					});
+					if(state){
+						deserialize(state, interpreter);
 					}else{
-						throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
+						interpreter.run(); // Init interpreter.
+						try{
+							interpreter.appendCode(ArenaHelper.babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join(';\n')));
+						}catch(error){
+							postMessage({type: 'Fetal-Error', response: error.toString()});
+							return;
+						}
+						let stepsRemaining = 0 < generalSettings.executionStepsInit ? generalSettings.executionStepsInit : Infinity;
+						while(stepsRemaining && interpreter.step()){ // Init participant.
+							stepsRemaining--;
+						}
+						if(stepsRemaining){
+							messageInterpreter({type: 'Settings', ...messageEvent.data.workerData}); // Init arena setup.
+							interpreterReady();
+						}else{
+							throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
+						}
+						return interpreter;
 					}
-					return interpreter;
 				}
-			}
-			initNewInterpreter().then(i => {
-				if(i){
-					postMessage(null);
-				}
-			});
-		}).catch(error => {throw new Error(error)});
-	})
+				initNewInterpreter().then(i => {
+					if(i){
+						postMessage(null);
+					}
+				});
+			}).catch(error => {throw new Error(error)});
+		});
+	});
 };
 postMessage(null);
