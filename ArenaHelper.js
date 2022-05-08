@@ -514,23 +514,28 @@ class ArenaHelper{
 			}else{
 				header.dependencies = [];
 			}
-			let preCode = '';
+			let preCode = jsCode.toLowerCase().startsWith('use strict', 1) ? '"use strict"\n' : '';
 			if(_includeScripts.length){
-				preCode += `importScripts('${_includeScripts.join('\', \'')}'); `;
+				preCode += `importScripts('${_includeScripts.join('\', \'')}');\n`;
 			}
 			if(url.endsWith('/arena.js')){
-				preCode += 'ArenaHelper.preInit(); ';
+				preCode += 'ArenaHelper.preInit();\n';
 			}else if(seed){
-				preCode += 'Date = null; Math.seedrandom(\''+seed+'\'); delete Math.seedrandom; globalThis.onmessage=(m)=>{onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})}; let onmessage = null; let postMessage=(value,executionSteps=1)=>{globalThis.postMessage({value: value, executionSteps: executionSteps})}; globalThis.postMessage(null); ';
+				jsCode = jsCode.replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
+				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage');
+				preCode += 'Date = null;\nMath.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nvar _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nvar postMessage_native = globalThis.postMessage;\nvar postMessage=function(value,executionSteps=1){postMessage_native({value: value, executionSteps: executionSteps})};\npostMessage_native(null);\n';
 			}
 			if(header.dependencies.length){
-				preCode += `'importScripts('${header.dependencies.join('\', \'')}'); `;
+				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
-			let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
-			jsCode = (useStrict ? '\'use strict\'; ' : '') + 'const __url=\''+url+'\'; const __modules=[]; '+preCode+jsCode;
+			preCode = 'const __url=\''+url+'\';\nconst __modules=[];\n'+preCode+'// ?';
+			if(options.babel){
+				preCode += '?';
+				jsCode = ArenaHelper.babelTransform(jsCode);
+			}
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let urlObject = createObjectURL(jsCode);
+			let urlObject = createObjectURL(preCode+url+'\n'+jsCode);
 			let worker = new Worker(urlObject);
 			worker.onmessage = ()=>{URL.revokeObjectURL(urlObject); resolve(worker);};
 			return promise;

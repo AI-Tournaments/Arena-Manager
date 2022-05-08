@@ -3,11 +3,15 @@ function a(){
 	const EXTERNAL_RESOURCES = (()=>{
 		let version = {
 			'{babel}': 'standalone@7.16.12',
+			'{core-js-bundle}': '3.22.3',
+			'{regeneratorRuntime}': '0.13.9',
 			'{seedrandom}': '3.0.5',
 			'{NeilFraser/JS-Interpreter}': '92aeaa2fceb58159bc491c0983e7e1309dc1d421'
 		};
 		let resources = {
 			babel: 'https://unpkg.com/@babel/{babel}/babel.min.js',
+			coreJsBundle: 'https://cdn.jsdelivr.net/npm/core-js-bundle@{core-js-bundle}/minified.js',
+			regeneratorRuntime: 'https://cdn.jsdelivr.net/npm/regenerator-runtime@{regeneratorRuntime}/runtime.min.js',
 			seedrandom: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
 			jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/acorn.js',
 			jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/interpreter.js',
@@ -355,6 +359,8 @@ function a(){
 									let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
 									let name = repo.full_name.replace(arenaReplace,'');
 									addParticipantOption(url, name);
+									addParticipantOption('?'+url, '?'+name); // Debugging. DO NOT COMMIT!
+									addParticipantOption('??'+url, '??'+name); // Debugging. DO NOT COMMIT!
 								}
 							});
 						})
@@ -364,7 +370,7 @@ function a(){
 					}
 				});
 				Promise.allSettled(promises).then(() => {
-					sortOptions(availableParticipants_select);
+					// sortOptions(availableParticipants_select); // Debugging. DO NOT COMMIT!
 					arenaListReady();
 				})
 			});
