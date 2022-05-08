@@ -359,8 +359,6 @@ function a(){
 									let url = 'https://raw.githubusercontent.com/' + repo.full_name + '/' + repo.default_branch + '/' + file.path;
 									let name = repo.full_name.replace(arenaReplace,'');
 									addParticipantOption(url, name);
-									addParticipantOption('?'+url, '?'+name); // Debugging. DO NOT COMMIT!
-									addParticipantOption('??'+url, '??'+name); // Debugging. DO NOT COMMIT!
 								}
 							});
 						})
@@ -370,7 +368,7 @@ function a(){
 					}
 				});
 				Promise.allSettled(promises).then(() => {
-					// sortOptions(availableParticipants_select); // Debugging. DO NOT COMMIT!
+					sortOptions(availableParticipants_select);
 					arenaListReady();
 				})
 			});
