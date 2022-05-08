@@ -8,7 +8,7 @@ function a(){
 		};
 		let resources = {
 			babel: 'https://unpkg.com/@babel/{babel}/babel.min.js',
-			randomseed: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
+			seedrandom: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
 			jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/acorn.js',
 			jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/interpreter.js',
 			jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/demos/serialize.js'

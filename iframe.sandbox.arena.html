@@ -49,7 +49,7 @@
 								}
 							}
 						}
-						[_data.urls.ArenaHelper, _data.urls.randomseed].forEach(url => {
+						[_data.urls.ArenaHelper, _data.urls.seedrandom].forEach(url => {
 							let script = document.createElement('script');
 							let scriptLoaded;
 							_scriptLoaded_promises.push(new Promise(resolve => scriptLoaded = resolve));
@@ -114,7 +114,7 @@
 										for(let index = 0; index < _data.settings.general.bestOf; index++){
 											let arenaSetup;
 											arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
-											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.randomseed, _data.urls.ArenaHelper]}).then(arena => {
+											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
 												arenas.push(arena);
 												let readyToStart;
 												_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
@@ -149,7 +149,7 @@
 																		system: [
 																			_data.urls.babel,
 																			_data.urls.jsAcorn,
-																			_data.urls.randomseed,
+																			_data.urls.seedrandom,
 																			_data.urls.jsInterpreter,
 																			_data.urls.jsInterpreterSerializer
 																		]
