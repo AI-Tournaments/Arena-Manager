@@ -462,23 +462,6 @@ class ArenaHelper{
 			}).catch(error => _onError(error));
 		}
 	}
-	static babelTransform(source){
-		return Babel.transform(source, {'presets': ['es2015']}).code;
-	}
-	static getBabelDependencies(includeScripts={}, urlsOnly=false){
-		let urls = [
-			includeScripts.urls.coreJsBundle,
-			includeScripts.urls.regeneratorRuntime
-		];
-		if(urlsOnly){
-			return urls;
-		}
-		let promises = [];
-		urls.forEach(url => {
-			promises.push(fetch(url).then(response => response.text()));
-		});
-		return Promise.allSettled(promises).then(promises => promises.map(r => r.value).join(';\n'));
-	}
 	static CreateWorkerFromRemoteURL(url='', options={}, seed){
 		function createObjectURL(javascript){
 			let blob;
@@ -514,7 +497,8 @@ class ArenaHelper{
 			}else{
 				header.dependencies = [];
 			}
-			let preCode = jsCode.toLowerCase().startsWith('use strict', 1) ? '"use strict"\n' : '';
+			let useStrict = jsCode.toLowerCase().startsWith('use strict', 1);
+			let preCode = '';
 			if(_includeScripts.length){
 				preCode += `importScripts('${_includeScripts.join('\', \'')}');\n`;
 			}
@@ -523,19 +507,20 @@ class ArenaHelper{
 			}else if(seed){
 				jsCode = jsCode.replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
 				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage');
-				preCode += 'Date = null;\nMath.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nvar _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nvar postMessage_native = globalThis.postMessage;\nvar postMessage=function(value,executionSteps=1){postMessage_native({value: value, executionSteps: executionSteps})};\npostMessage_native(null);\n';
+				preCode += 'Math.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nvar _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nvar postMessage_native = globalThis.postMessage;\nvar postMessage=function(value,executionSteps=1){postMessage_native({value: value, executionSteps: executionSteps})};\npostMessage_native(null);\n';
 			}
 			if(header.dependencies.length){
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
-			preCode = 'const __url=\''+url+'\';\nconst __modules=[];\n'+preCode+'// ?';
-			if(options.babel){
-				preCode += '?';
-				jsCode = ArenaHelper.babelTransform(jsCode);
+			if(preCode){
+				if(useStrict){
+					preCode = '\'use strict\'\n' + preCode;
+				}
+				preCode = 'var __url=\''+url+'\';\nvar __modules=[];\n'+preCode+'// ?'+url+'\n';
 			}
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
-			let urlObject = createObjectURL(preCode+url+'\n'+jsCode);
+			let urlObject = createObjectURL(preCode+jsCode);
 			let worker = new Worker(urlObject);
 			worker.onmessage = ()=>{URL.revokeObjectURL(urlObject); resolve(worker);};
 			return promise;
