@@ -2,20 +2,12 @@
 function a(){
 	const EXTERNAL_RESOURCES = (()=>{
 		let version = {
-			'{babel}': 'standalone@7.16.12',
-			'{core-js-bundle}': '3.22.3',
-			'{regeneratorRuntime}': '0.13.9',
-			'{seedrandom}': '3.0.5',
-			'{NeilFraser/JS-Interpreter}': '92aeaa2fceb58159bc491c0983e7e1309dc1d421'
+			'{engine262}': 'ad1b2d2e4fd5024a05313e740f084a46acf20564',
+			'{seedrandom}': '3.0.5'
 		};
 		let resources = {
-			babel: 'https://unpkg.com/@babel/{babel}/babel.min.js',
-			coreJsBundle: 'https://cdn.jsdelivr.net/npm/core-js-bundle@{core-js-bundle}/minified.js',
-			regeneratorRuntime: 'https://cdn.jsdelivr.net/npm/regenerator-runtime@{regeneratorRuntime}/runtime.min.js',
-			seedrandom: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js',
-			jsAcorn: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/acorn.js',
-			jsInterpreter: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/interpreter.js',
-			jsInterpreterSerializer: 'https://raw.githubusercontent.com/NeilFraser/JS-Interpreter/{NeilFraser/JS-Interpreter}/demos/serialize.js'
+			engine262: 'https://raw.githubusercontent.com/engine262/engine262/{engine262}/engine262.js',
+			seedrandom: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js'
 		}
 		for(const resourceKey in resources){
 			if(Object.hasOwnProperty.call(resources, resourceKey)){
@@ -265,6 +257,13 @@ function a(){
 			}
 			_replayData = {
 				header: {
+					id: {
+						salt_: Math.random(),
+						timestamp: Date.now()
+					},
+					meta: {
+						host: document.location.host
+					},
 					defaultReplay: localArenas[_json.raw_url] ?? messageEvent.data.defaultReplay
 				},
 				body: messageEvent.data.value

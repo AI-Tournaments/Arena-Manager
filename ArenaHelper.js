@@ -49,24 +49,25 @@ class ArenaHelper{
 		switch(event){
 			default: throw new Error('Response-Event "'+event+'" not found.');
 			case 'Response': ArenaHelper.#participants_onMessage(source, payload); break;
+			case 'Init-Error':
 			case 'Fetal-Error':
 			case 'Response-Error':
 				if(ArenaHelper.localDevelopment){
 					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 					console.error(event, 'Error occurred in message '+payload.messageIndex+' for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".\n'+payload.message);
 				}
-				ArenaHelper.#participants_onError(source, payload);
+				ArenaHelper.#participants_onError(event, source, payload);
 				break;
 			case 'Response-Timeout':
 				if(ArenaHelper.localDevelopment){
 					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-					console.warn('Response-Timeout', 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".');
+					console.warn(event, 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".');
 				}
 				ArenaHelper.#participants_onMessageTimeout(source, payload);
 				break;
 			case 'Worker-Created': ArenaHelper.#participants_workerCreated(source); break;
 		}
-		while(ArenaHelper.#responseQueue.length && ArenaHelper.#responseQueue[0].done !== null){
+		while(ArenaHelper.#responseQueue.length && ArenaHelper.#responseQueue[0].done){
 			let queueItem = ArenaHelper.#responseQueue[0];
 			queueItem.done({responseReceived: queueItem.responseReceived});
 			ArenaHelper.#responseQueue.splice(0, 1);
@@ -240,14 +241,14 @@ class ArenaHelper{
 			let wrappers = [];
 			ArenaHelper.#setParticipants(this);
 			ArenaHelper.#participants_getParticipantWrapper = source => _teams[source.participant[0]].members[source.participant[1]];
-			ArenaHelper.#participants_onError = (source, payload) => {
+			ArenaHelper.#participants_onError = (event, source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				if(typeof payload.messageIndex === 'number'){
 					ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name).then(pendingMessage => {
 						pendingMessage.responseReceived(new ResponseError({participant: participantWrapper.participant, workerName: source.name}));
 					});
 				}else{
-					ArenaHelper.postAbort('Fatal-Error', 'participant: '+participantWrapper.participant.name+'\nworker: '+source.name+'\n'+payload.message);
+					ArenaHelper.postAbort(event, 'participant: '+participantWrapper.participant.name+'\nworker: '+source.name+'\n'+payload.message);
 				}
 			}
 			ArenaHelper.#participants_onMessage = (source, payload) => {

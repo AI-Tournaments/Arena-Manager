@@ -1,48 +1,93 @@
 'use strict'
-let _stepCounter;
-onmessage = messageEvent => {
-	function getParticipantResponse(sendResponse=true){
-		_stepCounter = 0;
-		let stepsRemaining = 0 < generalSettings.executionSteps ? generalSettings.executionSteps : Infinity;
+let _url;
+let _interpreter;
+let _pendingMessage;
+let _localDevelopment;
+class Messenger {
+	static #state = ''; // TODO: Replace with: https://github.com/engine262/engine262/issues/191
+	static #stepsInit;
+	static #stepsRemaining = 0;
+	static #responseTimeout = Error();
+	static messageInProgress = false;
+	static tick(){
+		if(Messenger.#stepsRemaining-- < 1){
+			throw Messenger.#responseTimeout;
+		}
+	}
+	static getStepsUsed(){
+		return Messenger.#stepsInit - Messenger.#stepsRemaining;
+	}
+	static async messageInterpreter(input, executionSteps=NaN){
+		if(Messenger.messageInProgress){
+			throw Error('Message in progress');
+		}
+		if(isNaN(executionSteps)){
+			throw Error('Input `executionSteps` is not a number');
+		}
+		Messenger.messageInProgress = true;
+		Messenger.#stepsInit = Messenger.#stepsRemaining = executionSteps;
+		if(typeof input !== 'string'){
+			input = 'onmessage('+JSON.stringify(input)+');';
+		}
+		if(!Messenger.#state){
+			input = '\n'+input;
+		}
+		await new Promise(r=>{setTimeout(()=>{r()})}); // Micro sleep
+		let response;
 		try{
-			while(stepsRemaining-_stepCounter && interpreter.step()){
-				_stepCounter++;
+			response = _interpreter.evaluateScript(input);
+			if(response.Type !== 'throw'){
+				Messenger.#state += input;
 			}
 		}catch(error){
-			if(sendResponse){
-				postMessage({type: 'Response-Error', response: error.toString()});
-			}else{
-				if(localDevelopment){
-					console.error('Response-Error', error);
-				}
-			}
+			response = error;
 		}
-		return stepsRemaining;
-	}
-	function messageInterpreter(input){
-		let state = serialize(interpreter);
-		interpreter.appendCode('\nonmessage('+JSON.stringify(input)+');');
-		if(!getParticipantResponse()){
-			initNewInterpreter(state).then(()=>{
-				interpreter.appendCode('\nonmessage({"type": "Timeout-Rollback"});');
-				if(getParticipantResponse(false)){
-					sendTimeout();
+		try{
+			if(response === Messenger.#responseTimeout){
+				Messenger.#stepsRemaining = Infinity;
+				await initNewInterpreter(Messenger.#state);
+				Messenger.#stepsRemaining = executionSteps;
+				let timeoutMessage = '\nonmessage({"type": "Timeout-Rollback"});';
+				try{
+					response = _interpreter.evaluateScript(timeoutMessage);
+				}catch(error){}
+				if(response !== Messenger.#responseTimeout && response.Type !== 'throw'){
+					Messenger.#state += timeoutMessage;
 				}else{
-					initNewInterpreter(state).then(()=>{
-						sendTimeout();
-					});
+					Messenger.#stepsRemaining = Infinity;
+					await initNewInterpreter(Messenger.#state);
+					if(_localDevelopment){
+						console.error('Missed timeout message', Messenger.#state+timeoutMessage);
+					}
 				}
-			});
+				throw {type: 'Response-Timeout', response: 'Response timeout'};
+			}else if(response.Type === 'throw'){
+				throw {type: 'Response-Error', response: response.Value.properties.map.get('message').Value.string};
+			}
+		}catch(error){
+			throw error;
+		}finally{
+			Messenger.messageInProgress = false;
 		}
+	};
+}
+let initNewInterpreter = ()=>{};
+onmessage = messageEvent => {
+	_url = messageEvent.data.url;
+	function onResponse(response){
+		if(!response.length){
+			throw Error('No response');
+		}
+		let data = response[0];
+		if(data.constructor.name !== 'StringValue'){ // Until `response` can easily be converted into all types.
+			throw Error('Response is not String');
+		}
+		let value = data.string;
+		try{
+			value = JSON.parse(value); // Until `response` can easily be converted into all types.
+		}catch(e){}
+		_pendingMessage.then(()=>{postMessage({type: 'Response', response: {value: value, executionSteps: Messenger.getStepsUsed()}})});
 	}
-	function sendResponse(data){
-		postMessage({type: 'Response', response: {value: data, executionSteps: _stepCounter}});
-	}
-	function sendTimeout(){
-		postMessage({type: 'Response-Timeout'});
-	}
-	let initNewInterpreter = ()=>{};
-	let random;
 	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
 	Promise.allSettled(dependencies).then(results => {
 		importScripts(...results.map(r => {
@@ -58,21 +103,22 @@ onmessage = messageEvent => {
 			setTimeout(()=>{URL.revokeObjectURL(urlObject);},10000); // Script does not work if urlObject is removed to early.
 			return urlObject;
 		}));
-		random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId);
 	});
+	_localDevelopment = messageEvent.data.localDevelopment;
 	let generalSettings = messageEvent.data.workerData.settings.general;
-	let localDevelopment = messageEvent.data.localDevelopment;
-	let interpreter;
+	let executionLimit = 0 < generalSettings.executionStepsInit ? generalSettings.executionStepsInit : Infinity;
 	let interpreterReady;
 	(()=>{
 		let promise = new Promise(r => interpreterReady = r);
 		onmessage = messageEvent => {
 			promise.then(() => {
-				messageInterpreter({type: 'Post', data: messageEvent.data.message});
+				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).catch(errorMessage => {
+					postMessage(errorMessage);
+				});
 			});
 		};
 	})();
-	fetch(messageEvent.data.url).then(response => response.text()).then(participantSource => {
+	fetch(_url).then(response => response.text()).then(participantSource => {
 		let header = (()=>{
 			try{
 				return JSON.parse(participantSource.substring(participantSource.indexOf('/**')+3, participantSource.indexOf('**/')));
@@ -81,7 +127,7 @@ onmessage = messageEvent => {
 			}
 		})();
 		if(header.dependencies){
-			let scope = messageEvent.data.url.slice(0, messageEvent.data.url.lastIndexOf('/')+1);
+			let scope = _url.slice(0, _url.lastIndexOf('/')+1);
 			header.dependencies.forEach((dependency, index) => {
 				header.dependencies[index] = scope + dependency;
 			});
@@ -94,42 +140,45 @@ onmessage = messageEvent => {
 		});
 		participantSources.push(Promise.resolve(participantSource));
 		Promise.allSettled(dependencies).then(()=>{
-			ArenaHelper.getBabelDependencies(messageEvent.data.includeScripts).then(babel => {
-				initNewInterpreter = async state => {
-					interpreter = new Interpreter(ArenaHelper.babelTransform('const __url=\''+messageEvent.data.url+'\';\nDate = null;\nlet onmessage = null;\n'+babel), (interpreter, globalObject)=>{
-						interpreter.setProperty(globalObject, 'postMessage', interpreter.createNativeFunction(sendResponse));
-						let math = interpreter.getProperty(globalObject, 'Math');
-						interpreter.setProperty(math, 'random', interpreter.createNativeFunction(random));
-					});
-					if(state){
-						deserialize(state, interpreter);
-					}else{
-						interpreter.run(); // Init interpreter.
-						try{
-							interpreter.appendCode(ArenaHelper.babelTransform((await Promise.allSettled(participantSources)).map(r => r.value).join(';\n')));
-						}catch(error){
-							postMessage({type: 'Fetal-Error', response: error.toString()});
-							return;
-						}
-						let stepsRemaining = 0 < generalSettings.executionStepsInit ? generalSettings.executionStepsInit : Infinity;
-						while(stepsRemaining && interpreter.step()){ // Init participant.
-							stepsRemaining--;
-						}
-						if(stepsRemaining){
-							messageInterpreter({type: 'Settings', ...messageEvent.data.workerData}); // Init arena setup.
-							interpreterReady();
-						}else{
-							throw new Error('Init participant ('+messageEvent.data.url+') timeout.');
-						}
-						return interpreter;
-					}
+			const {
+				Agent,
+				setSurroundingAgent,
+				ManagedRealm,
+				Value,
+				Get,
+				CreateDataProperty
+			} = self['@engine262/engine262'];
+			setSurroundingAgent(new Agent({
+				onNodeEvaluation(){
+					Messenger.tick();
 				}
-				initNewInterpreter().then(i => {
-					if(i){
-						postMessage(null);
-					}
+			}));
+			initNewInterpreter = async state => {
+				let random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.iframeId);
+				_interpreter = new ManagedRealm({});
+				_interpreter.scope(() => {
+					CreateDataProperty(_interpreter.GlobalObject, new Value('postMessage'), new Value(onResponse));
+					let math = Get(_interpreter.GlobalObject, new Value('Math'));
+					CreateDataProperty(math.Value, new Value('random'), new Value(()=>{return new Value(random())}));
 				});
-			}).catch(error => {throw new Error(error)});
+				if(state){
+					_interpreter.evaluateScript(state);
+				}else{
+					await Messenger.messageInterpreter('var __url=\''+_url+'\';\nvar onmessage = null;', Infinity);
+					await Messenger.messageInterpreter((await Promise.allSettled(participantSources)).map(r => r.value).join(';\n'), executionLimit).catch(errorMessage => {
+						postMessage({type: 'Fetal-Error', response: errorMessage.response});
+					});
+					await Messenger.messageInterpreter({type: 'Settings', ...messageEvent.data.workerData}, executionLimit).then(()=>{
+						interpreterReady();
+					}).catch(errorMessage => {
+						throw new Error('Participant ('+_url+') initiation failed: '+errorMessage.response);
+					});
+					return _interpreter;
+				}
+			}
+			initNewInterpreter().then(()=>{
+				postMessage(null);
+			}).catch(error => {postMessage({type: 'Init-Error', response: error})});
 		});
 	});
 };

@@ -97,23 +97,13 @@
 								/** URL:s that begins with a question mark (?) is reserved for plain javascript that can be debugged. */
 								window.onmessage = messageEvent => messageEventToWorker(messageEvent);
 								let url = messageEvent.data.url.substr(1);
-								let babel = url.startsWith('?');
-								let systemUrls = [messageEvent.data.includeScripts.urls.seedrandom];
-								let wait = Promise.resolve();
-								if(babel){
-									url = url.substr(1);
-									wait = addScript(messageEvent.data.includeScripts.urls.babel);
-									systemUrls.push(...ArenaHelper.getBabelDependencies(messageEvent.data.includeScripts, true));
-								}
-								wait.then(() => {
-									ArenaHelper.CreateWorkerFromRemoteURL(url, {babel: babel, system: systemUrls}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
-										_worker = worker;
-										_worker.onmessage = m=>{
-											respond('Response', m.data);
-										}
-										messageEventToWorker(messageEvent);
-										respond('Worker-Created');
-									});
+								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: [messageEvent.data.includeScripts.urls.seedrandom]}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
+									_worker = worker;
+									_worker.onmessage = m=>{
+										respond('Response', m.data);
+									}
+									messageEventToWorker(messageEvent);
+									respond('Worker-Created');
 								});
 							}else{
 								window.onmessage = messageEvent => messageEventToWorker(messageEvent);

@@ -141,6 +141,7 @@
 																iframe.contentWindow.postMessage({
 																	url: data.url,
 																	name: data.name,
+																	iframeId: data.iframeId,
 																	participant: data.participant,
 																	localDevelopment: _data.localDevelopment,
 																	workerData: data.workerData,
@@ -148,12 +149,9 @@
 																		urls: _data.urls,
 																		modules: _modules,
 																		system: [
-																			_data.urls.babel,
-																			_data.urls.jsAcorn,
+																			_data.urls.engine262,
 																			_data.urls.seedrandom,
-																			_data.urls.ArenaHelper,
-																			_data.urls.jsInterpreter,
-																			_data.urls.jsInterpreterSerializer
+																			_data.urls.ArenaHelper
 																		]
 																	}
 																}, '*');
