@@ -62,7 +62,11 @@ class Messenger {
 				}
 				throw {type: 'Response-Timeout', response: 'Response timeout'};
 			}else if(response.Type === 'throw'){
-				throw {type: 'Response-Error', response: response.Value.properties.map.get('message').Value.string};
+				let message = response.Value.string;
+				if(!message){
+					response.Value.properties.map.get('message').Value.string;
+				}
+				throw {type: 'Response-Error', response: message};
 			}
 		}catch(error){
 			throw error;
@@ -86,7 +90,8 @@ onmessage = messageEvent => {
 		try{
 			value = JSON.parse(value); // Until `response` can easily be converted into all types.
 		}catch(e){}
-		_pendingMessage.then(()=>{postMessage({type: 'Response', response: {value: value, executionSteps: Messenger.getStepsUsed()}})});
+		_pendingMessage.then(()=>{postMessage({type: 'Response', response: {value: value, executionSteps: Messenger.getStepsUsed(),
+			used: NaN}})}); // TODO: GET ! ! ! !
 	}
 	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
 	Promise.allSettled(dependencies).then(results => {
