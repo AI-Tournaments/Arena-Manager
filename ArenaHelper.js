@@ -131,8 +131,6 @@ class ArenaHelper{
 		onMessageWatcher();
 		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
 		self.addEventListener('unhandledrejection', function(promiseRejectionEvent){
-			let nameArray = __url.split('.').slice(-2)[0].split('/');
-			nameArray = nameArray.slice(Math.max(nameArray.length-2, 0));
 			let message;
 			if(promiseRejectionEvent.reason.stack){
 				let stack = promiseRejectionEvent.reason.stack.split('\n');
@@ -140,7 +138,7 @@ class ArenaHelper{
 			}else{
 				message = promiseRejectionEvent.reason;
 			}
-			ArenaHelper.postAbort(nameArray.join('/'), message);
+			ArenaHelper.postAbort('Arena', message);
 		});
 		ArenaHelper.#postMessage(null);
 	}
@@ -246,7 +244,7 @@ class ArenaHelper{
 				if(typeof payload.messageIndex === 'number'){
 					ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name).then(pendingMessage => {
 						pendingMessage.responseReceived(new ResponseError({participant: participantWrapper.participant, workerName: source.name}));
-					});
+					}).catch(()=>{});
 				}else{
 					ArenaHelper.postAbort(event, 'participant: '+participantWrapper.participant.name+'\nworker: '+source.name+'\n'+payload.message);
 				}
@@ -255,13 +253,13 @@ class ArenaHelper{
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
 					pendingMessage.responseReceived(new ResponseMessage({participant: participantWrapper.participant, workerName: source.name, message: {data: payload.message.value, ticks: payload.message.executionSteps}}));
-				});
+				}).catch(()=>{});
 			}
 			ArenaHelper.#participants_onMessageTimeout = (source, payload) => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
 				ArenaHelper.Participants.#getPendingMessage(participantWrapper, source.name, payload.index).then(pendingMessage => {
 					pendingMessage.responseReceived(new ResponseTimeout({participant: participantWrapper.participant, workerName: source.name}));
-				});
+				}).catch(()=>{});
 			}
 			ArenaHelper.#participants_workerCreated = source => {
 				let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
