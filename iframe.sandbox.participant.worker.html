@@ -109,9 +109,6 @@
 								window.onmessage = messageEvent => messageEventToWorker(messageEvent);
 								ArenaHelper.CreateWorkerFromRemoteURL('ParticipantWorker.js').then(worker=>{
 									_worker = worker;
-									_worker.onerror = messageEvent => {
-										throw new Error(messageEvent.data); // Message type "Event" is depredated.
-									}
 									_worker.onmessage = m=>{
 										if(m.data){
 											respond(m.data.type, m.data.response);
