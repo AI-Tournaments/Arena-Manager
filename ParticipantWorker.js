@@ -79,6 +79,10 @@ let initNewInterpreter = ()=>{};
 onmessage = messageEvent => {
 	_url = messageEvent.data.url;
 	function onResponse(response){
+		if(!_pendingMessage){
+			console.warn('Response to message already received. Skipped.');
+			return;
+		}
 		if(!response.length){
 			throw Error('No response');
 		}
@@ -101,6 +105,7 @@ onmessage = messageEvent => {
 				}
 			}
 		})});
+		_pendingMessage = null;
 	}
 	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
 	Promise.allSettled(dependencies).then(results => {
