@@ -97,7 +97,7 @@ onmessage = messageEvent => {
 				value: value,
 				executionSteps: {
 					toRespond: usedSteps,
-					total: Messenger.getStepsUsed()
+					toTerminate: Messenger.getStepsUsed()
 				}
 			}
 		})});
