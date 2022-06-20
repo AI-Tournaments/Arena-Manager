@@ -90,8 +90,17 @@ onmessage = messageEvent => {
 		try{
 			value = JSON.parse(value); // Until `response` can easily be converted into all types.
 		}catch(e){}
-		_pendingMessage.then(()=>{postMessage({type: 'Response', response: {value: value, executionSteps: Messenger.getStepsUsed(),
-			used: NaN}})}); // TODO: GET ! ! ! !
+		let usedSteps = Messenger.getStepsUsed();
+		_pendingMessage.then(()=>{postMessage({
+			type: 'Response',
+			response: {
+				value: value,
+				executionSteps: {
+					toRespond: usedSteps,
+					total: Messenger.getStepsUsed()
+				}
+			}
+		})});
 	}
 	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
 	Promise.allSettled(dependencies).then(results => {
