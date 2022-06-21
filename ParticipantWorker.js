@@ -79,28 +79,34 @@ let initNewInterpreter = ()=>{};
 onmessage = messageEvent => {
 	_url = messageEvent.data.url;
 	function onResponse(response){
-		if(!_pendingMessage){
+		function logResponseAlreadyReceived(){
 			console.warn('Response to message already received. Skipped.');
+		}
+		function getValue(response){
+			if(!response.length){
+				throw Error('No response');
+			}
+			let data = response[0];
+			if(data.constructor.name !== 'StringValue'){
+				throw Error('Response is not String'); // Until `response` can easily be converted into all types.
+			}
+			let value = data.string;
+			try{
+				value = JSON.parse(value);
+			}catch(e){}
+			return value;
+		}
+		if(!_pendingMessage){
+			logResponseAlreadyReceived();
 			return;
 		}
-		if(!response.length){
-			throw Error('No response');
-		}
-		let data = response[0];
-		if(data.constructor.name !== 'StringValue'){ // Until `response` can easily be converted into all types.
-			throw Error('Response is not String');
-		}
-		let value = data.string;
-		try{
-			value = JSON.parse(value); // Until `response` can easily be converted into all types.
-		}catch(e){}
 		let usedSteps = Messenger.getStepsUsed();
 		_pendingMessage.then(()=>{
 			if(_pendingMessage === null){
 				postMessage({
 					type: 'Response',
 					response: {
-						value: value,
+						value: getValue(response),
 						executionSteps: {
 							toRespond: usedSteps,
 							toTerminate: Messenger.getStepsUsed()
@@ -108,7 +114,7 @@ onmessage = messageEvent => {
 					}
 				});
 			}else{
-				console.warn('Response to message already received. Skipped.');
+				logResponseAlreadyReceived();
 			}
 		});
 		_pendingMessage = null;
