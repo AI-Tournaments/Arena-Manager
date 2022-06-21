@@ -95,16 +95,22 @@ onmessage = messageEvent => {
 			value = JSON.parse(value); // Until `response` can easily be converted into all types.
 		}catch(e){}
 		let usedSteps = Messenger.getStepsUsed();
-		_pendingMessage.then(()=>{postMessage({
-			type: 'Response',
-			response: {
-				value: value,
-				executionSteps: {
-					toRespond: usedSteps,
-					toTerminate: Messenger.getStepsUsed()
-				}
+		_pendingMessage.then(()=>{
+			if(_pendingMessage === null){
+				postMessage({
+					type: 'Response',
+					response: {
+						value: value,
+						executionSteps: {
+							toRespond: usedSteps,
+							toTerminate: Messenger.getStepsUsed()
+						}
+					}
+				});
+			}else{
+				console.warn('Response to message already received. Skipped.');
 			}
-		})});
+		});
 		_pendingMessage = null;
 	}
 	let dependencies = messageEvent.data.includeScripts.system.map(url => fetch(url).then(response => response.text()));
@@ -132,6 +138,7 @@ onmessage = messageEvent => {
 		onmessage = messageEvent => {
 			promise.then(() => {
 				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).catch(errorMessage => {
+					_pendingMessage = false;
 					postMessage(errorMessage);
 				});
 			});
