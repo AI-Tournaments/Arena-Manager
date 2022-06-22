@@ -506,7 +506,7 @@ class ArenaHelper{
 			}else if(seed){
 				jsCode = jsCode.replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
 				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage');
-				preCode += 'Math.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nvar _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nvar postMessage_native = globalThis.postMessage;\nvar postMessage=function(value,executionSteps=1){postMessage_native({value: value, executionSteps: executionSteps})};\npostMessage_native(null);\n';
+				preCode += 'Math.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nlet _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nlet postMessage_native = globalThis.postMessage;\nlet postMessage=function(value,toRespond=1,toTerminate=2){postMessage_native({value: value, executionSteps: {toRespond, toTerminate}})};\npostMessage_native(null);\n';
 			}
 			if(header.dependencies.length){
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
@@ -515,7 +515,7 @@ class ArenaHelper{
 				if(useStrict){
 					preCode = '\'use strict\'\n' + preCode;
 				}
-				preCode = 'var __url=\''+url+'\';\nvar __modules=[];\n'+preCode+'// ?'+url+'\n';
+				preCode = 'let __url=\''+url+'\';\nlet __modules=[];\n'+preCode+'// ?'+url+'\n';
 			}
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);
