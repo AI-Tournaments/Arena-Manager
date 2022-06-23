@@ -88,7 +88,7 @@ onmessage = messageEvent => {
 			}
 			let data = response[0];
 			if(data.constructor.name !== 'StringValue'){
-				throw Error('Response is not String'); // Until `response` can easily be converted into all types.
+				throw Error('Response is not String'); // Until `response` can easily be converted into all types. https://github.com/engine262/engine262/issues/193
 			}
 			let value = data.string;
 			try{
