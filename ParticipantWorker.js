@@ -17,8 +17,11 @@ class Messenger {
 			}
 		}
 	}
-	static toggleCounter(value){
-		Messenger.#doCount = value === undefined ? !Messenger.#doCount : value;
+	static countExecutionSteps(value){
+		if(typeof value !== 'boolean'){
+			throw new Error('Value not boolean');
+		}
+		Messenger.#doCount = value;
 	}
 	static getStepsUsed(){
 		return Messenger.#stepsInit - Messenger.#stepsRemaining;
@@ -30,7 +33,7 @@ class Messenger {
 		if(isNaN(executionSteps)){
 			throw Error('Input `executionSteps` is not a number');
 		}
-		Messenger.toggleCounter(true);
+		Messenger.countExecutionSteps(true);
 		Messenger.messageInProgress = true;
 		Messenger.#stepsInit = Messenger.#stepsRemaining = executionSteps;
 		if(typeof input !== 'string'){
@@ -188,17 +191,17 @@ onmessage = messageEvent => {
 				let random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.iframeId);
 				_interpreter = new ManagedRealm({});
 				let postMessageName = '_'+Date.now()+'_postMessage';
-				let toggleCounterName = '_'+Date.now()+'_toggleCounter';
+				let countExecutionStepsName = '_'+Date.now()+'_countExecutionSteps';
 				_interpreter.scope(() => {
 					CreateDataProperty(_interpreter.GlobalObject, new Value(postMessageName), new Value(onResponse));
-					CreateDataProperty(_interpreter.GlobalObject, new Value(toggleCounterName), new Value(Messenger.toggleCounter));
+					CreateDataProperty(_interpreter.GlobalObject, new Value(countExecutionStepsName), new Value(Messenger.countExecutionSteps));
 					let math = Get(_interpreter.GlobalObject, new Value('Math'));
 					CreateDataProperty(math.Value, new Value('random'), new Value(()=>{return new Value(random())}));
 				});
 				if(state){
 					_interpreter.evaluateScript(state);
 				}else{
-					await Messenger.messageInterpreter('let __url=\''+_url+'\';\nlet onmessage = null; function postMessage(input){'+toggleCounterName+'(); '+postMessageName+'(JSON.stringify(input)); '+toggleCounterName+'();}', Infinity);
+					await Messenger.messageInterpreter('let __url=\''+_url+'\';\nlet onmessage = null; function postMessage(input){'+countExecutionStepsName+'(false); '+postMessageName+'(JSON.stringify(input)); '+countExecutionStepsName+'(true);}', Infinity);
 					await Messenger.messageInterpreter((await Promise.allSettled(participantSources)).map(r => r.value).join(';\n'), executionLimit).catch(errorMessage => {
 						postMessage({type: 'Fetal-Error', response: errorMessage.response});
 					});
