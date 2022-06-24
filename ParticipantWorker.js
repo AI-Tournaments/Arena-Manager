@@ -8,11 +8,17 @@ class Messenger {
 	static #stepsInit;
 	static #stepsRemaining = 0;
 	static #responseTimeout = Error();
+	static #doCount = true;
 	static messageInProgress = false;
 	static tick(){
-		if(Messenger.#stepsRemaining-- < 1){
-			throw Messenger.#responseTimeout;
+		if(Messenger.#doCount){
+			if(Messenger.#stepsRemaining-- < 1){
+				throw Messenger.#responseTimeout;
+			}
 		}
+	}
+	static toggleCounter(value){
+		Messenger.#doCount = value === undefined ? !Messenger.#doCount : value;
 	}
 	static getStepsUsed(){
 		return Messenger.#stepsInit - Messenger.#stepsRemaining;
@@ -24,6 +30,7 @@ class Messenger {
 		if(isNaN(executionSteps)){
 			throw Error('Input `executionSteps` is not a number');
 		}
+		Messenger.toggleCounter(true);
 		Messenger.messageInProgress = true;
 		Messenger.#stepsInit = Messenger.#stepsRemaining = executionSteps;
 		if(typeof input !== 'string'){
@@ -86,12 +93,7 @@ onmessage = messageEvent => {
 			if(!response.length){
 				throw Error('No response');
 			}
-			let data = response[0];
-			switch(data.constructor.name){
-				default: throw Error('Invalid response type'); // Until `response` can easily be converted into all types. https://github.com/engine262/engine262/issues/193
-				case 'StringValue': return data.string;
-				case 'NumberValue': return data.number;
-			}
+			return JSON.parse(response[0].string);
 		}
 		if(!_pendingMessage){
 			logResponseAlreadyReceived();
@@ -185,15 +187,18 @@ onmessage = messageEvent => {
 			initNewInterpreter = async state => {
 				let random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.iframeId);
 				_interpreter = new ManagedRealm({});
+				let postMessageName = '_'+Date.now()+'_postMessage';
+				let toggleCounterName = '_'+Date.now()+'_toggleCounter';
 				_interpreter.scope(() => {
-					CreateDataProperty(_interpreter.GlobalObject, new Value('postMessage'), new Value(onResponse));
+					CreateDataProperty(_interpreter.GlobalObject, new Value(postMessageName), new Value(onResponse));
+					CreateDataProperty(_interpreter.GlobalObject, new Value(toggleCounterName), new Value(Messenger.toggleCounter));
 					let math = Get(_interpreter.GlobalObject, new Value('Math'));
 					CreateDataProperty(math.Value, new Value('random'), new Value(()=>{return new Value(random())}));
 				});
 				if(state){
 					_interpreter.evaluateScript(state);
 				}else{
-					await Messenger.messageInterpreter('var __url=\''+_url+'\';\nvar onmessage = null;', Infinity);
+					await Messenger.messageInterpreter('let __url=\''+_url+'\';\nlet onmessage = null; function postMessage(input){'+toggleCounterName+'(); '+postMessageName+'(JSON.stringify(input)); '+toggleCounterName+'();}', Infinity);
 					await Messenger.messageInterpreter((await Promise.allSettled(participantSources)).map(r => r.value).join(';\n'), executionLimit).catch(errorMessage => {
 						postMessage({type: 'Fetal-Error', response: errorMessage.response});
 					});
