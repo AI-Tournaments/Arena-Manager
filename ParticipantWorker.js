@@ -87,14 +87,11 @@ onmessage = messageEvent => {
 				throw Error('No response');
 			}
 			let data = response[0];
-			if(data.constructor.name !== 'StringValue'){
-				throw Error('Response is not String'); // Until `response` can easily be converted into all types. https://github.com/engine262/engine262/issues/193
+			switch(data.constructor.name){
+				default: throw Error('Invalid response type'); // Until `response` can easily be converted into all types. https://github.com/engine262/engine262/issues/193
+				case 'StringValue': return data.string;
+				case 'NumberValue': return data.number;
 			}
-			let value = data.string;
-			try{
-				value = JSON.parse(value);
-			}catch(e){}
-			return value;
 		}
 		if(!_pendingMessage){
 			logResponseAlreadyReceived();
