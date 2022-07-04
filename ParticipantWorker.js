@@ -153,7 +153,12 @@ onmessage = messageEvent => {
 		let promise = new Promise(r => interpreterReady = r);
 		onmessage = messageEvent => {
 			promise.then(() => {
-				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).catch(errorMessage => {
+				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).then(()=>{
+					if(_pendingMessage){
+						_pendingMessage = false;
+						postMessage({type: 'Response-Timeout', response: 'No response'});
+					}
+				}).catch(errorMessage => {
 					_pendingMessage = false;
 					postMessage(errorMessage);
 				});
