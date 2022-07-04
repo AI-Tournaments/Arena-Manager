@@ -19,7 +19,7 @@ class Messenger {
 	}
 	static countExecutionSteps(value){
 		if(typeof value === 'boolean'){
-		Messenger.#doCount = value;
+			Messenger.#doCount = value;
 			return;
 		}
 		try{
