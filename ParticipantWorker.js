@@ -96,7 +96,9 @@ onmessage = messageEvent => {
 	_url = messageEvent.data.url;
 	function onResponse(response){
 		function logResponseAlreadyReceived(){
-			console.warn('Response to message already received. Skipped.');
+			if(_localDevelopment){
+				console.warn('Response to message already received. Skipped.', _url);
+			}
 		}
 		function getValue(response){
 			if(!response.length){
