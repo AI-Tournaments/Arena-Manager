@@ -61,7 +61,7 @@ class ArenaHelper{
 			case 'Response-Timeout':
 				if(ArenaHelper.localDevelopment){
 					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-					console.warn(event, 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".');
+					console.warn(event, 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'", reason "'+payload.message+'".');
 				}
 				ArenaHelper.#participants_onMessageTimeout(source, payload);
 				break;
