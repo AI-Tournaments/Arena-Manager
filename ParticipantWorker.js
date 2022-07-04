@@ -18,10 +18,16 @@ class Messenger {
 		}
 	}
 	static countExecutionSteps(value){
-		if(typeof value !== 'boolean'){
-			throw new Error('Value not boolean');
-		}
+		if(typeof value === 'boolean'){
 		Messenger.#doCount = value;
+			return;
+		}
+		try{
+			Messenger.#doCount = value[0].boolean;
+		}catch(error){
+			console.error('FATAL', 'Value not boolean');
+			throw error;
+		}
 	}
 	static getStepsUsed(){
 		return Messenger.#stepsInit - Messenger.#stepsRemaining;
