@@ -76,7 +76,7 @@ class Messenger {
 						console.error('Missed timeout message', Messenger.#state+timeoutMessage);
 					}
 				}
-				throw {type: 'Response-Timeout', response: 'Response timeout'};
+				throw {type: 'Response-Timeout', response: 'Did not finish in time'};
 			}else if(response.Type === 'throw'){
 				let message = response.Value.string;
 				if(!message){
