@@ -34,7 +34,7 @@
 				}
 				let scriptLoaded_promise = addScript(decodeURI(location.hash.substring(1)));
 				if(isIframe()){
-					let pauseBeforeFirstMessage;
+					let breakBeforeFirstMessage;
 					function respond(event, message=null, systemMessage=false){
 						_parent.postMessage({type: 'Response', data: {event: event, source: _source, payload: {message: message, systemMessage: systemMessage, messageIndex: _messageIndex}}}, '*');
 					}
@@ -43,8 +43,8 @@
 						if(messageEvent.data.systemMessage){
 							systemMessages[messageEvent.data.message]();
 						}else{
-							if(pauseBeforeFirstMessage){
-								pauseBeforeFirstMessage = false;
+							if(breakBeforeFirstMessage){
+								breakBeforeFirstMessage = false;
 								debugger
 							}
 							_worker.postMessage(messageEvent.data, targetOrigin);
@@ -89,8 +89,8 @@
 											created = true;
 											_interface_keepOpenAfterTermination = messageEvent.data;
 											_worker = messageEvent.source;
-											if(pauseBeforeFirstMessage){
-												pauseBeforeFirstMessage = false;
+											if(breakBeforeFirstMessage){
+												breakBeforeFirstMessage = false;
 												debugger
 											}
 											_worker.postMessage(workerData, '*');
@@ -99,8 +99,8 @@
 									}
 								}
 								let interfaceUrl = messageEvent.data.url.substr(1);
-								pauseBeforeFirstMessage = interfaceUrl[0] === '?';
-								if(pauseBeforeFirstMessage){
+								breakBeforeFirstMessage = interfaceUrl[0] === '?';
+								if(breakBeforeFirstMessage){
 									interfaceUrl = interfaceUrl.substr(1);
 								}
 								if(!window.open(interfaceUrl)){
@@ -110,8 +110,8 @@
 								/** URL:s that begins with a question mark (?) is reserved for plain javascript that can be debugged. */
 								window.onmessage = messageEvent => messageEventToWorker(messageEvent);
 								let url = messageEvent.data.url.substr(1);
-								pauseBeforeFirstMessage = url[0] === '?';
-								if(pauseBeforeFirstMessage){
+								breakBeforeFirstMessage = url[0] === '?';
+								if(breakBeforeFirstMessage){
 									url = url.substr(1);
 								}
 								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: [messageEvent.data.includeScripts.urls.seedrandom]}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
