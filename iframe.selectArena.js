@@ -9,8 +9,8 @@ function a(){
 	let inputSortByStars = document.getElementById('sort-by-stars');
 	arenaFilter.addEventListener('change', getArenas);
 	arenaList.onchange = event => {
-		let option = getOption(arenaList, event);
-		if(option !== undefined){
+		let option = event.target;
+		if(option){
 			let json = JSON.parse(option.dataset.json);
 			document.getElementById('link-arena').href = json.html_url;
 			let github_logo = document.getElementById('GitHub-logo');
@@ -77,13 +77,6 @@ function a(){
 			arenaList.options[0].selected = false;
 			preSelected.selected = true;
 			arenaList.onchange({target: preSelected});
-		}
-	}
-	function getOption(element, event){
-		for(const option of element.getElementsByTagName('option')){
-			if(option.value === event.target.value){
-				return option;
-			}
 		}
 	}
 	function sortOptions(selectElement){
