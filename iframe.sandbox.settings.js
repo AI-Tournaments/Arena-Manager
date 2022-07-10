@@ -18,14 +18,11 @@ function a(){
 		allowRemoteExecution: false
 	};
 	let _arenaProperties;
-	if(generalSettings.seed !== ''){
-		console.error('Seed has value. Fine during debugging, but do not commit. `generalSettings.seed` should be empty string (\'\').');
-	}
 	let settings = document.getElementById('settings');
 	let postSize;
 	let lastHeight;
 	window.onmessage = messageEvent => {
-		if(postSize === undefined){
+		if(!postSize){
 			postSize = function(){
 				lastHeight = document.body.parentElement.scrollHeight;
 				messageEvent.source.postMessage({type: 'size-changed', value: {height: lastHeight}}, messageEvent.origin);
