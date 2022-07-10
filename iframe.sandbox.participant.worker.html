@@ -11,7 +11,7 @@
 			let _worker = null;
 			let _source = null;
 			let _addedScripts = {};
-			let _interface_keepOpenAfterTermination;
+			let _interfaceSettings;
 			let _iframeId = window.location.search.substring(1);
 			let _messageIndex = null;
 			function a(){
@@ -58,7 +58,7 @@
 						'Kill': ()=>{
 							if(_worker instanceof Worker){
 								_worker.terminate();
-							}else if(_worker && !_interface_keepOpenAfterTermination){
+							}else if(_worker && !_interfaceSettings.keepOpenAfterTermination){
 								_worker.close();
 							}
 							respond('Response', 'Dead', true);
@@ -87,7 +87,7 @@
 											respond('Response', messageEvent.data);
 										}else{
 											created = true;
-											_interface_keepOpenAfterTermination = messageEvent.data;
+											_interfaceSettings = messageEvent.data ?? {};
 											_worker = messageEvent.source;
 											if(breakBeforeFirstMessage){
 												breakBeforeFirstMessage = false;
