@@ -61,7 +61,7 @@ class ArenaHelper{
 			case 'Response-Timeout':
 				if(ArenaHelper.localDevelopment){
 					let participantWrapper = ArenaHelper.#participants_getParticipantWrapper(source);
-					console.warn(event, 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'".');
+					console.warn(event, 'Message '+payload.messageIndex+' timed out for participant "'+participantWrapper.participant.name+'", worker "'+source.name+'", reason "'+payload.message+'".');
 				}
 				ArenaHelper.#participants_onMessageTimeout(source, payload);
 				break;
@@ -512,10 +512,10 @@ class ArenaHelper{
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
 			if(preCode){
+				preCode = 'let __url=\''+url+'\';\nlet __modules=[];\n'+preCode+'// ?'+url+'\n';
 				if(useStrict){
 					preCode = '\'use strict\'\n' + preCode;
 				}
-				preCode = 'let __url=\''+url+'\';\nlet __modules=[];\n'+preCode+'// ?'+url+'\n';
 			}
 			let resolve;
 			let promise = new Promise(_resolve => resolve = _resolve);

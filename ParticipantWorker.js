@@ -18,10 +18,16 @@ class Messenger {
 		}
 	}
 	static countExecutionSteps(value){
-		if(typeof value !== 'boolean'){
-			throw new Error('Value not boolean');
+		if(typeof value === 'boolean'){
+			Messenger.#doCount = value;
+			return;
 		}
-		Messenger.#doCount = value;
+		try{
+			Messenger.#doCount = value[0].boolean;
+		}catch(error){
+			console.error('FATAL', 'Value not boolean');
+			throw error;
+		}
 	}
 	static getStepsUsed(){
 		return Messenger.#stepsInit - Messenger.#stepsRemaining;
@@ -70,7 +76,7 @@ class Messenger {
 						console.error('Missed timeout message', Messenger.#state+timeoutMessage);
 					}
 				}
-				throw {type: 'Response-Timeout', response: 'Response timeout'};
+				throw {type: 'Response-Timeout', response: 'Did not finish in time'};
 			}else if(response.Type === 'throw'){
 				let message = response.Value.string;
 				if(!message){
@@ -90,7 +96,9 @@ onmessage = messageEvent => {
 	_url = messageEvent.data.url;
 	function onResponse(response){
 		function logResponseAlreadyReceived(){
-			console.warn('Response to message already received. Skipped.');
+			if(_localDevelopment){
+				console.warn('Response to message already received. Skipped.', _url);
+			}
 		}
 		function getValue(response){
 			if(!response.length){
@@ -145,7 +153,12 @@ onmessage = messageEvent => {
 		let promise = new Promise(r => interpreterReady = r);
 		onmessage = messageEvent => {
 			promise.then(() => {
-				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).catch(errorMessage => {
+				_pendingMessage = Messenger.messageInterpreter({type: 'Post', data: messageEvent.data.message}, executionLimit).then(()=>{
+					if(_pendingMessage){
+						_pendingMessage = false;
+						postMessage({type: 'Response-Timeout', response: 'No response'});
+					}
+				}).catch(errorMessage => {
 					_pendingMessage = false;
 					postMessage(errorMessage);
 				});
