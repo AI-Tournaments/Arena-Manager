@@ -71,12 +71,12 @@ function a(){
 			}
 		});
 		sortOptions(arenaList);
-		if(preSelected === undefined){
-			arenaList.onchange({target: arenaList.options[0]});
-		}else{
+		if(preSelected){
 			arenaList.options[0].selected = false;
 			preSelected.selected = true;
 			arenaList.onchange({target: preSelected});
+		}else{
+			arenaList.onchange({target: arenaList.options[0]});
 		}
 	}
 	function sortOptions(selectElement){
