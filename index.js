@@ -284,20 +284,50 @@ function a(){
 		function value(option){
 			return _sortByStars ? option.dataset.stars : option.value;
 		}
-		let options = [...selectElement.options];
-		options.sort(function(a, b){
-			if(a.classList.contains('local') && b.classList.contains('local')){
-				if(value(a) < value(b)){return -1;}
-				if(value(b) < value(a)){return 1;}
-			}else{
-			if(a.classList.contains('local') ? true : value(a) < value(b)){return -1;}
-			if(b.classList.contains('local') ? true : value(b) < value(a)){return 1;}
-			}
-			return 0;
-		});
-		for(let option of options){
-			selectElement.add(option);
+		function addToGroup(option, group){
+			[...selectElement.getElementsByTagName('optgroup')].forEach(optgroup => {
+				if(optgroup.label === group){
+					optgroup.appendChild(option);
+				}
+			});
 		}
+		let options = [...selectElement.options];
+		while(0 < selectElement.length){
+			selectElement.remove(0);
+		}
+		['Yours', 'Locals', 'Following', 'Followers'].forEach(name => {
+			let optgroup = document.createElement('optgroup')
+			optgroup.label = name;
+			selectElement.add(optgroup);
+		});
+		options.sort((a, b) => value(a)-value(b));
+		for(let option of options){
+			let owner = '';
+			if(option.dataset.name.includes('/')){
+				owner = option.dataset.name.replace(/\/(.*)/, '');
+			}
+			let sessionStorage = GitHubApi.getSessionStorage();
+			if(owner === sessionStorage.username){
+				addToGroup(option, 'Yours');
+			}else if(option.classList.contains('local')){
+				addToGroup(option, 'Locals');
+			}else if(sessionStorage.following.includes(owner)){
+				addToGroup(option, 'Following');
+			}else if(sessionStorage.followers.includes(owner)){
+				addToGroup(option, 'Followers');
+			}else{
+				selectElement.add(option);
+			}
+		}
+		['Yours', 'Locals', 'Following', 'Followers'].forEach(name => {
+			[...selectElement.getElementsByTagName('optgroup')].forEach(optgroup => {
+				if(optgroup.label === name){
+					if(!optgroup.childElementCount){
+						optgroup.parentNode.removeChild(optgroup);
+					}
+				}
+			});
+		});
 	}
 	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
@@ -344,8 +374,8 @@ function a(){
 			}
 		});
 		if(!localParticipants || !_settingsOverride){
-			let promises = [];
 			GitHubApi.fetch('search/repositories?q=topic:AI-Tournaments+topic:AI-Tournaments-Participant+topic:'+arena).then(response => response.json()).then(response => {
+				let promises = [];
 				response.items.forEach(repo => {
 					if(!repo.topics.includes('ai-tournaments-retired')){
 						promises.push(GitHubApi.fetch('repos/' + repo.full_name + '/git/trees/' + repo.default_branch)
