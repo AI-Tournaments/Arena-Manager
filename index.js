@@ -331,26 +331,31 @@ function a(){
 	}
 	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		btnAddTeam.disabled = arenaProperties.header.limits.teams.max <= selectElements.length;
-		return selectElements.length <= arenaProperties.header.limits.teams.max;
+		let max = arenaProperties.header.limits.teams.max ?? Infinity;
+		btnAddTeam.disabled = max <= selectElements.length;
+		return selectElements.length <= max;
 	}
 	function validateTeamsMin(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		btnRemoveTeam.disabled = selectElements.length < arenaProperties.header.limits.teams.min;
-		return arenaProperties.header.limits.teams.min <= selectElements.length;
+		let min = selectElements.length < arenaProperties.header.limits.teams.min ?? 1;
+		btnRemoveTeam.disabled = selectElements.length < min;
+		return min <= selectElements.length;
 	}
 	function validateTeams(){
 		return validateTeamsMin() && validateTeamsMax();
 	}
 	function validateStart(){
+		let limits = arenaProperties.header.limits;
 		let selectElements = document.getElementsByClassName('participant-team');
 		let allValid = validateTeams();
 		let total = 0;
 		for(const selectElement of selectElements){
 			total += selectElement.length;
-			allValid &= arenaProperties.header.limits.participantsPerTeam.min <= selectElement.length && selectElement.length <= arenaProperties.header.limits.participantsPerTeam.max;
+			let participantsPerTeam = limits.participantsPerTeam ?? {};
+			allValid &= (participantsPerTeam.min ?? 1) <= selectElement.length && selectElement.length <= (participantsPerTeam.max ?? Infinity);
 		}
-		allValid &= arenaProperties.header.limits.participants.min <= total && total <= arenaProperties.header.limits.participants.max;
+		let participants = limits.participants ?? {};
+		allValid &= participants.min <= total && total <= participants.max;
 		return allValid;
 	}
 	function transferToTeam(event){
