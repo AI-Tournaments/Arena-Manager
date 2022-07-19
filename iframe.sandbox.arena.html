@@ -90,8 +90,8 @@
 								}
 							}
 							document.title = document.title.replace('X', _data.arena.full_name);
-							function checkLimits(json){
-								let limits = json.header.limits;
+							function checkLimits(){
+								let limits = _data.properties.header.limits;
 								let participants = JSON.parse(JSON.stringify(_data.participants));
 								return limits.teams.min === undefined ? true : limits.teams.min <= participants.length
 								&& limits.teams.max === undefined ? true : participants.length <= limits.teams.max
@@ -100,232 +100,227 @@
 								&& limits.participantsPerTeam.min === undefined ? true : limits.participantsPerTeam.min <= participants.sort((x,y)=>y.length-x.length)[0].length
 								&& limits.participantsPerTeam.max === undefined ? true : participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max;
 							}
-							fetch(_data.arena.raw_url+'properties.json')
-							.then(response => response.json())
-							.then(json => {
-								if(checkLimits(json)){
-									if(json.header.modules){
-										json.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
-									}
-									let teams = json.header.limits.teams ?? {};
-									if(teams.max === 1){
-										_data.participants = _data.participants[0].map(p => [p]);
-									}
-									Promise.allSettled(_scriptLoaded_promises).then(() => {
-										Math.seedrandom(_data.settings.general.seed);
-										let arenaSetup_promises = [];
-										let arenas = [];
-										for(let index = 0; index < _data.settings.general.bestOf; index++){
-											let arenaSetup;
-											arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
-											ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
-												arenas.push(arena);
-												let readyToStart;
-												_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
-												let resolve;
-												_arenaPromises.push(new Promise(r=>resolve=r));
-												arenaSetup();
-												_arenaWorkers[index] = arena;
-												let callbacks = {
-													'Add-Worker': (data)=>{
-														let iframe = document.getElementById(data.iframeId);
-														if(iframe){
-															_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
-														}else{
-															iframe = document.createElement('iframe');
-															iframe.id = data.iframeId;
-															iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
-															iframe.sandbox = 'allow-scripts';
-															if(data.url.startsWith('!')){
-																iframe.sandbox += ' allow-popups allow-same-origin';
-															}
-															document.body.appendChild(iframe);
-															let promise = new Promise(resolve => _participantPromises[data.iframeId] = resolve).then(()=>{
-																delete _participantPromises[data.iframeId];
-																iframe.contentWindow.postMessage({
-																	url: data.url,
-																	name: data.name,
-																	iframeId: data.iframeId,
-																	participant: data.participant,
-																	localDevelopment: _data.localDevelopment,
-																	workerData: data.workerData,
-																	includeScripts: {
-																		urls: _data.urls,
-																		modules: _modules,
-																		system: [
-																			_data.urls.engine262,
-																			_data.urls.seedrandom,
-																			_data.urls.ArenaHelper
-																		]
-																	}
-																}, '*');
-															});
-														}
-													},
-													'Message-Worker': (message)=>{
-														_messageQueue.push(message);
-														if(_messagePending.length < _freeMessageChannels){
-															nextMessage();
-														}
-													},
-													'Ready-To-Start': readyToStart
-												};
-												arena.onmessage = messageEvent => {
-													let callback = callbacks[messageEvent.data.type];
-													if(callback === undefined){
-														switch(messageEvent.data.type){
-															default:
-																throw new Error('Callback "'+callback+'" not found.');
-															case 'Aborted':
-															case 'Done':
-																arena.terminate();
-																_arenaResponses[index] = {...messageEvent.data.message, status: messageEvent.data.type};
-																resolve();
-																break;
-														}
+							if(checkLimits(_data.properties)){
+								if(_data.properties.header.modules){
+									_data.properties.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
+								}
+								if(_data.properties.header.limits.teams.max === 1){
+									_data.participants = _data.participants[0].map(p => [p]);
+								}
+								Promise.allSettled(_scriptLoaded_promises).then(() => {
+									Math.seedrandom(_data.settings.general.seed);
+									let arenaSetup_promises = [];
+									let arenas = [];
+									for(let index = 0; index < _data.settings.general.bestOf; index++){
+										let arenaSetup;
+										arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
+											arenas.push(arena);
+											let readyToStart;
+											_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
+											let resolve;
+											_arenaPromises.push(new Promise(r=>resolve=r));
+											arenaSetup();
+											_arenaWorkers[index] = arena;
+											let callbacks = {
+												'Add-Worker': (data)=>{
+													let iframe = document.getElementById(data.iframeId);
+													if(iframe){
+														_arenaWorkers[data.source.matchIndex].postMessage('Participant-worker "'+data.iframeId+'" already exist!');
 													}else{
-														callback(messageEvent.data.message);
-													}
-												};
-												let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
-												arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.
-												arena.onerror = errorEvent => {
-													let message = errorEvent.message+' @ '+errorEvent.lineno+':'+errorEvent.colno;
-													console.error(message);
-													arena.terminate();
-													_arenaResponses[index] = {
-														status: 'Aborted',
-														error: message,
-														participantName: arenaInput.arena.full_name,
-														settings: arenaInput.settings,
-														log: []
-													};
-													resolve();
-												};
-												arena.postMessage(arenaInput);
-											});
-										}
-										Promise.allSettled(arenaSetup_promises).then(()=>{
-											Promise.allSettled(_arenaReadyToStart).then(()=>{
-												if(!_data.settings.general.advanced.allowRemoteExecution){
-													blockNetwork();
-												}
-												arenas.forEach(arena=>arena.postMessage({type: 'Start'}));
-											});
-											Promise.allSettled(_arenaPromises).then(()=>{
-												function getTeamColor(teamIndex){
-													let hue = ((teamIndex/_data.participants.length)+.5)%1;
-													let saturation = 0.5;
-													let lightness = 0.5;
-													let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
-													let _p = 2 * lightness - _q;
-													function hue2rgb(_p, _q, _t){
-														if(_t < 0){_t += 1;}
-														if(_t > 1){_t -= 1;}
-														if(_t < 1/6.0){return _p + (_q - _p) * 6 * _t;}
-														if(_t < 1/2.0){return _q;}
-														if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
-														return _p;
-													}
-													let returnObject = {
-														R: hue2rgb(_p, _q, hue + 1/3.0),
-														G: hue2rgb(_p, _q, hue),
-														B: hue2rgb(_p, _q, hue - 1/3.0)
-													}
-													let red = Math.round(256*returnObject.R).toString(16);
-													if(red.length === 1){
-														red = '0'+red;
-													}
-													let green = Math.round(256*returnObject.G).toString(16);
-													if(green.length === 1){
-														green = '0'+green;
-													}
-													let blue = Math.round(256*returnObject.B).toString(16);
-													if(blue.length === 1){
-														blue = '0'+blue;
-													}
-													returnObject.RGB = '#'+red+green+blue
-													return returnObject;
-												}
-												let result = {
-													team: [],
-													partialResult: false
-												};
-												_arenaResponses.forEach(responses => {
-													responses.seed = responses.settings.general.seed;
-													delete responses.settings;
-													if(responses.scores){
-														responses.scores.forEach(score => {
-															if(!result.team[score.team]){
-																result.team[score.team] = {
-																	average: {
-																		score: 0,
-																		bonusPoints: []
-																	},
-																	total: {
-																		score: 0,
-																		bonusPoints: []
-																	}
-																};
-															}
-															result.team[score.team].total.score += score.score;
-															score.members.forEach(member => {
-																let individualBonus = result.team[score.team].total.bonusPoints.find(b => b.participant === member.name && b.team === score.team);
-																if(!individualBonus){
-																	individualBonus = {
-																		participant: member.name,
-																		team: score.team,
-																		bonus: 0
-																	}
-																	result.team[score.team].average.bonusPoints.push(individualBonus);
-																	result.team[score.team].total.bonusPoints.push(JSON.parse(JSON.stringify(individualBonus)));
+														iframe = document.createElement('iframe');
+														iframe.id = data.iframeId;
+														iframe.src = 'iframe.sandbox.participant.worker.html?'+data.iframeId+'#'+_data.urls.ArenaHelper;
+														iframe.sandbox = 'allow-scripts';
+														if(data.url.startsWith('!')){
+															iframe.sandbox += ' allow-popups allow-same-origin';
+														}
+														document.body.appendChild(iframe);
+														let promise = new Promise(resolve => _participantPromises[data.iframeId] = resolve).then(()=>{
+															delete _participantPromises[data.iframeId];
+															iframe.contentWindow.postMessage({
+																url: data.url,
+																name: data.name,
+																iframeId: data.iframeId,
+																participant: data.participant,
+																localDevelopment: _data.localDevelopment,
+																workerData: data.workerData,
+																includeScripts: {
+																	urls: _data.urls,
+																	modules: _modules,
+																	system: [
+																		_data.urls.engine262,
+																		_data.urls.seedrandom,
+																		_data.urls.ArenaHelper
+																	]
 																}
-																individualBonus.bonus += member.bonus;
-															});
+															}, '*');
 														});
-													}else{
-														result.partialResult = true;
 													}
-												});
-												let dominator = _arenaResponses.filter(r => r.scores).length;
-												result.team.forEach(teamScore => {
-													teamScore.average.score = teamScore.total.score/dominator;
-													teamScore.average.bonusPoints.forEach(individualBonus => {
-														individualBonus.bonus = individualBonus.bonus/dominator;
+												},
+												'Message-Worker': (message)=>{
+													_messageQueue.push(message);
+													if(_messagePending.length < _freeMessageChannels){
+														nextMessage();
+													}
+												},
+												'Ready-To-Start': readyToStart
+											};
+											arena.onmessage = messageEvent => {
+												let callback = callbacks[messageEvent.data.type];
+												if(callback === undefined){
+													switch(messageEvent.data.type){
+														default:
+															throw new Error('Callback "'+callback+'" not found.');
+														case 'Aborted':
+														case 'Done':
+															arena.terminate();
+															_arenaResponses[index] = {...messageEvent.data.message, status: messageEvent.data.type};
+															resolve();
+															break;
+													}
+												}else{
+													callback(messageEvent.data.message);
+												}
+											};
+											let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
+											arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.
+											arena.onerror = errorEvent => {
+												let message = errorEvent.message+' @ '+errorEvent.lineno+':'+errorEvent.colno;
+												console.error(message);
+												arena.terminate();
+												_arenaResponses[index] = {
+													status: 'Aborted',
+													error: message,
+													participantName: arenaInput.arena.full_name,
+													settings: arenaInput.settings,
+													log: []
+												};
+												resolve();
+											};
+											arena.postMessage(arenaInput);
+										});
+									}
+									Promise.allSettled(arenaSetup_promises).then(()=>{
+										Promise.allSettled(_arenaReadyToStart).then(()=>{
+											if(!_data.settings.general.advanced.allowRemoteExecution){
+												blockNetwork();
+											}
+											arenas.forEach(arena=>arena.postMessage({type: 'Start'}));
+										});
+										Promise.allSettled(_arenaPromises).then(()=>{
+											function getTeamColor(teamIndex){
+												let hue = ((teamIndex/_data.participants.length)+.5)%1;
+												let saturation = 0.5;
+												let lightness = 0.5;
+												let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
+												let _p = 2 * lightness - _q;
+												function hue2rgb(_p, _q, _t){
+													if(_t < 0){_t += 1;}
+													if(_t > 1){_t -= 1;}
+													if(_t < 1/6.0){return _p + (_q - _p) * 6 * _t;}
+													if(_t < 1/2.0){return _q;}
+													if(_t < 2/3.0){return _p + (_q - _p) * (2/3.0 - _t) * 6;}
+													return _p;
+												}
+												let returnObject = {
+													R: hue2rgb(_p, _q, hue + 1/3.0),
+													G: hue2rgb(_p, _q, hue),
+													B: hue2rgb(_p, _q, hue - 1/3.0)
+												}
+												let red = Math.round(256*returnObject.R).toString(16);
+												if(red.length === 1){
+													red = '0'+red;
+												}
+												let green = Math.round(256*returnObject.G).toString(16);
+												if(green.length === 1){
+													green = '0'+green;
+												}
+												let blue = Math.round(256*returnObject.B).toString(16);
+												if(blue.length === 1){
+													blue = '0'+blue;
+												}
+												returnObject.RGB = '#'+red+green+blue
+												return returnObject;
+											}
+											let result = {
+												team: [],
+												partialResult: false
+											};
+											_arenaResponses.forEach(responses => {
+												responses.seed = responses.settings.general.seed;
+												delete responses.settings;
+												if(responses.scores){
+													responses.scores.forEach(score => {
+														if(!result.team[score.team]){
+															result.team[score.team] = {
+																average: {
+																	score: 0,
+																	bonusPoints: []
+																},
+																total: {
+																	score: 0,
+																	bonusPoints: []
+																}
+															};
+														}
+														result.team[score.team].total.score += score.score;
+														score.members.forEach(member => {
+															let individualBonus = result.team[score.team].total.bonusPoints.find(b => b.participant === member.name && b.team === score.team);
+															if(!individualBonus){
+																individualBonus = {
+																	participant: member.name,
+																	team: score.team,
+																	bonus: 0
+																}
+																result.team[score.team].average.bonusPoints.push(individualBonus);
+																result.team[score.team].total.bonusPoints.push(JSON.parse(JSON.stringify(individualBonus)));
+															}
+															individualBonus.bonus += member.bonus;
+														});
 													});
-												});
-												let teams = [];
-												_data.participants.forEach((t, index) => {
-													let team = {};
-													teams.push(team);
-													team.color = getTeamColor(index);
-													team.members = JSON.parse(JSON.stringify(t.map(m => m.name)));
-												});
-												_parent.source.postMessage({
-													iframeID: _data.iframeID,
-													defaultReplay: _data.urls.replay,
-													value: {
-														arena: {
-															full_name: _data.arena.full_name,
-															commit: _data.arena.commit,
-															version: _data.arena.version
-														},
-														settings: _data.settings,
-														matchLogs: _arenaResponses,
-														result: result,
-														teams: teams
-													}
-												}, _parent.origin);
+												}else{
+													result.partialResult = true;
+												}
 											});
+											let dominator = _arenaResponses.filter(r => r.scores).length;
+											result.team.forEach(teamScore => {
+												teamScore.average.score = teamScore.total.score/dominator;
+												teamScore.average.bonusPoints.forEach(individualBonus => {
+													individualBonus.bonus = individualBonus.bonus/dominator;
+												});
+											});
+											let teams = [];
+											_data.participants.forEach((t, index) => {
+												let team = {};
+												teams.push(team);
+												team.color = getTeamColor(index);
+												team.members = JSON.parse(JSON.stringify(t.map(m => m.name)));
+											});
+											_parent.source.postMessage({
+												iframeID: _data.iframeID,
+												defaultReplay: _data.urls.replay,
+												value: {
+													arena: {
+														full_name: _data.arena.full_name,
+														commit: _data.arena.commit,
+														version: _data.arena.version
+													},
+													settings: _data.settings,
+													matchLogs: _arenaResponses,
+													result: result,
+													teams: teams
+												}
+											}, _parent.origin);
 										});
 									});
-								}else{
-									let message = 'Participants does not meet the arena limitations.';
-									document.body.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
-									console.error(message);
-								}
-								console.log('// TODO: Optimize and removed unused functions. Is document.body.innerHTML used?');
-							});
+								});
+							}else{
+								let message = 'Participants does not meet the arena limitations.';
+								document.body.innerHTML += '<label for="message_limit_error" class="Error">Error</label><pre id="message_limit_error" class="Error">'+message+'</pre>';
+								console.error(message);
+							}
+							console.log('// TODO: Optimize and removed unused functions. Is document.body.innerHTML used?');
 						}
 					}
 				}else{

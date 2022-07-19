@@ -331,13 +331,13 @@ function a(){
 	}
 	function validateTeamsMax(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		let max = arenaProperties.header.limits.teams.max ?? Infinity;
+		let max = arenaProperties.header.limits.teams.max;
 		btnAddTeam.disabled = max <= selectElements.length;
 		return selectElements.length <= max;
 	}
 	function validateTeamsMin(){
 		let selectElements = document.getElementsByClassName('participant-team');
-		let min = selectElements.length < arenaProperties.header.limits.teams.min ?? 1;
+		let min = selectElements.length < arenaProperties.header.limits.teams.min;
 		btnRemoveTeam.disabled = selectElements.length < min;
 		return min <= selectElements.length;
 	}
@@ -351,10 +351,10 @@ function a(){
 		let total = 0;
 		for(const selectElement of selectElements){
 			total += selectElement.length;
-			let participantsPerTeam = limits.participantsPerTeam ?? {};
-			allValid &= (participantsPerTeam.min ?? 1) <= selectElement.length && selectElement.length <= (participantsPerTeam.max ?? Infinity);
+			let participantsPerTeam = limits.participantsPerTeam;
+			allValid &= (participantsPerTeam.min) <= selectElement.length && selectElement.length <= (participantsPerTeam.max);
 		}
-		let participants = limits.participants ?? {};
+		let participants = limits.participants;
 		allValid &= participants.min <= total && total <= participants.max;
 		return allValid;
 	}
@@ -459,6 +459,7 @@ function a(){
 	function begin(data, bracket=[]){
 		let json = {
 			arena: _json,
+			properties: arenaProperties,
 			localDevelopment: isLocalDevelopment(),
 			urls: {
 				ArenaHelper: location.origin+location.pathname.replace(/[^\/]*$/,'')+'ArenaHelper.js',

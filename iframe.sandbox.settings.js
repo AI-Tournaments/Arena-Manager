@@ -81,6 +81,39 @@ function a(){
 		jsonEditor = null;
 		fetch((messageEvent.data.value??'') + 'properties.json').then(response => response.json()).then(insecureJson => {
 			_arenaProperties = secureJson(insecureJson);
+			if(!_arenaProperties.header){
+				_arenaProperties.header = {};
+			}
+			if(!_arenaProperties.header.limits){
+				_arenaProperties.header.limits = {};
+			}
+			if(!_arenaProperties.header.limits.teams){
+				_arenaProperties.header.limits.teams = {};
+			}
+			if(!_arenaProperties.header.limits.teams.min){
+				_arenaProperties.header.limits.teams.min = 1;
+			}
+			if(!_arenaProperties.header.limits.teams.max){
+				_arenaProperties.header.limits.teams.max = Infinity;
+			}
+			if(!_arenaProperties.header.limits.participantsPerTeam){
+				_arenaProperties.header.limits.participantsPerTeam = {};
+			}
+			if(!_arenaProperties.header.limits.participantsPerTeam.min){
+				_arenaProperties.header.limits.participantsPerTeam.min = 1;
+			}
+			if(!_arenaProperties.header.limits.participantsPerTeam.max){
+				_arenaProperties.header.limits.participantsPerTeam.max = Infinity;
+			}
+			if(!_arenaProperties.header.limits.participants){
+				_arenaProperties.header.limits.participants = {};
+			}
+			if(!_arenaProperties.header.limits.participants.min){
+				_arenaProperties.header.limits.participants.min = 1;
+			}
+			if(!_arenaProperties.header.limits.participants.max){
+				_arenaProperties.header.limits.participants.max = Infinity;
+			}
 			let jsonEditor_element;
 			let customInput = isObject(_arenaProperties.header.customInput) && (isObject(_arenaProperties.header.customInput.schema) || isObject(_arenaProperties.header.customInput.schemaDefs) || (_arenaProperties.header.customInput.default !== undefined && _arenaProperties.header.customInput.default !== null));
 			function addComment(label, comment){
