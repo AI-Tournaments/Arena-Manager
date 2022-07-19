@@ -107,6 +107,10 @@
 									if(json.header.modules){
 										json.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
 									}
+									let teams = json.header.limits.teams ?? {};
+									if(teams.max === 1){
+										_data.participants = _data.participants[0].map(p => [p]);
+									}
 									Promise.allSettled(_scriptLoaded_promises).then(() => {
 										Math.seedrandom(_data.settings.general.seed);
 										let arenaSetup_promises = [];
