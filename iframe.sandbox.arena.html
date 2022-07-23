@@ -104,15 +104,13 @@
 								if(_data.properties.header.modules){
 									_data.properties.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
 								}
-								if(_data.properties.header.limits.teams.max === 1){
-									_data.participants = _data.participants[0].map(p => [p]);
-								}
 								Promise.allSettled(_scriptLoaded_promises).then(() => {
-									Math.seedrandom(_data.settings.general.seed);
+									let saltGenerator = new Math.seedrandom(_data.settings.general.seed);
 									let arenaSetup_promises = [];
 									let arenas = [];
 									for(let index = 0; index < _data.settings.general.bestOf; index++){
 										let arenaSetup;
+										let salt = (''+saltGenerator()).replace(/^.*\./,'');
 										arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
 										ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
 											arenas.push(arena);
@@ -184,7 +182,17 @@
 												}
 											};
 											let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
-											arenaInput.settings.general.seed += '#'+(''+Math.random()).replace(/^.*\./,''); // Get salt from Math.seedrandom.
+											arenaInput.settings.general.seed += '#'+salt;
+											let seededRandom = new Math.seedrandom(arenaInput.settings.general.seed);
+											arenaInput.participants.forEach(members => {
+												for(let index = members.length - 1; 0 < index; index--){
+													let newIndex = Math.floor(seededRandom()*(index + 1));
+													[members[index], members[newIndex]] = [members[newIndex], members[index]];
+												}
+											});
+											if(_data.properties.header.limits.teams.max === 1){
+												arenaInput.participants = arenaInput.participants[0].map(p => [p]);
+											}
 											arena.onerror = errorEvent => {
 												let message = errorEvent.message+' @ '+errorEvent.lineno+':'+errorEvent.colno;
 												console.error(message);
