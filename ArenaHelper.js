@@ -344,6 +344,9 @@ class ArenaHelper{
 			this.get = (team=-1, participant=-1) => {
 				return _teams[team].members[participant].participant;
 			}
+			this.forEach = callback => {
+				_teams.forEach(team => team.members.forEach(member => callback(member.participant)));
+			}
 			this.addScore = (team, score) => {
 				_teams[team].score += score;
 			}
