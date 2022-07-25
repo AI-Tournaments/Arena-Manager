@@ -18,6 +18,9 @@ class ArenaHelper{
 	static log = (type='', value, raw=false)=>{
 		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
 	}
+	static countLog = (type='')=>{
+		return this.#log.filter(l => l.type === type).length;
+	}
 	static #getBaseReturn = ()=>{
 		return {settings: ArenaHelper.#settings, log: this.#log};
 	}
