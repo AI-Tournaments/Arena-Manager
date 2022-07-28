@@ -104,6 +104,12 @@
 								if(_data.properties.header.modules){
 									_data.properties.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
 								}
+								let nextMemberID = 0;
+								_data.participants.forEach(members => {
+									members.forEach(member => {
+										member.id = nextMemberID++;
+									});
+								});
 								Promise.allSettled(_scriptLoaded_promises).then(() => {
 									let saltGenerator = new Math.seedrandom(_data.settings.general.seed);
 									let arenaSetup_promises = [];
@@ -214,8 +220,8 @@
 											arenas.forEach(arena=>arena.postMessage({type: 'Start'}));
 										});
 										Promise.allSettled(_arenaPromises).then(()=>{
-											function getTeamColor(teamIndex){
-												let hue = ((teamIndex/_data.participants.length)+.5)%1;
+											function getColor(index, total){
+												let hue = ((index/total)+.5)%1;
 												let saturation = 0.5;
 												let lightness = 0.5;
 												let _q = lightness < 0.5 ? lightness * (1 + saturation) : lightness + saturation - lightness * saturation;
@@ -247,6 +253,14 @@
 												}
 												returnObject.RGB = '#'+red+green+blue
 												return returnObject;
+											}
+											function getTeamColor(teamIndex){
+												return getColor(teamIndex, _data.participants.length);
+											}
+											function getMemberColor(member){
+												let members = [];
+												_data.participants.forEach(team => members.push(...team));
+												return getColor(member.id, members.length);
 											}
 											let result = {
 												team: [],
@@ -300,7 +314,7 @@
 												let team = {};
 												teams.push(team);
 												team.color = getTeamColor(index);
-												team.members = JSON.parse(JSON.stringify(t.map(m => m.name)));
+												team.members = JSON.parse(JSON.stringify(t.map(m => {return {name: m.name, color: getMemberColor(m)}})));
 											});
 											_parent.source.postMessage({
 												iframeID: _data.iframeID,
