@@ -179,29 +179,29 @@ function a(){
 			window.onresize();
 		}
 	}
-	function addArena(localArena){
-		if(localArena.arena){
-			if(!localArena.arena.name){
-				localArena.arena.name = localArena.arena.url;
+	function addArena(localDevelopment){
+		if(localDevelopment.arena){
+			if(!localDevelopment.arena.name){
+				localDevelopment.arena.name = localDevelopment.arena.url;
 			}
-			localArenas[localArena.arena.url] = localArena.arena.replay;
+			localArenas[localDevelopment.arena.url] = localDevelopment.arena.replay;
 			let arena = {
-				name: localArena.arena.name,
-				raw_url: localArena.arena.url,
-				html_url: localArena.arena.url,
-				full_name: 'local/'+localArena.arena.name,
+				name: localDevelopment.arena.name,
+				raw_url: localDevelopment.arena.url,
+				html_url: localDevelopment.arena.url,
+				full_name: 'local/'+localDevelopment.arena.name,
 				default_branch: null,
 				stars: -1,
 				commit: null,
 				version: null
 			};
-			_settingsOverride = {arena: arena.raw_url, settings: localArena.settings};
+			_settingsOverride = {arena: arena.raw_url, settings: localDevelopment.arena.settings};
 			arenaListReadyPromise.then(()=>{
-				localParticipants = localArena.participants;
+				localParticipants = localDevelopment.participants;
 				selectArena.contentWindow.postMessage({type: 'add-arena', value: arena});
 			});
 		}else{
-			localParticipants = localArena.participants;
+			localParticipants = localDevelopment.participants;
 		}
 	}
 	function addParticipant(url='', name='Manually added participant'){
