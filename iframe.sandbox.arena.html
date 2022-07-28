@@ -190,9 +190,6 @@
 													[members[index], members[newIndex]] = [members[newIndex], members[index]];
 												}
 											});
-											if(_data.properties.header.limits.teams.max === 1){
-												arenaInput.participants = arenaInput.participants[0].map(p => [p]);
-											}
 											arena.onerror = errorEvent => {
 												let message = errorEvent.message+' @ '+errorEvent.lineno+':'+errorEvent.colno;
 												console.error(message);
