@@ -259,7 +259,7 @@ function a(){
 				header: {
 					id: {
 						salt_: Math.random(),
-						timestamp: Date.now()
+						timestamp: JSON.parse(JSON.stringify(new Date()))
 					},
 					meta: {
 						host: document.location.host
