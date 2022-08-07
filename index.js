@@ -475,7 +475,7 @@ function a(){
 				if(select.id !== 'participants-selectable'){
 					let team = [];
 					json.participants.push(team);
-					for(const option of [...select.options.sort((a,b) => a.dataset.name.localeCompare(b.dataset.name))]){
+					for(const option of [...select.options].sort((a,b) => a.dataset.name.localeCompare(b.dataset.name))){
 						team.push({
 							name: option.dataset.name,
 							url: option.dataset.raw_url
