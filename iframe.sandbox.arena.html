@@ -242,7 +242,7 @@
 															};
 														}
 														result.team[score.team].total.score += score.score;
-														score.members.forEach(member => {
+														score.members.sort((a,b) => a.name.localeCompare(b.name)).forEach(member => {
 															let individualBonus = result.team[score.team].total.bonusPoints.find(b => b.participant === member.name && b.team === score.team);
 															if(!individualBonus){
 																individualBonus = {
