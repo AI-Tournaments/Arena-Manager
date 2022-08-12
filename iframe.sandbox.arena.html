@@ -24,7 +24,7 @@
 					let _scriptLoaded_promises = [];
 					let _messageQueue = [];
 					let _messagePending = [];
-					let _modules = [];
+					let _mutators = [];
 					let _participantPromises = {};
 					window.onmessage = messageEvent => {
 						_parent = {
@@ -101,8 +101,8 @@
 								&& limits.participantsPerTeam.max === undefined ? true : participants.sort((x,y)=>x.length-y.length)[0].length <= limits.participantsPerTeam.max;
 							}
 							if(checkLimits(_data.properties)){
-								if(_data.properties.header.modules){
-									_data.properties.header.modules.forEach(module => _modules.push(_data.arena.raw_url + module));
+								if(_data.properties.header.mutators){
+									_data.properties.header.mutators.forEach(mutator => _mutators.push(_data.arena.raw_url + mutator));
 								}
 								let nextMemberID = 0;
 								_data.participants.forEach(members => {
@@ -118,7 +118,7 @@
 										let arenaSetup;
 										let salt = (''+saltGenerator()).replace(/^.*\./,'');
 										arenaSetup_promises.push(new Promise(r=>arenaSetup=r));
-										ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {modules: _modules, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
+										ArenaHelper.CreateWorkerFromRemoteURL(_data.arena.raw_url+'arena.js', {mutators: _mutators, system: [_data.urls.seedrandom, _data.urls.ArenaHelper]}).then(arena => {
 											arenas.push(arena);
 											let readyToStart;
 											_arenaReadyToStart.push(new Promise(r=>readyToStart=r));
@@ -151,7 +151,7 @@
 																workerData: data.workerData,
 																includeScripts: {
 																	urls: _data.urls,
-																	modules: _modules,
+																	mutators: _mutators,
 																	system: [
 																		_data.urls.engine262,
 																		_data.urls.seedrandom,

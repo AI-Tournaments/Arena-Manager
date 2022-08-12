@@ -478,8 +478,8 @@ class ArenaHelper{
 			if(options.system){
 				_includeScripts.push(...options.system);
 			}
-			if(options.modules){
-				_includeScripts.push(...options.modules);
+			if(options.mutators){
+				_includeScripts.push(...options.mutators);
 			}
 			let header = (()=>{
 				try{
@@ -512,7 +512,7 @@ class ArenaHelper{
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
 			if(preCode){
-				preCode = 'let __url=\''+url+'\';\nlet __modules=[];\n'+preCode+'// ?'+url+'\n';
+				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// ?'+url+'\n';
 				if(useStrict){
 					preCode = '\'use strict\'\n' + preCode;
 				}
