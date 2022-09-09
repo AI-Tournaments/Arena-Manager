@@ -10,6 +10,16 @@ function a(){
 	arenaFilter.addEventListener('change', getArenas);
 	arenaList.onchange = event => {
 		let option;
+		switch(event.target.tagName){
+			case 'OPTION':
+				option = event.target;
+				break;
+			case 'SELECT':
+				if(event.target.selectedOptions.length){
+					option = event.target.selectedOptions[0];
+				}
+				break;
+		}
 		if(event.target instanceof Option){
 			option = event.target;
 		}else if(event.target instanceof Select && event.target.selectedOptions.length){
