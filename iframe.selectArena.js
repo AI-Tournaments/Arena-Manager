@@ -9,9 +9,13 @@ function a(){
 	let inputSortByStars = document.getElementById('sort-by-stars');
 	arenaFilter.addEventListener('change', getArenas);
 	arenaList.onchange = event => {
-		let options = event.target.selectedOptions;
-		if(options.length){
-			let option = options[0];
+		let option;
+		if(event.target instanceof Option){
+			option = event.target;
+		}else if(event.target instanceof Select && event.target.selectedOptions.length){
+			option = event.target.selectedOptions[0];
+		}
+		if(option){
 			let json = JSON.parse(option.dataset.json);
 			document.getElementById('link-arena').href = json.html_url;
 			let github_logo = document.getElementById('GitHub-logo');
