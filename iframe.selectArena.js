@@ -20,11 +20,6 @@ function a(){
 				}
 				break;
 		}
-		if(event.target instanceof Option){
-			option = event.target;
-		}else if(event.target instanceof Select && event.target.selectedOptions.length){
-			option = event.target.selectedOptions[0];
-		}
 		if(option){
 			let json = JSON.parse(option.dataset.json);
 			document.getElementById('link-arena').href = json.html_url;
