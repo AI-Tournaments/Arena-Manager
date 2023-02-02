@@ -512,7 +512,7 @@ class ArenaHelper{
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
 			if(preCode){
-				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// ?'+url+'\n';
+				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// 👇 ?'+url+' 👇\n';
 				if(useStrict){
 					preCode = '\'use strict\'\n' + preCode;
 				}
