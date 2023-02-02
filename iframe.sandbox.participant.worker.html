@@ -114,7 +114,7 @@
 								if(breakBeforeFirstMessage){
 									url = url.substr(1);
 								}
-								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: [messageEvent.data.includeScripts.urls.seedrandom]}, messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.workerData.iframeId).then(worker=>{
+								ArenaHelper.CreateWorkerFromRemoteURL(url, {system: [messageEvent.data.includeScripts.urls.seedrandom]}, messageEvent.data.workerData.settings.general.seed+'@'+_iframeId).then(worker=>{
 									_worker = worker;
 									_worker.onmessage = m=>{
 										respond('Response', m.data);
