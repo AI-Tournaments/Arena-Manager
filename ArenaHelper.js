@@ -504,15 +504,15 @@ class ArenaHelper{
 			if(url.endsWith('/arena.js')){
 				preCode += 'ArenaHelper.preInit();\n';
 			}else if(seed){
-				jsCode = jsCode.replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
-				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage');
+				jsCode = (' '+jsCode).replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
+				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage').trim();
 				preCode += 'Math.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nlet _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nlet postMessage_native = globalThis.postMessage;\nlet postMessage=function(value,toRespond=1,toTerminate=2){postMessage_native({value: value, executionSteps: {toRespond, toTerminate}})};\npostMessage_native(null);\n';
 			}
 			if(header.dependencies.length){
 				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
 			}
 			if(preCode){
-				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// ?'+url+'\n';
+				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// 👇 ?'+url+' 👇\n';
 				if(useStrict){
 					preCode = '\'use strict\'\n' + preCode;
 				}
