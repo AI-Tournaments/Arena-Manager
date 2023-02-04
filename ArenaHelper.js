@@ -16,7 +16,7 @@ class ArenaHelper{
 	}
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value, raw=false)=>{
-		this.#log.push({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))});
+		this.#log.push(JSON.stringify({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))}));
 	}
 	static countLog = (type='')=>{
 		return this.#log.filter(l => l.type === type).length;
