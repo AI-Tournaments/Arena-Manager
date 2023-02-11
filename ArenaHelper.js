@@ -1,6 +1,7 @@
 'use strict'
 class ArenaHelper{
 	static #log = [];
+	static #logTypeCount = {};
 	static #settings = null;
 	static #arenaReady = null;
 	static #responseQueue = [];
@@ -12,23 +13,27 @@ class ArenaHelper{
 	static #participants_getParticipantWrapper = null;
 	static #postMessage_native = ()=>{};
 	static #postMessage = data => {
-		ArenaHelper.#postMessage_native.call(globalThis, JSON.parse(JSON.stringify(data)));
+		ArenaHelper.#postMessage_native.call(globalThis, data);
 	}
 	static #setParticipants = participants => {this.#participants = participants};
-	static log = (type='', value, raw=false)=>{
-		this.#log.push(JSON.stringify({type: type, value: raw ? value : JSON.parse(JSON.stringify(value))}));
+	static log = (type='', value)=>{
+		this.#log.push({type, value});
+		if(!this.#logTypeCount[type]){
+			this.#logTypeCount[type] = 0;
+		}
+		this.#logTypeCount[type]++;
 	}
 	static countLog = (type='')=>{
-		return this.#log.filter(l => l.type === type).length;
+		return this.#logTypeCount[type];
 	}
 	static #getBaseReturn = ()=>{
 		return {settings: ArenaHelper.#settings, log: this.#log};
 	}
 	static postDone = ()=>{
 		this.#participants.terminateAllWorkers();
-		let returnObject = this.#getBaseReturn();
-		returnObject.scores = this.#participants.getScores();
-		ArenaHelper.#postMessage({type: 'Done', message: returnObject});
+		const message = this.#getBaseReturn();
+		message.scores = this.#participants.getScores();
+		ArenaHelper.#postMessage({type: 'Done', message});
 	}
 	static postAbort = (participant='', error='')=>{
 		this.#participants.terminateAllWorkers();
