@@ -451,6 +451,7 @@ function a(){
 	}
 	function start(){
 		while(0 < iframeWrapper.childElementCount){
+			iframeWrapper.firstChild.stop();
 			iframeWrapper.removeChild(iframeWrapper.firstChild);
 		}
 		arenaMatches = {};
