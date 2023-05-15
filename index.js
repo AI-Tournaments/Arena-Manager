@@ -494,7 +494,10 @@ function a(){
 		iframe.id = json.iframeID;
 		iframeWrapper.appendChild(iframe);
 		let resolve;
-		new Promise(r => resolve = r).then(()=>iframe.contentWindow.postMessage(json, '*'));
+		new Promise(r => resolve = r).then(async()=>{
+			await queue(()=>pendingArenaSandboxes.findIndex(s => s.contentWindow === iframe.contentWindow) !== -1);
+			iframe.contentWindow.postMessage(json, '*')
+		});
 		pendingArenaSandboxes.push({contentWindow: iframe.contentWindow, ready: resolve});
 	}
 }
