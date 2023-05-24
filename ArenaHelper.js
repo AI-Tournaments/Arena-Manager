@@ -17,6 +17,7 @@ class ArenaHelper{
 	}
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value)=>{
+		value = JSON.parse(JSON.stringify(value));
 		this.#log.push({type, value});
 		if(!this.#logTypeCount[type]){
 			this.#logTypeCount[type] = 0;
@@ -351,6 +352,9 @@ class ArenaHelper{
 			}
 			this.get = (team=-1, participant=-1) => {
 				return _teams[team].members[participant].participant;
+			}
+			this.find = callback => {
+				return _teams.find(team => team.members.find(member => callback(member.participant)));
 			}
 			this.forEach = callback => {
 				_teams.forEach(team => team.members.forEach(member => callback(member.participant)));
