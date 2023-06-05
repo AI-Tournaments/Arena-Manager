@@ -205,7 +205,7 @@ function a(){
 			while(0 < settings.childElementCount){
 				settings.removeChild(settings.firstChild);
 			}
-			_arenaProperties.settings.general = JSON.parse(JSON.stringify(generalSettings));
+			_arenaProperties.settings.general = structuredClone(generalSettings);
 			if(messageEvent.data.settingsOverride && messageEvent.data.settingsOverride.arena === messageEvent.data.value && messageEvent.data.settingsOverride.settings){
 				for(const groupKey in messageEvent.data.settingsOverride.settings){
 					if(Object.hasOwnProperty.call(messageEvent.data.settingsOverride.settings, groupKey)){
@@ -290,7 +290,7 @@ function a(){
 			}
 			json[info[0]][info[1]] = value;
 		}
-		json.general.advanced = JSON.parse(JSON.stringify(advancedSettings));
+		json.general.advanced = structuredClone(advancedSettings);
 		json.general.customInput = jsonEditor === null ? {} : jsonEditor.get();
 		messageEvent.source.postMessage({type: 'settings', value: {header: {replay: _arenaProperties.header.replay}, settings: json}}, messageEvent.origin);
 	}

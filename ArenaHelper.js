@@ -17,7 +17,7 @@ class ArenaHelper{
 	}
 	static #setParticipants = participants => {this.#participants = participants};
 	static log = (type='', value)=>{
-		value = JSON.parse(JSON.stringify(value));
+		value = structuredClone(value);
 		this.#log.push({type, value});
 		if(!this.#logTypeCount[type]){
 			this.#logTypeCount[type] = 0;
