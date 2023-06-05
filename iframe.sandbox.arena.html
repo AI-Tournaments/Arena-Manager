@@ -92,7 +92,7 @@
 							document.title = document.title.replace('X', _data.arena.full_name);
 							function checkLimits(){
 								let limits = _data.properties.header.limits;
-								let participants = JSON.parse(JSON.stringify(_data.participants));
+								let participants = structuredClone(_data.participants);
 								return limits.teams.min === undefined ? true : limits.teams.min <= participants.length
 								&& limits.teams.max === undefined ? true : participants.length <= limits.teams.max
 								&& limits.participants.min === undefined ? true : limits.participants.min <= participants.flat().length
@@ -186,7 +186,7 @@
 													callback(messageEvent.data.message);
 												}
 											};
-											let arenaInput = {...JSON.parse(JSON.stringify(_data)), matchIndex: index};
+											let arenaInput = {...structuredClone(_data), matchIndex: index};
 											arenaInput.settings.general.seed += '#'+salt;
 											let seededRandom = new Math.seedrandom(arenaInput.settings.general.seed);
 											arenaInput.participants.forEach(members => {
@@ -250,7 +250,7 @@
 																	bonus: 0
 																}
 																result.team[score.team].average.bonusPoints.push(individualBonus);
-																result.team[score.team].total.bonusPoints.push(JSON.parse(JSON.stringify(individualBonus)));
+																result.team[score.team].total.bonusPoints.push(structuredClone(individualBonus));
 															}
 															individualBonus.bonus += member.bonus;
 														});
@@ -270,7 +270,7 @@
 											_data.participants.forEach((t, index) => {
 												let team = {};
 												teams.push(team);
-												team.members = JSON.parse(JSON.stringify(t.map(m => {return {name: m.name}})));
+												team.members = structuredClone(t.map(m => {return {name: m.name}}));
 											});
 											_parent.source.postMessage({
 												iframeID: _data.iframeID,
