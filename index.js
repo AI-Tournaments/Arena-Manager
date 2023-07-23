@@ -295,7 +295,12 @@ function a(){
 		while(0 < selectElement.length){
 			selectElement.remove(0);
 		}
-		['Yours', 'Locals', 'Following', 'Followers'].forEach(name => {
+		const groupYours = 'Yours';
+		const groupLocals = 'Locals';
+		const groupFollowing = 'Following';
+		const groupFollowers = 'Followers';
+		const groups = [groupYours, groupLocals, groupFollowing, groupFollowers];
+		groups.forEach(name => {
 			let optgroup = document.createElement('optgroup')
 			optgroup.label = name;
 			selectElement.add(optgroup);
@@ -308,20 +313,18 @@ function a(){
 			}
 			let sessionStorage = GitHubApi.getSessionStorage();
 			if(owner === sessionStorage.username){
-				addToGroup(option, 'Yours');
+				addToGroup(option, groupYours);
 			}else if(option.classList.contains('local')){
-				addToGroup(option, 'Locals');
-			}else if(sessionStorage.following){
-				if(sessionStorage.following.includes(owner)){
-					addToGroup(option, 'Following');
-				}else if(sessionStorage.followers.includes(owner)){
-					addToGroup(option, 'Followers');
-				}
+				addToGroup(option, groupLocals);
+			}else if(sessionStorage?.following.includes(owner)){
+				addToGroup(option, groupFollowing);
+			}else if(sessionStorage?.followers.includes(owner)){
+				addToGroup(option, groupFollowers);
 			}else{
 				selectElement.add(option);
 			}
 		}
-		['Yours', 'Locals', 'Following', 'Followers'].forEach(name => {
+		groups.forEach(name => {
 			[...selectElement.getElementsByTagName('optgroup')].forEach(optgroup => {
 				if(optgroup.label === name){
 					if(!optgroup.childElementCount){
