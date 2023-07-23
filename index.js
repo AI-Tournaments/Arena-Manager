@@ -311,10 +311,12 @@ function a(){
 				addToGroup(option, 'Yours');
 			}else if(option.classList.contains('local')){
 				addToGroup(option, 'Locals');
-			}else if(sessionStorage.following.includes(owner)){
-				addToGroup(option, 'Following');
-			}else if(sessionStorage.followers.includes(owner)){
-				addToGroup(option, 'Followers');
+			}else if(sessionStorage.following){
+				if(sessionStorage.following.includes(owner)){
+					addToGroup(option, 'Following');
+				}else if(sessionStorage.followers.includes(owner)){
+					addToGroup(option, 'Followers');
+				}
 			}else{
 				selectElement.add(option);
 			}
