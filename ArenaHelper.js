@@ -270,63 +270,6 @@ class ArenaHelper{
 				workerWrapper.ready = true;
 				workerWrapper.promiseWorkerReady();
 			}
-			this.addWorker = (participant, name='') => {
-				if(name !== ''){
-					console.log('// TODO: (Fixed?) Add a wrapping sandbox outside of iframe.sandbox.arena.html, because the current blocks network and prevent more Workers to be created.');
-				}
-				let team = _teams[participant.team];
-				let participantWrapper = team.members[participant.member];
-				let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
-				if(workerWrapper !== undefined){
-					throw new Error('Participant already has worker with name "'+name+'".');
-				}
-				workerWrapper = {
-					name: name,
-					promiseWorkerReady: null,
-					ready: false,
-					iframeId: 'matchIndex-'+data.matchIndex+'_team-'+participant.team+'_'+'member-'+participant.member+'_'+encodeURIComponent(name),
-					messageIndex: 0,
-					pendingMessages: []
-				};
-				if(team.precomputedWorkerData === null){
-					let opponents = [];
-					_teams.forEach((team, teamIndex) => {
-						if(participant.team === teamIndex){
-							opponents.push(null);
-						}else{
-							let names = [];
-							opponents.push(names);
-							team.members.forEach(participantWrapper => {
-								let name = null;
-								if(data.settings.general.discloseOpponents === 'Yes'){
-									name = participantWrapper.participant.name;
-								}else if(data.settings.general.discloseOpponents === 'AccountOnly'){
-									name = participantWrapper.participant.name.split('/')[0];
-								}
-								names.push(name);
-							});
-						}
-					});
-					team.precomputedWorkerData = {
-						settings: data.settings,
-						opponents: opponents
-					};
-				}
-				participantWrapper.private.workers.push(workerWrapper);
-				ArenaHelper.#postMessage({
-					type: 'Add-Worker',
-					message: {
-						iframeId: workerWrapper.iframeId,
-						participant: [participant.team, participant.member],
-						name: name,
-						url: participantWrapper.private.url,
-						workerData: {
-							...team.precomputedWorkerData
-						}
-					}
-				});
-				return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
-			}
 			this.killWorker = (participant, name)=>{
 				participant.postMessage('Kill', name, true).then(()=>{
 					let participantWrapper = _teams[participant.team].members[participant.member];
@@ -358,12 +301,6 @@ class ArenaHelper{
 			}
 			this.forEach = callback => {
 				_teams.forEach(team => team.members.forEach(member => callback(member.participant)));
-			}
-			this.addScore = (team, score) => {
-				_teams[team].score += score;
-			}
-			this.addBonusScore = (participant, score) => {
-				_teams[participant.team].members[participant.member].private.score += score;
 			}
 			this.countTeams = () => _teams.length;
 			this.countMembers = teamIndex => {
@@ -417,7 +354,63 @@ class ArenaHelper{
 							value: participantIndex
 						},{
 							name: 'addWorker',
-							value: name=>ArenaHelper.#participants.addWorker(this, name)
+							value: name=>{
+								if(name !== ''){
+									console.log('// TODO: (Fixed?) Add a wrapping sandbox outside of iframe.sandbox.arena.html, because the current blocks network and prevent more Workers to be created.');
+								}
+								const team = _teams[teamIndex];
+								const participantWrapper = team.members[participantIndex];
+								let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
+								if(workerWrapper !== undefined){
+									throw new Error('Participant already has worker with name "'+name+'".');
+								}
+								workerWrapper = {
+									name: name,
+									promiseWorkerReady: null,
+									ready: false,
+									iframeId: 'matchIndex-'+data.matchIndex+'_team-'+teamIndex+'_'+'member-'+participantIndex+'_'+encodeURIComponent(name),
+									messageIndex: 0,
+									pendingMessages: []
+								};
+								if(team.precomputedWorkerData === null){
+									let opponents = [];
+									_teams.forEach((team, teamIndex) => {
+										if(teamIndex === teamIndex){
+											opponents.push(null);
+										}else{
+											let names = [];
+											opponents.push(names);
+											team.members.forEach(participantWrapper => {
+												let name = null;
+												if(data.settings.general.discloseOpponents === 'Yes'){
+													name = participantWrapper.participant.name;
+												}else if(data.settings.general.discloseOpponents === 'AccountOnly'){
+													name = participantWrapper.participant.name.split('/')[0];
+												}
+												names.push(name);
+											});
+										}
+									});
+									team.precomputedWorkerData = {
+										settings: data.settings,
+										opponents: opponents
+									};
+								}
+								participantWrapper.private.workers.push(workerWrapper);
+								ArenaHelper.#postMessage({
+									type: 'Add-Worker',
+									message: {
+										iframeId: workerWrapper.iframeId,
+										participant: [teamIndex, participantIndex],
+										name: name,
+										url: participantWrapper.private.url,
+										workerData: {
+											...team.precomputedWorkerData
+										}
+									}
+								});
+								return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
+							}
 						},{
 							name: 'postMessage',
 							value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage})
@@ -458,11 +451,11 @@ class ArenaHelper{
 			});
 			_teams.forEach(team => {
 				team.members.forEach(participantWrapper => {
-					let promise = this.addWorker(participantWrapper.participant, '');
+					const promise = participantWrapper.participant.addWorker('');
 					promises.push(promise);
 				});
 			});
-			let _onError = error=>{
+			const _onError = error=>{
 				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
 			Promise.allSettled(promises).then(() => {
