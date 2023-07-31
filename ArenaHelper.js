@@ -416,10 +416,10 @@ class ArenaHelper{
 							value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage})
 						},{
 							name: 'addScore',
-							value: points=>_participants.addScore(teamIndex, points)
+							value: points=>_teams[teamIndex].score += points
 						},{
 							name: 'addBonusScore',
-							value: points=>_participants.addBonusScore(this, points)
+							value: points=>_teams[teamIndex].members[participantIndex].private.score += points
 						}
 					].forEach(field => {
 						Object.defineProperty(this, field.name, {
