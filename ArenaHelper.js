@@ -270,15 +270,6 @@ class ArenaHelper{
 				workerWrapper.ready = true;
 				workerWrapper.promiseWorkerReady();
 			}
-			this.killWorker = (participant, name)=>{
-				participant.postMessage('Kill', name, true).then(()=>{
-					let participantWrapper = _teams[participant.team].members[participant.member];
-					let workers = participantWrapper.private.workers;
-					let workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
-					let index = workers.findIndex(w => w === workerWrapper);
-					workers.splice(index, 1);
-				});
-			}
 			this.postToAll = (message='') => {
 				let promises = [];
 				_teams.forEach((team,index) => {
@@ -335,12 +326,13 @@ class ArenaHelper{
 			this.terminateAllWorkers = () => {
 				wrappers.forEach(participantWrapper => {
 					participantWrapper.private.workers.forEach(workerWrapper => {
-						this.killWorker(participantWrapper.participant, workerWrapper.name);
+						participantWrapper.participant.killWorker(workerWrapper.name);
 					});
 				});
 			}
 			class Participant{
 				constructor(name, teamIndex, participantIndex, participantWrapper){
+					const _team = _teams[teamIndex];
 					this.payload = {};
 					[
 						{
@@ -354,12 +346,10 @@ class ArenaHelper{
 							value: participantIndex
 						},{
 							name: 'addWorker',
-							value: name=>{
+							value: (name='')=>{
 								if(name !== ''){
 									console.log('// TODO: (Fixed?) Add a wrapping sandbox outside of iframe.sandbox.arena.html, because the current blocks network and prevent more Workers to be created.');
 								}
-								const team = _teams[teamIndex];
-								const participantWrapper = team.members[participantIndex];
 								let workerWrapper = ArenaHelper.Participants.#getWorker(participantWrapper, name);
 								if(workerWrapper !== undefined){
 									throw new Error('Participant already has worker with name "'+name+'".');
@@ -372,10 +362,10 @@ class ArenaHelper{
 									messageIndex: 0,
 									pendingMessages: []
 								};
-								if(team.precomputedWorkerData === null){
+								if(_team.precomputedWorkerData === null){
 									let opponents = [];
-									_teams.forEach((team, teamIndex) => {
-										if(teamIndex === teamIndex){
+									_teams.forEach(team => {
+										if(team === _team){
 											opponents.push(null);
 										}else{
 											let names = [];
@@ -391,7 +381,7 @@ class ArenaHelper{
 											});
 										}
 									});
-									team.precomputedWorkerData = {
+									_team.precomputedWorkerData = {
 										settings: data.settings,
 										opponents: opponents
 									};
@@ -405,21 +395,31 @@ class ArenaHelper{
 										name: name,
 										url: participantWrapper.private.url,
 										workerData: {
-											...team.precomputedWorkerData
+											..._team.precomputedWorkerData
 										}
 									}
 								});
 								return new Promise(resolve => workerWrapper.promiseWorkerReady = resolve);
 							}
 						},{
+							name: 'killWorker',
+							value: name=>{
+								this.postMessage('Kill', name, true).then(()=>{
+									const workers = participantWrapper.private.workers;
+									const workerWrapper = workers.find(workerWrapper => workerWrapper.name === name);
+									const index = workers.findIndex(w => w === workerWrapper);
+									workers.splice(index, 1);
+								});
+							}
+						},{
 							name: 'postMessage',
 							value: async (data, workerName='', systemMessage=false) => ArenaHelper.Participants.#messageWorker(workerName, participantWrapper, {type: 'Post', message: data, systemMessage: systemMessage})
 						},{
 							name: 'addScore',
-							value: points=>_teams[teamIndex].score += points
+							value: points=>_team.score += points
 						},{
 							name: 'addBonusScore',
-							value: points=>_teams[teamIndex].members[participantIndex].private.score += points
+							value: points=>participantWrapper.private.score += points
 						}
 					].forEach(field => {
 						Object.defineProperty(this, field.name, {
@@ -451,11 +451,11 @@ class ArenaHelper{
 			});
 			_teams.forEach(team => {
 				team.members.forEach(participantWrapper => {
-					const promise = participantWrapper.participant.addWorker('');
+					let promise = participantWrapper.participant.addWorker('');
 					promises.push(promise);
 				});
 			});
-			const _onError = error=>{
+			let _onError = error=>{
 				ArenaHelper.postAbort('Did-Not-Start', error);
 			}
 			Promise.allSettled(promises).then(() => {
