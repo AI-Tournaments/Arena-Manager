@@ -311,8 +311,8 @@ function a(){
 			if(option.dataset.name.includes('/')){
 				owner = option.dataset.name.replace(/\/(.*)/, '');
 			}
-			let sessionStorage = GitHubApi.getSessionStorage();
-			if(owner === sessionStorage.username){
+			const sessionStorage = GitHubApi.getSessionStorage();
+			if(owner === sessionStorage?.username){
 				addToGroup(option, groupYours);
 			}else if(option.classList.contains('local')){
 				addToGroup(option, groupLocals);
