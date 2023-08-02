@@ -306,19 +306,19 @@ function a(){
 			selectElement.add(optgroup);
 		});
 		options.sort((a, b) => value(a)-value(b));
+		const sessionStorage = GitHubApi.getSessionStorage();
 		for(let option of options){
 			let owner = '';
 			if(option.dataset.name.includes('/')){
 				owner = option.dataset.name.replace(/\/(.*)/, '');
 			}
-			const sessionStorage = GitHubApi.getSessionStorage();
-			if(owner === sessionStorage?.username){
-				addToGroup(option, groupYours);
-			}else if(option.classList.contains('local')){
+			if(option.classList.contains('local')){
 				addToGroup(option, groupLocals);
-			}else if(sessionStorage?.following.includes(owner)){
+			}else if(owner === sessionStorage.username){
+				addToGroup(option, groupYours);
+			}else if(sessionStorage.following?.includes?.(owner)){
 				addToGroup(option, groupFollowing);
-			}else if(sessionStorage?.followers.includes(owner)){
+			}else if(sessionStorage.followers?.includes?.(owner)){
 				addToGroup(option, groupFollowers);
 			}else{
 				selectElement.add(option);
