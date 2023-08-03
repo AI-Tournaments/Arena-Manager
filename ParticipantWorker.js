@@ -101,10 +101,12 @@ onmessage = messageEvent => {
 			}
 		}
 		function getValue(response){
-			if(!response.length){
-				throw Error('No response');
+			try{
+				return JSON.parse(response[0].string);
+			}catch(error){}
+			if(response.length){
+				return response[0].string;
 			}
-			return JSON.parse(response[0].string);
 		}
 		if(!_pendingMessage){
 			logResponseAlreadyReceived();
