@@ -112,16 +112,19 @@ onmessage = messageEvent => {
 			logResponseAlreadyReceived();
 			return;
 		}
-		let usedSteps = Messenger.getStepsUsed();
+		const usedSteps = Messenger.getStepsUsed();
 		_pendingMessage.then(()=>{
 			if(_pendingMessage === null){
+				const total = Messenger.getStepsUsed();
+				const toTerminate = total - usedSteps;
 				postMessage({
 					type: 'Response',
 					response: {
 						value: getValue(response),
 						executionSteps: {
 							toRespond: usedSteps,
-							toTerminate: usedSteps - Messenger.getStepsUsed()
+							toTerminate,
+							total
 						}
 					}
 				});
