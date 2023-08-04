@@ -1,25 +1,12 @@
 'use strict'
 function a(){
 	const EXTERNAL_RESOURCES = (()=>{
-		let version = {
-			'{engine262}': 'ad1b2d2e4fd5024a05313e740f084a46acf20564',
-			'{seedrandom}': '3.0.5'
-		};
-		let resources = {
-			engine262: 'https://raw.githubusercontent.com/engine262/engine262/{engine262}/engine262.js',
-			seedrandom: 'https://cdnjs.cloudflare.com/ajax/libs/seedrandom/{seedrandom}/seedrandom.min.js'
-		}
-		for(const resourceKey in resources){
-			if(Object.hasOwnProperty.call(resources, resourceKey)){
-				for(const versionKey in version){
-					if(Object.hasOwnProperty.call(version, versionKey)){
-						resources[resourceKey] = resources[resourceKey].replace(versionKey, version[versionKey]);
-					}
-				}
-			}
-		}
-		Object.freeze(resources);
-		return resources;
+		const engine262 = 'ad1b2d2e4fd5024a05313e740f084a46acf20564';
+		const seedrandom = '3.0.5';
+		return Object.freeze({
+			engine262: `https://raw.githubusercontent.com/engine262/engine262/${engine262}/engine262.js`,
+			seedrandom: `https://cdnjs.cloudflare.com/ajax/libs/seedrandom/${seedrandom}/seedrandom.min.js`
+		});
 	})();
 	let styleMode = window.self == window.top ? 'top' : 'iFrame';
 	document.documentElement.classList.add(styleMode);
