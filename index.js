@@ -18,7 +18,7 @@ function a(){
 	let _replayData = null;
 	let _rerunUntilErrorCounter = 0;
 	let localArenas = {};
-	let localParticipants = null
+	let localParticipants = null;
 	let arenaProperties;
 	let arenaMatches = null;
 	let selectArena = document.getElementById('selectArena');
