@@ -94,7 +94,9 @@ function a(){
 			if(document.title !== 'auto-run'){
 				document.getElementById('wrapper').classList.remove('hidden');
 				_sortByStars = messageEvent.data.value.settings.sortByStars;
-				selectArena.style.height = messageEvent.data.value.settings.height + 'px';
+				if(messageEvent.data.value.settings.height){
+					selectArena.style.height = messageEvent.data.value.settings.height + 'px';
+				}
 				_json = messageEvent.data.value.option;
 				btnAddTeam.disabled = true;
 				Array.from(document.getElementsByClassName('participant-team-container')).forEach(element => {
