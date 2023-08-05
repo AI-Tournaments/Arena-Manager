@@ -75,8 +75,12 @@ function a(){
 				if(_preSelectedArena === arena.full_name){
 					preSelected = option;
 				}
-				option.innerHTML = arena.name + ' ' + cssStar + arena.stars;
+				const name = arena.official ? arena.full_name.replace(/.*\/Arena-/g,'') : repo.full_name;
+				option.innerHTML = name + ' ' + cssStar + arena.stars;
 				option.dataset.json = JSON.stringify(arena);
+				if(arena.official){
+					option.dataset.official = true;
+				}
 				arenaList.appendChild(option);
 			}
 		});
@@ -94,13 +98,23 @@ function a(){
 			return inputSortByStars.checked ? JSON.parse(option.dataset.json).stars : option.value;
 		}
 		let options = [...selectElement.options];
+		const optgroup = document.createElement('optgroup');
+		optgroup.label = 'Official';
+		arenaList.appendChild(optgroup);
 		options.sort(function(a, b){
 			if(a.classList.contains('local') ? true : value(a) < value(b)){return -1;}
 			if(b.classList.contains('local') ? true : value(b) < value(a)){return 1;}
 			return 0;
 		});
-		for(let option of options){
-			selectElement.add(option);
+		for(const option of options){
+			if(option.dataset.official){
+				optgroup.appendChild(option);
+			}else{
+				selectElement.add(option)
+			}
+		}
+		if(!optgroup.childElementCount){
+			optgroup.parentNode.removeChild(optgroup);
 		}
 	}
 }
