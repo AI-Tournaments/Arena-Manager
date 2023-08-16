@@ -206,14 +206,14 @@ onmessage = messageEvent => {
 				}
 			}));
 			initNewInterpreter = async state => {
-				let random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.iframeId);
+				const random = new Math.seedrandom(messageEvent.data.workerData.settings.general.seed+'@'+messageEvent.data.iframeId);
 				_interpreter = new ManagedRealm({});
-				let postMessageName = '_'+Date.now()+'_postMessage';
-				let countExecutionStepsName = '_'+Date.now()+'_countExecutionSteps';
+				const postMessageName = '_'+Date.now()+'_postMessage';
+				const countExecutionStepsName = '_'+Date.now()+'_countExecutionSteps';
 				_interpreter.scope(() => {
 					CreateDataProperty(_interpreter.GlobalObject, new Value(postMessageName), new Value(onResponse));
 					CreateDataProperty(_interpreter.GlobalObject, new Value(countExecutionStepsName), new Value(Messenger.countExecutionSteps));
-					let math = Get(_interpreter.GlobalObject, new Value('Math'));
+					const math = Get(_interpreter.GlobalObject, new Value('Math'));
 					CreateDataProperty(math.Value, new Value('random'), new Value(()=>{return new Value(random())}));
 				});
 				if(state){
