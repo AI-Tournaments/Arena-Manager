@@ -287,16 +287,21 @@ class ArenaHelper{
 				});
 				return promises;
 			}
-			this.get = (team=-1, participant=-1) => {
-				return _teams[team].members[participant].participant;
+			this.get = (team=-1, member=-1) => {
+				return _teams[team].members[member].participant;
 			}
 			this.find = callback => {
 				return _teams.find(team => team.members.find(member => callback(member.participant)));
 			}
-			this.forEach = callback => {
-				_teams.forEach(team => team.members.forEach(member => callback(member.participant)));
+			this.toArray = () => {
+				const array = [];
+				_teams.forEach(team => team.members.forEach(member => array.push(member.participant)));
+				return array;
 			}
-			this.countTeams = () => _teams.length;
+			this.forEach = callback => {
+				this.toArray().forEach((participant, index) => callback(participant, index));
+			}
+			this.countTeams = ()=>_teams.length;
 			this.countMembers = teamIndex => {
 				let count = 0;
 				if(teamIndex === undefined){
