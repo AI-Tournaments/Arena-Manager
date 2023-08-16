@@ -84,7 +84,7 @@ class ArenaHelper{
 	}
 	static init = null;
 	static #init = null;
-	static preInit(){
+	static preInit(dependencies){
 		function fatal(message){
 			console.error(message);
 			ArenaHelper.postAbort('Fatal-Abort', message);
@@ -138,7 +138,17 @@ class ArenaHelper{
 			}
 		}
 		onMessageWatcher();
-		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(() => ArenaHelper.#init());
+		new Promise(resolve => ArenaHelper.#arenaReady = resolve).then(async() => {
+			for(let index = 0; index < dependencies.length; index++){
+				const d = dependencies[index];
+				if(d.module){
+					await import(d.path).then(dependency => self[d.importAs] = dependency);
+				}else if(typeof d === 'string'){
+					importScripts(d);
+				}
+			}
+			ArenaHelper.#init()
+		});
 		self.addEventListener('unhandledrejection', function(promiseRejectionEvent){
 			let message;
 			if(promiseRejectionEvent.reason.stack){
@@ -483,7 +493,7 @@ class ArenaHelper{
 			}
 			return URL.createObjectURL(blob);
 		}
-		return fetch(url).then(response => response.text()).then(jsCode => {
+		return fetch(url).then(response => response.text()).then(async jsCode => {
 			let _includeScripts = [];
 			if(options.system){
 				_includeScripts.push(...options.system);
@@ -501,7 +511,12 @@ class ArenaHelper{
 			if(header.dependencies){
 				let scope = url.slice(0, url.lastIndexOf('/')+1);
 				header.dependencies.forEach((dependency, index) => {
-					header.dependencies[index] = scope + dependency;
+					const path = scope + (dependency.path ? dependency.path : dependency);
+					if(dependency.module){
+						dependency.path = path;
+					}else if(typeof d === 'string'){
+						header.dependencies[index] = path;
+					}
 				});
 			}else{
 				header.dependencies = [];
@@ -512,14 +527,18 @@ class ArenaHelper{
 				preCode += `importScripts('${_includeScripts.join('\', \'')}');\n`;
 			}
 			if(url.endsWith('/arena.js')){
-				preCode += 'ArenaHelper.preInit();\n';
+				preCode += `ArenaHelper.preInit(${JSON.stringify(header.dependencies)});\n`;
 			}else if(seed){
 				jsCode = (' '+jsCode).replace(/(?<=\W)_onmessage(?=\W)/g, '_'+Date.now()+'_onmessage');
 				jsCode = jsCode.replace(/(?<=\W)onmessage(?=\W)/g, '_onmessage').trim();
 				preCode += 'Math.seedrandom(\''+seed+'\');\ndelete Math.seedrandom;\nlet _onmessage=function(){}\nonmessage=(m)=>{_onmessage(m.data.workerData ? m.data.workerData : {type: m.data.type, data: m.data.message})};\nlet postMessage_native = globalThis.postMessage;\nlet postMessage=function(value,toRespond=1,toTerminate=2){postMessage_native({value: value, executionSteps: {toRespond, toTerminate}})};\npostMessage_native(null);\n';
-			}
-			if(header.dependencies.length){
-				preCode += `importScripts('${header.dependencies.join('\', \'')}');\n`;
+				header.dependencies.forEach(d => {
+					if(d.module){
+						preCode += `await import(${d.path}).then(dependency => self[${d.importAs}] = dependency);`;
+					}else if(typeof d === 'string'){
+						preCode += `importScripts('${d}');`;
+					}
+				});
 			}
 			if(preCode){
 				preCode = 'let __url=\''+url+'\';\nlet __mutators=[];\n'+preCode+'// 👇 ?'+url+' 👇\n';
