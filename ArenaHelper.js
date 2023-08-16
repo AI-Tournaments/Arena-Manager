@@ -143,7 +143,10 @@ class ArenaHelper{
 			let message;
 			if(promiseRejectionEvent.reason.stack){
 				let stack = promiseRejectionEvent.reason.stack.split('\n');
-				message = stack[0]+' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
+				message = stack[0];
+				if(stack[1]){
+					message += ' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
+				}
 			}else{
 				message = promiseRejectionEvent.reason;
 			}
