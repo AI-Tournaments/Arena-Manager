@@ -151,17 +151,7 @@ class ArenaHelper{
 			ArenaHelper.#init()
 		});
 		self.addEventListener('unhandledrejection', function(promiseRejectionEvent){
-			let message;
-			if(promiseRejectionEvent.reason.stack){
-				let stack = promiseRejectionEvent.reason.stack.split('\n');
-				message = stack[0];
-				if(stack[1]){
-					message += ' @ '+stack[1].trim().split(':').slice(Math.max(-2)).join(':');
-				}
-			}else{
-				message = promiseRejectionEvent.reason;
-			}
-			ArenaHelper.postAbort('Arena', message);
+			ArenaHelper.postAbort('Arena', promiseRejectionEvent.reason.stack ? promiseRejectionEvent.reason.stack.replaceAll(location.href, 'arena.js') : promiseRejectionEvent.reason);
 		});
 		ArenaHelper.#postMessage(null);
 	}
