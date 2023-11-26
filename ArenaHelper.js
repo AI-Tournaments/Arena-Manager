@@ -32,17 +32,17 @@ class ArenaHelper{
 	}
 	static postDone = ()=>{
 		this.#participants.terminateAllWorkers();
-		const returnObject = this.#getBaseReturn();
-		returnObject.scores = this.#participants.getScores();
-		ArenaHelper.#postMessage({type: 'Done', returnObject});
+		const message = this.#getBaseReturn();
+		message.scores = this.#participants.getScores();
+		ArenaHelper.#postMessage({type: 'Done', message});
 	}
 	static postAbort = (participant='', error='')=>{
 		this.#participants.terminateAllWorkers();
-		const returnObject = this.#getBaseReturn();
-		returnObject.participantName = participant.name === undefined ? participant : participant.name;
-		returnObject.error = error;
-		returnObject.scores = [];
-		ArenaHelper.#postMessage({type: 'Aborted', message: returnObject});
+		const message = this.#getBaseReturn();
+		message.participantName = participant.name === undefined ? participant : participant.name;
+		message.error = error;
+		message.scores = [];
+		ArenaHelper.#postMessage({type: 'Aborted', message});
 	}
 	static #onmessage = messageEvent=>{
 		switch(messageEvent.data.type){
